@@ -1,0 +1,593 @@
+/* ============= LOGIN COMPONENT STYLES ============= */
+.login-page-container {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Places login form securely docked on the side */
+  padding: 2rem 4vw 2rem 2rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Fullscreen Background Pictures: Farmer on farm / Developer at workstation */
+.login-bg-layer {
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: opacity 0.5s ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.login-bg-farmer {
+  background-image: linear-gradient(to right, rgba(10, 25, 12, 0.10) 0%, rgba(10, 25, 12, 0.25) 55%, rgba(10, 25, 12, 0.48) 100%), url('../assets/farmer.jpg');
+  background-position: left 28%;
+}
+
+.login-bg-dev {
+  background-image: linear-gradient(to right, rgba(8, 20, 35, 0.12) 0%, rgba(8, 20, 35, 0.28) 55%, rgba(8, 20, 35, 0.55) 100%), url('../assets/developer.jpg');
+  background-position: left center;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  max-width: 430px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 2rem;
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.45),
+              inset 0 1px 2px rgba(255, 255, 255, 0.95);
+  padding: 1.8rem 1.8rem 2rem;
+  transition: all 0.35s ease;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  margin: 1rem 0;
+}
+
+.theme-farmer .login-card {
+  box-shadow: 0 25px 55px -10px rgba(10, 35, 15, 0.4);
+}
+
+.theme-dev .login-card {
+  box-shadow: 0 25px 55px -10px rgba(10, 25, 50, 0.4);
+}
+
+/* Card peek background button & state */
+.btn-peek-bg {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(80, 110, 80, 0.25);
+  color: #2b4d2b;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.32rem 0.65rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+.btn-peek-bg:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.03);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.theme-dev .btn-peek-bg {
+  border-color: rgba(40, 80, 120, 0.25);
+  color: #1f4d66;
+}
+
+.login-card.is-peeking {
+  opacity: 0.16;
+  transform: scale(0.97);
+}
+.login-card.is-peeking:hover {
+  opacity: 0.92;
+  transform: scale(1);
+}
+
+/* Header */
+.login-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px dashed rgba(80, 100, 70, 0.15);
+  transition: border-color 0.3s;
+}
+
+.theme-dev .login-header {
+  border-bottom-color: rgba(40, 80, 120, 0.15);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-icon-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 1.2rem;
+  font-size: 1.5rem;
+  background: rgba(60, 100, 60, 0.1);
+  color: #2b4d2b;
+  transition: 0.3s;
+}
+
+.theme-dev .header-icon-slot {
+  color: #1f4d66;
+  background: rgba(30, 70, 100, 0.1);
+}
+
+.login-header h1 {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: #1f3a1f;
+  margin: 0;
+}
+
+.theme-dev .login-header h1 {
+  color: #1a3b4f;
+}
+
+.account-badge {
+  display: inline-block;
+  background: rgba(60, 130, 60, 0.12);
+  padding: 0.25rem 0.8rem;
+  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1f4a1f;
+  border: 1px solid rgba(60, 130, 60, 0.15);
+}
+
+.theme-dev .account-badge {
+  background: rgba(42, 95, 122, 0.12);
+  color: #1a4b66;
+  border-color: rgba(42, 95, 122, 0.15);
+}
+
+.header-subtitle {
+  font-size: 0.85rem;
+  color: #446644;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.35;
+}
+
+.theme-dev .header-subtitle {
+  color: #2e5570;
+}
+
+/* Switch Mode Toggle */
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin: 0.2rem 0 1.6rem 0;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.5rem 1.2rem;
+  border-radius: 60px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  transition: 0.3s;
+}
+
+.theme-dev .switch-wrapper {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(200, 225, 245, 0.6);
+}
+
+.switch-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #555;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.switch-label:hover {
+  opacity: 0.85;
+}
+
+.switch-label.active-farm {
+  opacity: 1;
+  color: #1e6b37;
+}
+
+.switch-label.active-dev {
+  opacity: 1;
+  color: #1a567d;
+}
+
+.toggle-track {
+  position: relative;
+  width: 62px;
+  height: 34px;
+  background: #b8d0b5;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.theme-dev .toggle-track {
+  background: #89b4c9;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 26px;
+  height: 26px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.toggle-track.is-dev .toggle-knob {
+  transform: translateX(28px);
+}
+
+/* Panel */
+.panel {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 2rem;
+  padding: 1.8rem 1.8rem 2rem;
+  box-shadow: 0 8px 20px rgba(30, 50, 30, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  transition: 0.3s ease;
+}
+
+.theme-dev .panel {
+  border-color: rgba(200, 225, 245, 0.6);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #1d341d;
+}
+
+.theme-dev .panel-title {
+  color: #1a3b4f;
+}
+
+.panel-sub {
+  font-size: 0.82rem;
+  color: #406040;
+  margin: 0.3rem 0 1.4rem 0;
+  border-left: 3px solid rgba(70, 120, 70, 0.3);
+  padding-left: 0.8rem;
+}
+
+.theme-dev .panel-sub {
+  color: #2a5a70;
+  border-left-color: rgba(42, 95, 122, 0.3);
+}
+
+/* Quick Fill Buttons */
+.quick-fill-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.4rem;
+}
+
+.btn-quick-fill {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px dashed rgba(60, 110, 60, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2b4d2b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-quick-fill:hover {
+  background: white;
+  border-color: #27ae60;
+  transform: translateY(-1px);
+}
+
+.theme-dev .btn-quick-fill {
+  border-color: rgba(40, 90, 140, 0.3);
+  color: #1a4b66;
+}
+
+.theme-dev .btn-quick-fill:hover {
+  border-color: #3498db;
+}
+
+/* Inputs */
+.login-input-group {
+  margin-bottom: 1.2rem;
+}
+
+.login-input-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #2b4d2b;
+  margin-bottom: 0.35rem;
+}
+
+.theme-dev .login-input-group label {
+  color: #1f4d66;
+}
+
+.login-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 2rem;
+  padding: 0.1rem 1rem;
+  border: 1px solid rgba(80, 110, 80, 0.18);
+  transition: all 0.25s ease;
+}
+
+.theme-dev .login-input-wrapper {
+  border-color: rgba(40, 80, 120, 0.18);
+}
+
+.login-input-wrapper:focus-within {
+  border-color: #27ae60;
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.15);
+  background: #ffffff;
+}
+
+.theme-dev .login-input-wrapper:focus-within {
+  border-color: #2980b9;
+  box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+}
+
+.login-input-icon {
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  opacity: 0.7;
+}
+
+.login-input-wrapper input {
+  width: 100%;
+  padding: 0.8rem 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2c3e50;
+  outline: none;
+}
+
+.login-options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.5rem 0 1.2rem;
+  font-size: 0.8rem;
+}
+
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #406040;
+  cursor: pointer;
+}
+
+.theme-dev .remember-label {
+  color: #2a5a70;
+}
+
+.forgot-link {
+  color: #27ae60;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-dev .forgot-link {
+  color: #2980b9;
+}
+
+.btn-auth-submit {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 3rem;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: #27ae60;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 15px rgba(39, 174, 96, 0.25);
+}
+
+.btn-auth-submit:hover {
+  background: #219653;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(39, 174, 96, 0.35);
+}
+
+.theme-dev .btn-auth-submit {
+  background: #2980b9;
+  box-shadow: 0 6px 15px rgba(41, 128, 185, 0.25);
+}
+
+.theme-dev .btn-auth-submit:hover {
+  background: #1f6690;
+  box-shadow: 0 8px 20px rgba(41, 128, 185, 0.35);
+}
+
+/* Account Creation Modal Buttons */
+.btn-auth-submit.btn-modal-cancel,
+.theme-dev .btn-auth-submit.btn-modal-cancel {
+  background: #e74c3c;
+  box-shadow: 0 6px 15px rgba(231, 76, 60, 0.25);
+}
+
+.btn-auth-submit.btn-modal-cancel:hover,
+.theme-dev .btn-auth-submit.btn-modal-cancel:hover {
+  background: #c0392b;
+  box-shadow: 0 8px 20px rgba(231, 76, 60, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-auth-submit.btn-modal-register,
+.theme-dev .btn-auth-submit.btn-modal-register {
+  background: #27ae60;
+  box-shadow: 0 6px 15px rgba(39, 174, 96, 0.25);
+}
+
+.btn-auth-submit.btn-modal-register:hover,
+.theme-dev .btn-auth-submit.btn-modal-register:hover {
+  background: #219653;
+  box-shadow: 0 8px 20px rgba(39, 174, 96, 0.35);
+  transform: translateY(-2px);
+}
+
+
+.auth-switch-prompt {
+  margin-top: 1.2rem;
+  font-size: 0.8rem;
+  text-align: center;
+  color: #555;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 0.9rem;
+}
+
+.auth-switch-prompt a,
+.auth-switch-prompt .auth-switch-btn {
+  color: #27ae60;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+
+.theme-dev .auth-switch-prompt a,
+.theme-dev .auth-switch-prompt .auth-switch-btn {
+  color: #2980b9;
+}
+
+/* Modal Overlay */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.auth-modal-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 2rem;
+  padding: 2.2rem;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .login-page-container {
+    padding: 1.5rem 2vw 1.5rem 1.5rem;
+  }
+  .login-card {
+    max-width: 410px;
+    padding: 1.6rem 1.4rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-page-container {
+    justify-content: center;
+    padding: 1.2rem 1rem;
+  }
+  .login-bg-farmer,
+  .login-bg-dev {
+    background-position: center center;
+  }
+  .login-card {
+    max-width: 100%;
+    padding: 1.5rem 1.2rem;
+  }
+}
+
+

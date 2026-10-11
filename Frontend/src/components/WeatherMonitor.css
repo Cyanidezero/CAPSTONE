@@ -1,0 +1,851 @@
+/* ========================================================= */
+/* Google Weather Inspired Styling for ClimaYield-X          */
+/* With Minimizable & Expandable Zoom Earth Satellite/Radar   */
+/* ========================================================= */
+
+.gw-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #202124;
+}
+
+/* Loading & Error States */
+.gw-loading, .gw-error {
+  text-align: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8eaed;
+}
+
+.gw-loading-icon, .gw-error-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  animation: gw-bounce 2s infinite ease-in-out;
+}
+
+@keyframes gw-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.gw-btn-retry {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s;
+}
+
+.gw-btn-retry:hover {
+  background: #1557b0;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.4);
+}
+
+/* Header Bar */
+.gw-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e8eaed;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gw-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gw-location-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #202124;
+}
+
+.gw-location-pin {
+  color: #ea4335;
+  font-size: 1.1rem;
+}
+
+.gw-subtitle {
+  font-size: 0.84rem;
+  color: #5f6368;
+}
+
+.gw-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gw-unit-toggle {
+  display: flex;
+  background: #f1f3f4;
+  border-radius: 20px;
+  padding: 3px;
+}
+
+.gw-unit-btn {
+  background: none;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gw-unit-btn.active {
+  background: #ffffff;
+  color: #1a73e8;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.gw-btn-action {
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gw-btn-action:hover {
+  background: #e8eaed;
+  color: #202124;
+}
+
+.gw-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e6f4ea;
+  color: #137333;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.gw-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #137333;
+  animation: gw-pulse 1.5s infinite;
+}
+
+@keyframes gw-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* ========================================================= */
+/* ZOOM EARTH / SATELLITE RADAR WIDGET (Small & Minimizable) */
+/* ========================================================= */
+.gw-zoom-earth-card {
+  background: #0d131f;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid #1f293d;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gw-ze-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #131b2e;
+  border-bottom: 1px solid #222e46;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gw-ze-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e8ecf1;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.gw-ze-badge {
+  background: #1e3a5f;
+  color: #60a5fa;
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.gw-ze-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gw-ze-btn {
+  background: #1f293d;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gw-ze-btn:hover {
+  background: #2b3952;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.gw-ze-btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.gw-ze-btn-primary:hover {
+  background: #1d4ed8;
+}
+
+/* Layer tabs inside Zoom Earth bar */
+.gw-ze-tabs {
+  display: flex;
+  gap: 4px;
+  background: #0f172a;
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.gw-ze-tab {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gw-ze-tab.active {
+  background: #334155;
+  color: #f8fafc;
+}
+
+/* Dynamic height for Small vs Large */
+.gw-ze-body {
+  position: relative;
+  width: 100%;
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.gw-ze-body.size-small {
+  height: 240px; /* Kept small by default as requested! */
+}
+
+.gw-ze-body.size-large {
+  height: 520px; /* Expandable to high-res large map */
+}
+
+.gw-ze-body iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.gw-ze-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  background: #0a0f1a;
+  color: #64748b;
+  font-size: 0.72rem;
+  border-top: 1px solid #1e293b;
+}
+
+.gw-ze-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.gw-ze-link:hover {
+  text-decoration: underline;
+}
+
+/* Minimized bar state */
+.gw-ze-minimized {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  background: #0f172a;
+  border-radius: 14px;
+  border: 1px solid #1e293b;
+  margin-bottom: 20px;
+  color: #e2e8f0;
+}
+
+/* ========================================================= */
+/* MAIN GOOGLE WEATHER HERO CARD                             */
+/* ========================================================= */
+.gw-hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafd 100%);
+  border-radius: 20px;
+  padding: 24px 28px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.gw-hero-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.gw-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.gw-hero-icon-wrapper {
+  font-size: 4.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+}
+
+.gw-hero-temp-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.gw-hero-temp {
+  font-size: 4.5rem;
+  font-weight: 400;
+  line-height: 1;
+  color: #202124;
+  letter-spacing: -2px;
+}
+
+.gw-hero-feels {
+  font-size: 0.95rem;
+  color: #5f6368;
+  margin-top: 4px;
+}
+
+.gw-hero-condition {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #3c4043;
+  margin-top: 4px;
+}
+
+.gw-hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.gw-hero-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 0.92rem;
+  color: #3c4043;
+  padding: 6px 12px;
+  background: #f1f3f4;
+  border-radius: 12px;
+}
+
+.gw-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5f6368;
+}
+
+.gw-stat-value {
+  font-weight: 700;
+  color: #202124;
+}
+
+/* ========================================================= */
+/* HOURLY FORECAST SECTION (Google Tabs: Temp, Precip, Wind) */
+/* ========================================================= */
+.gw-hourly-section {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px 24px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.gw-hourly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gw-hourly-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #202124;
+}
+
+.gw-tabs {
+  display: flex;
+  background: #f1f3f4;
+  padding: 4px;
+  border-radius: 20px;
+  gap: 4px;
+}
+
+.gw-tab-btn {
+  background: none;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gw-tab-btn.active {
+  background: #ffffff;
+  color: #1a73e8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.gw-hourly-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 10px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #dadce0 transparent;
+}
+
+.gw-hourly-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.gw-hourly-scroll::-webkit-scrollbar-thumb {
+  background: #dadce0;
+  border-radius: 6px;
+}
+
+.gw-hourly-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 68px;
+  padding: 10px 8px;
+  background: #f8fafd;
+  border-radius: 14px;
+  border: 1px solid #edf2f7;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.gw-hourly-item.now {
+  background: #e8f0fe;
+  border-color: #c2e7ff;
+}
+
+.gw-hourly-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.gw-hourly-time {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5f6368;
+}
+
+.gw-hourly-icon {
+  font-size: 1.4rem;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.gw-hourly-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #202124;
+}
+
+/* Probability or bar inside hourly */
+.gw-hourly-bar-container {
+  width: 100%;
+  height: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.gw-hourly-bar-fill {
+  width: 14px;
+  background: #1a73e8;
+  border-radius: 3px;
+  transition: height 0.3s ease;
+}
+
+/* ========================================================= */
+/* 7-DAY FORECAST SECTION (Google Range Sliders)             */
+/* ========================================================= */
+.gw-7day-section {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 26px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.gw-7day-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #202124;
+  margin-bottom: 16px;
+}
+
+.gw-7day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gw-7day-row {
+  display: grid;
+  grid-template-columns: 100px 70px 140px 1fr;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  border: 1px solid #edf0f2;
+  transition: all 0.2s;
+}
+
+@media (max-width: 650px) {
+  .gw-7day-row {
+    grid-template-columns: 80px 50px 1fr;
+  }
+  .gw-7day-condition {
+    display: none;
+  }
+}
+
+.gw-7day-row:hover {
+  background: #f1f3f4;
+}
+
+.gw-7day-day {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #202124;
+}
+
+.gw-7day-pop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1a73e8;
+}
+
+.gw-7day-condition {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #5f6368;
+}
+
+.gw-7day-range-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gw-temp-low {
+  font-size: 0.88rem;
+  color: #5f6368;
+  font-weight: 600;
+  min-width: 30px;
+  text-align: right;
+}
+
+.gw-temp-high {
+  font-size: 0.92rem;
+  color: #202124;
+  font-weight: 700;
+  min-width: 30px;
+}
+
+/* Google-style horizontal temperature slider bar */
+.gw-range-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #e8eaed;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gw-range-bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #4285f4 0%, #34a853 45%, #fbbc05 80%, #ea4335 100%);
+}
+
+/* ========================================================= */
+/* WEATHER DETAILS CARDS GRID (Google Weather Cards)         */
+/* ========================================================= */
+.gw-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.gw-detail-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gw-dc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gw-dc-val-main {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #202124;
+  line-height: 1.1;
+}
+
+.gw-dc-sub {
+  font-size: 0.82rem;
+  color: #5f6368;
+}
+
+/* UV Bar */
+.gw-uv-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #34a853 0%, #fbbc05 40%, #ea4335 75%, #a142f4 100%);
+  margin-top: 4px;
+}
+
+/* Sun Path Arc */
+.gw-sun-arc-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gw-sun-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: #3c4043;
+  font-weight: 600;
+}
+
+.gw-sun-progress {
+  width: 100%;
+  height: 6px;
+  background: #e8eaed;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.gw-sun-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #fbbc05, #ea4335);
+  border-radius: 3px;
+}
+
+/* ========================================================= */
+/* AGRONOMIC WEATHER ADVISORIES FOR FARMERS                  */
+/* ========================================================= */
+.gw-agro-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px 24px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+.gw-agro-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #202124;
+  margin-bottom: 14px;
+}
+
+.gw-agro-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gw-alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.gw-alert-warning {
+  background: #fef7e0;
+  border-left: 4px solid #f9ab00;
+  color: #7a4f01;
+}
+
+.gw-alert-info {
+  background: #e8f0fe;
+  border-left: 4px solid #1a73e8;
+  color: #174ea6;
+}
+
+.gw-alert-success {
+  background: #e6f4ea;
+  border-left: 4px solid #1e8e3e;
+  color: #137333;
+}
+
+/* ========================================================= */
+/* DATA SOURCE BADGE & MODAL STYLING                         */
+/* ========================================================= */
+.gw-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.gw-source-google {
+  background: #e6f4ea;
+  color: #137333;
+  border: 1px solid #a8dab5;
+}
+
+.gw-source-meteo {
+  background: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #aecbfa;
+}
+
+/* ============= THEME FARMER WEATHER ENHANCEMENTS ============= */
+.theme-farmer .gw-container {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #12381f;
+}
+
+.theme-farmer .gw-header-bar {
+  border: 1.5px solid #d4e8da;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(25, 60, 30, 0.05);
+}
+
+.theme-farmer .gw-current-card,
+.theme-farmer .gw-card {
+  border-radius: 20px;
+  border: 1.5px solid #d4e8da;
+  box-shadow: 0 6px 18px rgba(25, 60, 30, 0.05);
+}
+
+.theme-farmer .gw-tab-btn.active {
+  background: linear-gradient(135deg, #14532d 0%, #166534 50%, #22c55e 100%);
+  color: #ffffff;
+  border-color: #166534;
+}
+
+

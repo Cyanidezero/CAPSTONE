@@ -1,0 +1,373 @@
+/* ========================================================= */
+/* Modern Farmer-Friendly Recommendations Component Styling   */
+/* ========================================================= */
+
+.rec-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #12381f;
+}
+
+/* Header Banner */
+.rec-hero-card {
+  background: linear-gradient(135deg, #0f381c 0%, #175429 50%, #26793f 100%);
+  color: #ffffff;
+  border-radius: 24px;
+  padding: 26px 30px;
+  box-shadow: 0 14px 32px rgba(23, 84, 41, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.rec-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.16) 0%, rgba(74, 222, 128, 0.1) 55%, transparent 75%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.rec-hero-text h2 {
+  margin: 0 0 6px 0;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
+}
+
+.rec-hero-text p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #d1fae5;
+  max-width: 650px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.rec-hero-badge {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  padding: 10px 18px;
+  text-align: right;
+}
+
+.rec-hero-badge .title {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  color: #a7f3d0;
+}
+
+.rec-hero-badge .val {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-top: 2px;
+}
+
+/* Controls Bar */
+.rec-controls-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 26px;
+  border: 1.5px solid #d4e8da;
+  box-shadow: 0 6px 18px rgba(25, 60, 30, 0.05);
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.rec-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.rec-control-group label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #2b4d34;
+}
+
+.rec-control-group select,
+.rec-control-group input {
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #c8e2cf;
+  background: #f8fbf9;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #12381f;
+  outline: none;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+
+.rec-control-group select:focus,
+.rec-control-group input:focus {
+  border-color: #22c55e;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.btn-rec-generate {
+  background: linear-gradient(135deg, #14532d 0%, #166534 50%, #22c55e 100%);
+  color: #ffffff;
+  border: none;
+  padding: 13px 26px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 18px rgba(22, 101, 52, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+.btn-rec-generate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(22, 101, 52, 0.4);
+}
+
+.btn-rec-generate:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Recommendations Card & Grid */
+.rec-results-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 26px;
+  border: 1.5px solid #d4e8da;
+  box-shadow: 0 6px 18px rgba(25, 60, 30, 0.05);
+}
+
+.rec-results-card h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #12381f;
+  margin: 0 0 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rec-items-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.recommendation-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 22px;
+  border: 1.5px solid #d8eadc;
+  border-left: 5px solid #16a34a;
+  box-shadow: 0 4px 12px rgba(25, 60, 30, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(25, 75, 35, 0.09);
+  border-color: #86efac;
+}
+
+.rec-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rec-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0faf2;
+  color: #14532d;
+  border: 1px solid #bbf7d0;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rec-level-pill {
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.level-high {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.level-medium {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.level-low {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.rec-suggestion-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #1a3822;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Empty / Prompt State */
+.rec-empty-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 24px;
+  text-align: center;
+  border: 1.5px dashed #b8ddc0;
+}
+
+.rec-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.rec-empty-text {
+  color: #3b5f44;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Seasonal Calendar Section */
+.rec-calendar-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 26px;
+  border: 1.5px solid #d4e8da;
+  box-shadow: 0 6px 18px rgba(25, 60, 30, 0.05);
+}
+
+.rec-calendar-card h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #12381f;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rec-calendar-sub {
+  color: #4b6352;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.rec-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.rec-month-card {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1.5px solid #d8eadc;
+  background: #fafdfa;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec-month-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(25, 75, 35, 0.08);
+  border-color: #86efac;
+}
+
+.rec-month-card.active-month {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #22c55e;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.2);
+}
+
+.rec-month-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rec-month-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #12381f;
+}
+
+.rec-month-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #166534;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rec-month-tip {
+  font-size: 0.85rem;
+  color: #32553a;
+  line-height: 1.5;
+  font-weight: 500;
+  margin: 0;
+}
