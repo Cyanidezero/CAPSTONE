@@ -1,6 +1,6 @@
 // Simulated LSTM model using sequence modeling, feature regression, and regression metrics (RMSE, MAPE, MAE)
 
-function trainLSTM(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 'Max_Temp', 'Min_Temp', 'Humidity'], sequenceLength = 30, epochs = 100) {
+function trainLSTM(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 'Max_Temp', 'Min_Temp', 'Humidity'], sequenceLength = 30, epochs = 100, isResidualModel = false) {
     return new Promise((resolve, reject) => {
         try {
             if (!data || !Array.isArray(data) || data.length === 0) {
@@ -94,6 +94,8 @@ function trainLSTM(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 'M
             let sse = 0;
             let absErrSum = 0;
             let percErrSum = 0;
+            const isResidual = Boolean(isResidualModel || target.some(v => v < 0));
+
             const predictions = testSeqs.map((seq, idx) => {
                 // Multi-variate sequence aggregation
                 const zScores = weatherCols.map((_, fIdx) => {
@@ -102,7 +104,8 @@ function trainLSTM(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 'M
                 });
 
                 const neuralScore = weights.reduce((sum, w, i) => sum + w * zScores[i], 0);
-                const val = Math.max(0, targetMean + neuralScore * targetStd * 0.70);
+                const rawVal = targetMean + neuralScore * targetStd * 0.70;
+                const val = isResidual ? rawVal : Math.max(0, rawVal);
                 const roundedVal = Math.round(val * 100) / 100;
 
                 const actual = testTargets[idx] !== undefined ? testTargets[idx] : targetMean;
@@ -133,7 +136,7 @@ function trainLSTM(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 'M
                 val_loss: []
             };
             
-            const initialLoss = Math.max(5, targetMean * 0.5);
+            const initialLoss = Math.max(5, Math.abs(targetMean) * 0.5);
             for (let i = 1; i <= Math.min(epochs, 100); i++) {
                 const progress = i / epochs;
                 const baseLoss = initialLoss * (1 - progress * 0.75);
@@ -155,6 +158,7 @@ function trainLSTM(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 'M
                 targetCol: targetCol,
                 targetMean: targetMean,
                 type: 'lstm',
+                isResidual: isResidual,
                 metrics: metrics
             };
 
@@ -186,7 +190,8 @@ function predictLSTM(model, data, steps = 30) {
         featureMeans = [],
         featureStds = [],
         targetMean = 4.5,
-        targetStd = 1.0 
+        targetStd = 1.0,
+        isResidual = false
     } = model;
     
     // Copy the last sequence without mutating global data
@@ -211,7 +216,8 @@ function predictLSTM(model, data, steps = 30) {
 
         const neuralScore = weights.reduce((sum, w, idx) => sum + (w || 0) * (zScores[idx] || 0), 0);
         const noise = (Math.random() - 0.5) * 0.04 * targetStd;
-        const pred = Math.max(0, targetMean + neuralScore * targetStd * 0.70 + bias + noise);
+        const rawPred = targetMean + neuralScore * targetStd * 0.70 + bias + noise;
+        const pred = isResidual ? rawPred : Math.max(0, rawPred);
         predictions.push(Math.round(pred * 100) / 100);
         
         // Slide window forward with simulated weather continuation

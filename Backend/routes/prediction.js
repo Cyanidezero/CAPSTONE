@@ -100,17 +100,42 @@ router.post('/predict', async (req, res) => {
         const nPreds = predictions.length;
         const meanYield = nPreds > 0 ? (predictions.reduce((a, b) => a + b, 0) / nPreds) : 15.0;
         
+        // Dynamically retrieve actual trained model metrics
         let modelAccuracyRate = 97.4;
         let modelMape = 2.6;
         let modelRmse = 0.15;
-        if (effectiveModel === 'sarima') {
-            modelAccuracyRate = 91.5;
-            modelMape = 8.5;
-            modelRmse = 0.38;
-        } else if (effectiveModel === 'lstm') {
-            modelAccuracyRate = 93.4;
-            modelMape = 6.6;
-            modelRmse = 0.29;
+        let modelFormula = 'Ŷ(t) = SARIMA_seasonal(t) + LSTM_residual(X_t)';
+
+        const trainedRecord = global.latestForecasts?.[target] || global.lastTrainedResult;
+        if (effectiveModel === 'hybrid' && global.trainedModels?.hybrid) {
+            const hMetrics = trainedRecord?.metrics || global.trainedModels.hybrid?.metrics;
+            if (hMetrics) {
+                modelRmse = typeof hMetrics.rmse === 'number' ? hMetrics.rmse : parseFloat(hMetrics.rmse) || 0.15;
+                modelMape = typeof hMetrics.mape === 'number' ? hMetrics.mape : parseFloat(hMetrics.mape) || 2.6;
+                modelAccuracyRate = typeof hMetrics.accuracyRate === 'number' 
+                    ? hMetrics.accuracyRate 
+                    : (parseFloat(hMetrics.accuracyRate) || Math.max(0, Math.round((100 - modelMape) * 10) / 10));
+            }
+            modelFormula = 'Ŷ(t) = Y_SARIMA(t) + ε_LSTM(t)';
+        } else if (effectiveModel === 'sarima' && global.trainedModels?.sarima) {
+            const sMetrics = trainedRecord?.metrics || global.trainedModels.sarima?.bestConfig;
+            if (sMetrics) {
+                modelRmse = typeof sMetrics.rmse === 'number' ? sMetrics.rmse : parseFloat(sMetrics.rmse) || 0.21;
+                modelMape = typeof sMetrics.mape === 'number' ? sMetrics.mape : parseFloat(sMetrics.mape) || 4.0;
+                modelAccuracyRate = typeof sMetrics.accuracy === 'number' 
+                    ? sMetrics.accuracy 
+                    : (parseFloat(sMetrics.accuracy) || Math.max(0, Math.round((100 - modelMape) * 10) / 10));
+            }
+            const sBest = trainedRecord?.bestConfig?.params || '(1, 0, 1) (0, 1, 1)s';
+            modelFormula = `Ŷ(t) = SARIMA ${sBest}`;
+        } else if (effectiveModel === 'lstm' && global.trainedModels?.lstm) {
+            const lMetrics = trainedRecord?.metrics || global.trainedModels.lstm?.metrics;
+            if (lMetrics) {
+                modelRmse = typeof lMetrics.rmse === 'number' ? lMetrics.rmse : parseFloat(lMetrics.rmse) || 0.26;
+                modelMape = typeof lMetrics.mape === 'number' ? lMetrics.mape : parseFloat(lMetrics.mape) || 5.2;
+                modelAccuracyRate = Math.max(0, Math.round((100 - modelMape) * 10) / 10);
+            }
+            modelFormula = 'Ŷ(t) = LSTM(Sequential Weather Windows)';
         }
 
         const marginOfError = Math.round(1.96 * modelRmse * 100) / 100;
@@ -118,11 +143,7 @@ router.post('/predict', async (req, res) => {
         const upperBound = Math.round((meanYield + marginOfError) * 100) / 100;
 
         const computation = {
-            formula: effectiveModel === 'hybrid'
-                ? 'Ŷ(t) = SARIMA_seasonal(t) + LSTM_residual(X_t)'
-                : effectiveModel === 'sarima'
-                ? 'Ŷ(t) = SARIMA(p,d,q)(P,D,Q)s'
-                : 'Ŷ(t) = LSTM(Sequential Weather Windows)',
+            formula: modelFormula,
             accuracyFormula: 'Accuracy Rate (%) = 100% - MAPE',
             accuracyRate: modelAccuracyRate,
             mape: modelMape,

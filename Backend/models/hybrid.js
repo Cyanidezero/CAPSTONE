@@ -60,7 +60,8 @@ function trainHybrid(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 
                 targetCol,
                 weatherCols,
                 Math.min(30, Math.max(2, Math.floor(minLength / 3))),
-                50
+                50,
+                true // isResidualModel = true: permits negative residual adjustments
             );
 
             // 5. Combine baseline and residual predictions
@@ -169,16 +170,15 @@ function predictHybrid(model, data, steps = 30) {
     if (!model) return [];
     const { sarima, lstm } = model;
     
-    // Get SARIMA baseline forecast
+    // 1. Get SARIMA baseline forecast (trend + seasonal + AR/MA persistence)
     const sarimaForecast = forecastSARIMA(sarima, steps);
     
-    // Get LSTM weather-driven residual adjustments
+    // 2. Get LSTM weather-driven residual adjustments (non-linear compensations)
     const lstmResiduals = predictLSTM(lstm, data, steps);
-    const lstmBias = lstm?.bias || 0;
     
-    // Combine base trend + non-linear weather effect
+    // 3. Combine base trend + non-linear weather residual: Y(t) = Y_SARIMA(t) + ε_LSTM(t)
     const hybridPredictions = sarimaForecast.map((val, idx) => {
-        const residualOffset = (lstmResiduals[idx] !== undefined ? lstmResiduals[idx] : 0) - (lstmBias * 0.5);
+        const residualOffset = (lstmResiduals && lstmResiduals[idx] !== undefined) ? lstmResiduals[idx] : 0;
         const combined = Math.max(0, val + residualOffset);
         return Math.round(combined * 100) / 100;
     });

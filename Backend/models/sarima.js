@@ -315,14 +315,24 @@ function trainSARIMA(data, targetCol = 'Rainfall') {
                 history.push(Math.round(pred * 100) / 100);
             }
 
-            // Generate 30-day ahead forecast starting after the dataset end
+            // Generate 30-day ahead forecast starting after the dataset end with AR & MA dynamic persistence
+            const phi1 = config1.p * 0.28;
+            const theta1 = config1.q * 0.16;
+            const dFactor = config1.d === 1 ? 0.92 : 0.82;
+            const lastObsVal = n > 0 ? records[n - 1].value : 0;
+            const lastTrendVal = slope * (n - 1) + intercept;
+            const lastResid = lastObsVal - lastTrendVal;
+            const lastFitErr = lastObsVal - (history[n - 1] || lastTrendVal);
+
             const forecast = [];
             for (let i = 1; i <= 30; i++) {
                 const t = n + i - 1;
                 const trend = slope * t + intercept;
                 const angle = (2 * Math.PI * (t % s)) / s;
                 const seasonal = config1.P > 0 ? (ampSin * Math.sin(angle) + ampCos * Math.cos(angle)) : 0;
-                const pred = Math.max(0, trend + seasonal);
+                const arDecay = (phi1 * lastResid) * dFactor * Math.pow(0.95, i);
+                const maDecay = (theta1 * lastFitErr) * Math.pow(0.85, i);
+                const pred = Math.max(0, trend + seasonal + arDecay + maDecay);
                 forecast.push(Math.round(pred * 100) / 100);
             }
 
@@ -360,6 +370,10 @@ function trainSARIMA(data, targetCol = 'Rainfall') {
                     intercept,
                     ampSin,
                     ampCos,
+                    phi1,
+                    theta1,
+                    dFactor,
+                    P: config1.P,
                     seasonalPeriod: s,
                     values: records.map(r => r.value),
                     dates: records.map(r => r.date),
@@ -420,16 +434,32 @@ function trainSARIMA(data, targetCol = 'Rainfall') {
 
 function forecastSARIMA(model, steps = 30) {
     if (!model) return [];
-    const { slope = 0, intercept = 0, seasonalPeriod = 7, values = [], ampSin = 0, ampCos = 0 } = model;
-    const lastIndex = Math.max(0, values.length - 1);
+    const { 
+        slope = 0, 
+        intercept = 0, 
+        seasonalPeriod = 7, 
+        values = [], 
+        ampSin = 0, 
+        ampCos = 0,
+        phi1 = 0.28,
+        theta1 = 0.16,
+        dFactor = 0.92,
+        P = 1
+    } = model;
+    const n = values.length;
+    const lastIndex = Math.max(0, n - 1);
+    const lastObs = values[lastIndex] !== undefined ? values[lastIndex] : (slope * lastIndex + intercept);
+    const lastResid = lastObs - (slope * lastIndex + intercept);
     const forecast = [];
 
     for (let i = 1; i <= steps; i++) {
         const t = lastIndex + i;
         const trend = slope * t + intercept;
         const angle = (2 * Math.PI * (t % seasonalPeriod)) / seasonalPeriod;
-        const seasonEffect = (ampSin * Math.sin(angle) + ampCos * Math.cos(angle));
-        const pred = Math.max(0, trend + seasonEffect);
+        const seasonEffect = P > 0 ? (ampSin * Math.sin(angle) + ampCos * Math.cos(angle)) : 0;
+        const arDecay = (phi1 * lastResid) * dFactor * Math.pow(0.95, i);
+        const maDecay = (theta1 * lastResid * 0.5) * Math.pow(0.85, i);
+        const pred = Math.max(0, trend + seasonEffect + arDecay + maDecay);
         forecast.push(Math.round(pred * 100) / 100);
     }
 
