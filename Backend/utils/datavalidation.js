@@ -1,4 +1,4 @@
-function validateDataset(data) {
+function validateDataset(data, expectedType = 'auto') {
     const report = {
         isValid: true,
         missingValues: {},
@@ -25,27 +25,51 @@ function validateDataset(data) {
     const lowerCols = columns.map(c => c.toLowerCase().replace(/[\s_-]+/g, ''));
     
     // Check for recommended agricultural & weather columns
-    const recommended = [
+    const weatherAliases = [
         { standard: 'Rainfall', aliases: ['rainfall', 'rain', 'precipitation', 'precip'] },
         { standard: 'Max_Temp', aliases: ['maxtemp', 'maximumtemperature', 'tempmax', 'temperaturemax', 'max_temperature'] },
         { standard: 'Min_Temp', aliases: ['mintemp', 'minimumtemperature', 'tempmin', 'temperaturemin', 'min_temperature'] },
         { standard: 'Humidity', aliases: ['humidity', 'rh', 'relativehumidity'] },
-        { standard: 'Crop_Yield', aliases: ['cropyield', 'yield', 'production', 'crop_yield'] }
+        { standard: 'Wind_Speed', aliases: ['windspeed', 'wind_speed', 'wind'] }
     ];
 
-    let matchedCount = 0;
-    recommended.forEach(rec => {
+    const cropAliases = [
+        { standard: 'Crop_Yield', aliases: ['cropyield', 'yield', 'production', 'crop_yield', 'harvest', 'harvest_yield', 'harvestyield', 'el_nino_yield', 'la_nina_yield', 'yield_mt_per_ha', 'yieldmtperha', 'volume_mt', 'area_ha'] },
+        { standard: 'Crop', aliases: ['crop', 'cropname', 'crop_name', 'vegetable', 'variety', 'pananim', 'commodity', 'plant', 'parent_crop'] }
+    ];
+
+    let weatherMatches = 0;
+    weatherAliases.forEach(rec => {
         const found = lowerCols.some(c => rec.aliases.some(a => a.replace(/[\s_-]+/g, '') === c));
-        if (found) matchedCount++;
+        if (found) weatherMatches++;
     });
 
-    if (matchedCount < 2) {
-        report.warnings.push(
-            `Dataset has ${matchedCount} recognized agricultural/weather columns. Expected at least two of: Rainfall, Max_Temp, Min_Temp, Humidity, Crop_Yield`
-        );
-        if (matchedCount === 0 && columns.length < 2) {
+    let cropMatches = 0;
+    cropAliases.forEach(rec => {
+        const found = lowerCols.some(c => rec.aliases.some(a => a.replace(/[\s_-]+/g, '') === c));
+        if (found) cropMatches++;
+    });
+
+    const isCropType = expectedType === 'crops' || (expectedType === 'auto' && cropMatches > 0 && weatherMatches === 0);
+    const isWeatherType = expectedType === 'weather' || (expectedType === 'auto' && weatherMatches > 0 && cropMatches === 0);
+
+    if (expectedType === 'weather') {
+        if (weatherMatches === 0) {
             report.isValid = false;
-            report.warnings.push('Dataset lacks any recognized weather or crop yield variables');
+            report.warnings.push('Weather dataset requires at least one meteorological column (Rainfall, Max_Temp, Min_Temp, Humidity, or Wind_Speed).');
+        }
+    } else if (expectedType === 'crops') {
+        if (cropMatches === 0) {
+            report.isValid = false;
+            report.warnings.push('Crop yield dataset requires a Crop name or Crop_Yield column (e.g., Crop, Crop_Yield, Yield).');
+        }
+    } else {
+        // Auto / combined
+        if (weatherMatches === 0 && cropMatches === 0 && columns.length < 2) {
+            report.isValid = false;
+            report.warnings.push('Dataset lacks recognized weather or crop yield variables.');
+        } else if (weatherMatches < 1 && cropMatches < 1) {
+            report.warnings.push('Dataset structure is uncalibrated. Expected weather variables (Rainfall, Temp, Humidity) or crop variables (Crop, Crop_Yield).');
         }
     }
 

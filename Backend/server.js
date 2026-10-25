@@ -34,7 +34,10 @@ app.use('/api', trainingRoutes);
 app.use('/api', predictionRoutes);
 
 // Global state
+global.weatherDataset = null;
+global.cropDataset = null;
 global.currentDataset = null;
+global.detectedCrops = [];
 global.trainedModels = {
     sarima: null,
     lstm: null,
@@ -43,8 +46,11 @@ global.trainedModels = {
 global.trainingStatus = {
     sarima: 'Not Trained',
     lstm: 'Not Trained',
-    hybrid: 'Not Trained'
+    hybrid: 'Not Trained',
+    cropModelTrained: false
 };
+global.latestForecasts = {};
+global.lastTrainedResult = null;
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -59,11 +65,35 @@ app.get('/api/health', (req, res) => {
 app.get('/api/status', (req, res) => {
     res.json({
         datasetLoaded: global.currentDataset !== null,
+        weatherDatasetLoaded: Boolean(global.weatherDataset && global.weatherDataset.length > 0),
+        cropDatasetLoaded: Boolean(global.cropDataset && global.cropDataset.length > 0),
+        weatherCount: global.weatherDataset?.length || 0,
+        cropCount: global.cropDataset?.length || 0,
+        combinedCount: global.currentDataset?.length || 0,
         trainingStatus: global.trainingStatus,
+        detectedCrops: global.detectedCrops || [],
         datasetShape: global.currentDataset ? {
             rows: global.currentDataset.length,
             columns: Object.keys(global.currentDataset[0] || {})
         } : null
+    });
+});
+
+// Crops Endpoint: Returns crops detected in active dataset
+app.get('/api/crops', (req, res) => {
+    res.json({
+        success: true,
+        count: (global.detectedCrops || []).length,
+        crops: global.detectedCrops || []
+    });
+});
+
+app.post('/api/crops', (req, res) => {
+    global.detectedCrops = req.body.crops || [];
+    res.json({
+        success: true,
+        count: global.detectedCrops.length,
+        crops: global.detectedCrops
     });
 });
 
@@ -114,7 +144,10 @@ app.get('/api/weather', async (req, res) => {
 
 // Reset endpoint
 app.post('/api/reset', async (req, res) => {
+    global.weatherDataset = null;
+    global.cropDataset = null;
     global.currentDataset = null;
+    global.detectedCrops = [];
     global.trainedModels = {
         sarima: null,
         lstm: null,
@@ -123,18 +156,23 @@ app.post('/api/reset', async (req, res) => {
     global.trainingStatus = {
         sarima: 'Not Trained',
         lstm: 'Not Trained',
-        hybrid: 'Not Trained'
+        hybrid: 'Not Trained',
+        cropModelTrained: false
     };
+    global.latestForecasts = {};
+    global.lastTrainedResult = null;
     try {
+        await pool.query('TRUNCATE TABLE weather_data');
+        await pool.query('TRUNCATE TABLE crop_yield_data');
         await pool.query('TRUNCATE TABLE agricultural_data');
         await pool.query('TRUNCATE TABLE predictions');
-        console.log('🧹 Truncated agricultural_data and predictions tables in MySQL.');
+        console.log('🧹 Truncated weather_data, crop_yield_data, agricultural_data and predictions tables in MySQL.');
     } catch (err) {
         console.warn('MySQL truncate warning:', err.message);
     }
     res.json({
         success: true,
-        message: 'Backend dataset and models reset successfully. System is clean and ready for new dataset upload.'
+        message: 'Backend datasets (weather & crops) and models reset successfully. System is clean and ready for new dataset uploads.'
     });
 });
 
@@ -161,20 +199,38 @@ app.listen(PORT, async () => {
     const dbReady = await initDatabase();
     if (dbReady) {
         try {
-            const [rows] = await pool.query('SELECT date_recorded AS Date, rainfall AS Rainfall, max_temp AS Max_Temp, min_temp AS Min_Temp, humidity AS Humidity, crop_yield AS Crop_Yield FROM agricultural_data ORDER BY id ASC');
-            if (rows && rows.length > 0) {
-                global.currentDataset = rows.map(r => ({
+            // Auto-load weather datasets storage from MySQL
+            const [wRows] = await pool.query('SELECT date_recorded AS Date, rainfall AS Rainfall, max_temp AS Max_Temp, min_temp AS Min_Temp, humidity AS Humidity, wind_speed AS Wind_Speed FROM weather_data ORDER BY id ASC');
+            if (wRows && wRows.length > 0) {
+                global.weatherDataset = wRows.map(r => ({
                     Date: r.Date,
                     Rainfall: Number(r.Rainfall),
                     Max_Temp: Number(r.Max_Temp),
                     Min_Temp: Number(r.Min_Temp),
                     Humidity: Number(r.Humidity),
-                    Crop_Yield: Number(r.Crop_Yield)
+                    Wind_Speed: Number(r.Wind_Speed)
                 }));
-                console.log(`🌾 Loaded ${global.currentDataset.length} records from XAMPP MySQL 'agricultural_data' into active memory.`);
+                console.log(`🌦️ Loaded ${global.weatherDataset.length} records from XAMPP MySQL 'weather_data' (Weather Storage) into active memory.`);
+            }
+
+            if (uploadRoutes.initAndLoadDatasets) {
+                await uploadRoutes.initAndLoadDatasets();
+            } else {
+                const [rows] = await pool.query('SELECT date_recorded AS Date, rainfall AS Rainfall, max_temp AS Max_Temp, min_temp AS Min_Temp, humidity AS Humidity, crop_yield AS Crop_Yield FROM agricultural_data ORDER BY id ASC');
+                if (rows && rows.length > 0) {
+                    global.currentDataset = rows.map(r => ({
+                        Date: r.Date,
+                        Rainfall: Number(r.Rainfall),
+                        Max_Temp: Number(r.Max_Temp),
+                        Min_Temp: Number(r.Min_Temp),
+                        Humidity: Number(r.Humidity),
+                        Crop_Yield: Number(r.Crop_Yield)
+                    }));
+                    console.log(`🌾 Loaded ${global.currentDataset.length} records from XAMPP MySQL 'agricultural_data' into active memory.`);
+                }
             }
         } catch (loadErr) {
-            console.warn('Could not auto-load agricultural records from MySQL:', loadErr.message);
+            console.warn('Could not auto-load records from MySQL:', loadErr.message);
         }
     }
 });

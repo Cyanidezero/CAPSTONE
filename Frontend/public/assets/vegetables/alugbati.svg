@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="alugLeaf" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="50%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </radialGradient>
+    <linearGradient id="alugVine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="60%" stop-color="#be123c"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </linearGradient>
+    <filter id="alugShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#alugShadow)">
+    <!-- Reddish-Purple Succulent Vine -->
+    <path d="M40 190 Q90 160 110 110 Q130 60 170 30" fill="none" stroke="url(#alugVine)" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Alugbati Leaf 1 (Large lower heart-shaped) -->
+    <g transform="translate(35, 95) rotate(-15)">
+      <path d="M40 10 C20 -15 0 0 5 25 C10 45 40 60 40 60 C40 60 70 45 75 25 C80 0 60 -15 40 10 Z" fill="url(#alugLeaf)"/>
+      <path d="M40 10 L40 55" fill="none" stroke="#be123c" stroke-width="2"/>
+    </g>
+
+    <!-- Alugbati Leaf 2 (Mid-right heart-shaped) -->
+    <g transform="translate(105, 75) rotate(25)">
+      <path d="M35 10 C18 -12 0 0 4 22 C8 40 35 52 35 52 C35 52 62 40 66 22 C70 0 52 -12 35 10 Z" fill="url(#alugLeaf)"/>
+      <path d="M35 10 L35 48" fill="none" stroke="#be123c" stroke-width="1.8"/>
+    </g>
+
+    <!-- Alugbati Leaf 3 (Top small leaf) -->
+    <g transform="translate(135, 20) rotate(10)">
+      <path d="M25 8 C12 -8 0 0 3 16 C6 30 25 38 25 38 C25 38 44 30 47 16 C50 0 38 -8 25 8 Z" fill="url(#alugLeaf)"/>
+      <path d="M25 8 L25 35" fill="none" stroke="#be123c" stroke-width="1.5"/>
+    </g>
+
+    <!-- Characteristic dark purple Alugbati berries cluster -->
+    <circle cx="95" cy="140" r="7" fill="#4c0519"/><circle cx="94" cy="139" r="2" fill="#be123c"/>
+    <circle cx="106" cy="136" r="6.5" fill="#581c87"/><circle cx="105" cy="135" r="2" fill="#c084fc"/>
+    <circle cx="100" cy="148" r="6" fill="#3b0764"/><circle cx="99" cy="147" r="1.8" fill="#a855f7"/>
+
+    <!-- Glossy reflection on succulent leaves -->
+    <ellipse cx="68" cy="120" rx="10" ry="5" transform="rotate(-15 68 120)" fill="#ffffff" opacity="0.5"/>
+    <ellipse cx="132" cy="98" rx="8" ry="4" transform="rotate(25 132 98)" fill="#ffffff" opacity="0.5"/>
+  </g>
+</svg>

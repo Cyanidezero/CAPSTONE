@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import './App.css';
-import App from './App';
+import './components/App.css';
+import App from './components/App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -10,3 +10,17 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// Register Progressive Web App (PWA) Service Worker
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then((reg) => {
+        console.log('🌾 ClimaYield-X PWA Service Worker registered:', reg.scope);
+      })
+      .catch((err) => {
+        console.log('Service Worker registration skipped/failed:', err);
+      });
+  });
+}

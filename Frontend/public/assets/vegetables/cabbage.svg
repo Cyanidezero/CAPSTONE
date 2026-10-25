@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="cabCore" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="40%" stop-color="#4ade80"/>
+      <stop offset="75%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </radialGradient>
+    <linearGradient id="cabLeafOuter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="60%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <filter id="cabShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#cabShadow)">
+    <!-- Base outer broad leaves -->
+    <path d="M40 140 C20 100 45 60 85 45 C70 80 80 120 110 135 C70 150 45 155 40 140 Z" fill="url(#cabLeafOuter)"/>
+    <path d="M180 140 C200 100 175 60 135 45 C150 80 140 120 110 135 C150 150 175 155 180 140 Z" fill="url(#cabLeafOuter)"/>
+    <path d="M60 170 C40 190 100 205 160 170 C140 190 80 195 60 170 Z" fill="#15803d"/>
+
+    <!-- Central Round Head -->
+    <circle cx="110" cy="115" r="68" fill="url(#cabCore)"/>
+
+    <!-- Layer 1: Left Wrapping Leaf -->
+    <path d="M62 82 C55 120 70 155 105 172 C92 145 88 115 100 90 C110 70 95 65 80 70 C72 74 65 77 62 82 Z"
+          fill="#4ade80" stroke="#86efac" stroke-width="2"/>
+
+    <!-- Layer 2: Right Wrapping Leaf -->
+    <path d="M158 82 C165 120 150 155 115 172 C128 145 132 115 120 90 C110 70 125 65 140 70 C148 74 155 77 158 82 Z"
+          fill="#22c55e" stroke="#86efac" stroke-width="2"/>
+
+    <!-- Leaf Veins (Creamy white cabbage ribbing) -->
+    <g stroke="#f0fdf4" stroke-linecap="round" opacity="0.85" fill="none">
+      <!-- Central rib curve -->
+      <path d="M110 170 Q112 135 110 105" stroke-width="3.5"/>
+      <path d="M111 145 Q125 135 142 138" stroke-width="2"/>
+      <path d="M111 140 Q95 132 80 135" stroke-width="2"/>
+      <path d="M110 125 Q128 118 140 115" stroke-width="1.8"/>
+      <path d="M110 120 Q92 115 82 112" stroke-width="1.8"/>
+    </g>
+
+    <!-- Top leaf fold (crispy crinkle) -->
+    <path d="M85 70 Q110 52 135 70 Q110 62 85 70 Z" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+
+    <!-- Dewdrop shine -->
+    <ellipse cx="92" cy="98" rx="8" ry="4" transform="rotate(-30 92 98)" fill="#ffffff" opacity="0.5"/>
+  </g>
+</svg>

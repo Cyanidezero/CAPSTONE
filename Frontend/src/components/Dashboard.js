@@ -1,106 +1,538 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { DevDashboardLogo, DevSarimaIcon, DevLstmIcon, DevHybridIcon, DevHeroBadge } from './DevIcons';
+import { AnimatedVegetableImage, VegetableImageModal } from './AnimatedVegetable';
+import { 
+  getSavedDatasetCrops, 
+  clearDatasetCrops,
+  isDatasetCropsCleared
+} from '../utils/cropDatasetParser';
+import { getVegetableFunFact } from '../utils/vegetableFunFacts';
 import './Dashboard.css';
 
-const CROPS_DATA = [
+const STAGE_STEPS = [
+  { num: 1, id: 'seedling', icon: '🌱', shortEn: 'Seedling', shortFil: 'Punla', titleEn: 'Seedling / Emergence', titleFil: 'Pagpupunla at Pagsibol' },
+  { num: 2, id: 'vegetative', icon: '🌿', shortEn: 'Vegetative', shortFil: 'Paglaki', titleEn: 'Vegetative Foliage Growth', titleFil: 'Paglaki ng Dahon at Tangkay' },
+  { num: 3, id: 'flowering', icon: '🌸', shortEn: 'Flowering', shortFil: 'Bulaklak', titleEn: 'Flowering & Budding', titleFil: 'Pamumulaklak' },
+  { num: 4, id: 'fruiting', icon: '🍅', shortEn: 'Fruiting', shortFil: 'Bunga', titleEn: 'Fruit / Bulb Development', titleFil: 'Paglaki ng Bunga' },
+  { num: 5, id: 'harvest', icon: '🧺', shortEn: 'Harvest', shortFil: 'Pag-ani', titleEn: 'Ready for Harvest', titleFil: 'Handa nang Anihin' }
+];
+
+const EMOJI_OPTIONS = ['🥬', '🥗', '🌿', '🥒', '🫛', '🌱', '🍅', '🍆', '🌶️', '🥕', '🫑'];
+
+const TAGALOG_TO_ENGLISH_MAP = {
+  pechay: { en: 'Pechay / Bok Choy', icon: '🥬', key: 'pechay' },
+  'pechay tagalog': { en: 'Native Pechay', icon: '🥬', key: 'pechay_native' },
+  mustasa: { en: 'Mustard Greens', icon: '🥬', key: 'mustasa' },
+  kangkong: { en: 'Water Spinach', icon: '🌿', key: 'kangkong' },
+  letsugas: { en: 'Lettuce', icon: '🥗', key: 'lettuce' },
+  lettuce: { en: 'Lettuce', icon: '🥗', key: 'lettuce' },
+  labanos: { en: 'White Radish', icon: '🥕', key: 'radish' },
+  pipino: { en: 'Cucumber', icon: '🥒', key: 'cucumber' },
+  sitaw: { en: 'String Beans', icon: '🫛', key: 'sitao' },
+  sitao: { en: 'String Beans', icon: '🫛', key: 'sitao' },
+  okra: { en: 'Okra', icon: '🌱', key: 'okra' },
+  kamatis: { en: 'Tomato', icon: '🍅', key: 'tomato' },
+  talong: { en: 'Eggplant', icon: '🍆', key: 'eggplant' },
+  sili: { en: 'Chili Pepper', icon: '🌶️', key: 'pepper' },
+  'siling haba': { en: 'Finger Pepper', icon: '🌶️', key: 'finger_pepper' },
+  'siling atsara': { en: 'Bell Pepper', icon: '🫑', key: 'bell_pepper' },
+  ampalaya: { en: 'Bitter Gourd', icon: '🥒', key: 'ampalaya' },
+  kalabasa: { en: 'Squash', icon: '🎃', key: 'squash' },
+  patola: { en: 'Sponge Gourd', icon: '🥒', key: 'patola' },
+  upo: { en: 'Bottle Gourd', icon: '🥒', key: 'upo' },
+  sayote: { en: 'Chayote', icon: '🍐', key: 'sayote' },
+  alugbati: { en: 'Malabar Spinach', icon: '🌿', key: 'alugbati' },
+  asparagus: { en: 'Asparagus', icon: '🌱', key: 'asparagus' },
+  balanoy: { en: 'Basil', icon: '🌿', key: 'basil' },
+  remolatsa: { en: 'Beets', icon: '🥔', key: 'beets' },
+  brokoli: { en: 'Broccoli', icon: '🥦', key: 'broccoli' },
+  repolyo: { en: 'Cabbage', icon: '🥬', key: 'cabbage' },
+  karot: { en: 'Carrot', icon: '🥕', key: 'carrot' },
+  koliplor: { en: 'Cauliflower', icon: '🥦', key: 'cauliflower' },
+  kintsay: { en: 'Celery', icon: '🌿', key: 'celery' },
+  seleri: { en: 'Celery', icon: '🌿', key: 'celery' },
+  kutsay: { en: 'Chives', icon: '🌱', key: 'chives' },
+  wansoy: { en: 'Coriander', icon: '🌿', key: 'coriander' },
+  paayap: { en: 'Cowpea', icon: '🫛', key: 'cowpea' },
+  gisantes: { en: 'Garden Pea', icon: '🫛', key: 'gisantes' },
+  habitchuelas: { en: 'Snap Beans', icon: '🫛', key: 'habitchuelas' },
+  kulitis: { en: 'Amaranth Greens', icon: '🌿', key: 'kulitis' },
+  saluyot: { en: 'Jute Mallow', icon: '🌿', key: 'saluyot' },
+  sigarilyas: { en: 'Winged Beans', icon: '🫛', key: 'sigarilyas' },
+  singkamas: { en: 'Jicama', icon: '🥔', key: 'singkamas' },
+  espinaka: { en: 'Spinach', icon: '🥬', key: 'spinach' },
+  sitsaro: { en: 'Sweet Peas', icon: '🫛', key: 'sweet_peas' },
+  talinum: { en: 'Philippine Spinach', icon: '🌿', key: 'talinum' },
+  'batang mais': { en: 'Baby Corn', icon: '🌽', key: 'young_corn' },
+  zucchini: { en: 'Zucchini', icon: '🥒', key: 'zucchini' },
+  watercress: { en: 'Watercress', icon: '🌿', key: 'watercress' },
+  bawang: { en: 'Garlic', icon: '🧄', key: 'bawang' },
+  sibuyas: { en: 'Onion', icon: '🧅', key: 'sibuyas' },
+  luya: { en: 'Ginger', icon: '🫚', key: 'luya' },
+  malunggay: { en: 'Moringa', icon: '🌿', key: 'malunggay' }
+};
+
+const ENGLISH_TO_TAGALOG_MAP = {
+  alugbati: { fil: 'Alugbati', icon: '🌿', key: 'alugbati' },
+  'malabar spinach': { fil: 'Alugbati', icon: '🌿', key: 'alugbati' },
+  ampalaya: { fil: 'Ampalaya', icon: '🥒', key: 'ampalaya' },
+  'bitter gourd': { fil: 'Ampalaya', icon: '🥒', key: 'ampalaya' },
+  'bitter melon': { fil: 'Ampalaya', icon: '🥒', key: 'ampalaya' },
+  asparagus: { fil: 'Asparagus', icon: '🌱', key: 'asparagus' },
+  basil: { fil: 'Balanoy', icon: '🌿', key: 'basil' },
+  beets: { fil: 'Remolatsa', icon: '🥔', key: 'beets' },
+  beet: { fil: 'Remolatsa', icon: '🥔', key: 'beets' },
+  beetroot: { fil: 'Remolatsa', icon: '🥔', key: 'beets' },
+  broccoli: { fil: 'Brokoli', icon: '🥦', key: 'broccoli' },
+  cabbage: { fil: 'Repolyo', icon: '🥬', key: 'cabbage' },
+  carrot: { fil: 'Karot', icon: '🥕', key: 'carrot' },
+  cauliflower: { fil: 'Koliplor', icon: '🥦', key: 'cauliflower' },
+  celery: { fil: 'Kintsay', icon: '🌿', key: 'celery' },
+  'chinese cabbage': { fil: 'Pechay Baguio', icon: '🥬', key: 'chinese_cabbage' },
+  wongbok: { fil: 'Pechay Baguio', icon: '🥬', key: 'chinese_cabbage' },
+  'pechay baguio': { fil: 'Pechay Baguio', icon: '🥬', key: 'chinese_cabbage' },
+  'napa cabbage': { fil: 'Pechay Baguio', icon: '🥬', key: 'chinese_cabbage' },
+  chives: { fil: 'Kutsay', icon: '🌱', key: 'chives' },
+  coriander: { fil: 'Wansoy', icon: '🌿', key: 'coriander' },
+  cilantro: { fil: 'Wansoy', icon: '🌿', key: 'coriander' },
+  cowpea: { fil: 'Paayap', icon: '🫛', key: 'cowpea' },
+  'cowpea, green': { fil: 'Paayap', icon: '🫛', key: 'cowpea' },
+  cucumber: { fil: 'Pipino', icon: '🥒', key: 'cucumber' },
+  eggplant: { fil: 'Talong', icon: '🍆', key: 'eggplant' },
+  gisantes: { fil: 'Gisantes', icon: '🫛', key: 'gisantes' },
+  'garden pea': { fil: 'Gisantes', icon: '🫛', key: 'gisantes' },
+  habitchuelas: { fil: 'Habitchuelas', icon: '🫛', key: 'habitchuelas' },
+  'snap beans': { fil: 'Habitchuelas', icon: '🫛', key: 'habitchuelas' },
+  'baguio beans': { fil: 'Habitchuelas', icon: '🫛', key: 'habitchuelas' },
+  kangkong: { fil: 'Kangkong', icon: '🌿', key: 'kangkong' },
+  'water spinach': { fil: 'Kangkong', icon: '🌿', key: 'kangkong' },
+  kinchay: { fil: 'Kinchay', icon: '🌿', key: 'kinchay' },
+  'chinese celery': { fil: 'Kinchay', icon: '🌿', key: 'kinchay' },
+  kulitis: { fil: 'Kulitis', icon: '🌿', key: 'kulitis' },
+  amaranth: { fil: 'Kulitis', icon: '🌿', key: 'kulitis' },
+  lettuce: { fil: 'Letsugas', icon: '🥗', key: 'lettuce' },
+  mustard: { fil: 'Mustasa', icon: '🥬', key: 'mustasa' },
+  'mustard greens': { fil: 'Mustasa', icon: '🥬', key: 'mustasa' },
+  mustasa: { fil: 'Mustasa', icon: '🥬', key: 'mustasa' },
+  okra: { fil: 'Okra', icon: '🌱', key: 'okra' },
+  'onion leeks': { fil: 'Dahon ng Sibuyas', icon: '🌱', key: 'onion_leeks' },
+  leeks: { fil: 'Dahon ng Sibuyas', icon: '🌱', key: 'onion_leeks' },
+  parsley: { fil: 'Pasli', icon: '🌿', key: 'parsley' },
+  patola: { fil: 'Patola', icon: '🥒', key: 'patola' },
+  'sponge gourd': { fil: 'Patola', icon: '🥒', key: 'patola' },
+  pechay: { fil: 'Pechay', icon: '🥬', key: 'pechay' },
+  'bok choy': { fil: 'Pechay', icon: '🥬', key: 'pechay' },
+  'pechay native': { fil: 'Pechay Tagalog', icon: '🥬', key: 'pechay_native' },
+  'pechay, native': { fil: 'Pechay Tagalog', icon: '🥬', key: 'pechay_native' },
+  'native pechay': { fil: 'Pechay Tagalog', icon: '🥬', key: 'pechay_native' },
+  pepper: { fil: 'Sili', icon: '🌶️', key: 'pepper' },
+  'bell pepper': { fil: 'Siling Atsara', icon: '🫑', key: 'bell_pepper' },
+  'pepper, bell': { fil: 'Siling Atsara', icon: '🫑', key: 'bell_pepper' },
+  'sweet pepper': { fil: 'Siling Atsara', icon: '🫑', key: 'bell_pepper' },
+  'finger pepper': { fil: 'Siling Haba', icon: '🌶️', key: 'finger_pepper' },
+  'pepper, finger': { fil: 'Siling Haba', icon: '🌶️', key: 'finger_pepper' },
+  radish: { fil: 'Labanos', icon: '🥕', key: 'radish' },
+  'white radish': { fil: 'Labanos', icon: '🥕', key: 'radish' },
+  saluyot: { fil: 'Saluyot', icon: '🌿', key: 'saluyot' },
+  'jute mallow': { fil: 'Saluyot', icon: '🌿', key: 'saluyot' },
+  sigarilyas: { fil: 'Sigarilyas', icon: '🫛', key: 'sigarilyas' },
+  'winged beans': { fil: 'Sigarilyas', icon: '🫛', key: 'sigarilyas' },
+  singkamas: { fil: 'Singkamas', icon: '🥔', key: 'singkamas' },
+  turnip: { fil: 'Singkamas', icon: '🥔', key: 'singkamas' },
+  jicama: { fil: 'Singkamas', icon: '🥔', key: 'singkamas' },
+  sitao: { fil: 'Sitaw', icon: '🫛', key: 'sitao' },
+  'string beans': { fil: 'Sitaw', icon: '🫛', key: 'sitao' },
+  spinach: { fil: 'Espinaka', icon: '🥬', key: 'spinach' },
+  'spring onion': { fil: 'Dahon ng Sibuyas', icon: '🌱', key: 'spring_onion' },
+  scallion: { fil: 'Dahon ng Sibuyas', icon: '🌱', key: 'spring_onion' },
+  squash: { fil: 'Kalabasa', icon: '🎃', key: 'squash' },
+  'squash fruit': { fil: 'Kalabasa', icon: '🎃', key: 'squash' },
+  'sweet peas': { fil: 'Sitsaro', icon: '🫛', key: 'sweet_peas' },
+  'snow peas': { fil: 'Sitsaro', icon: '🫛', key: 'sweet_peas' },
+  talinum: { fil: 'Talinum', icon: '🌿', key: 'talinum' },
+  tomato: { fil: 'Kamatis', icon: '🍅', key: 'tomato' },
+  upo: { fil: 'Upo', icon: '🥒', key: 'upo' },
+  'bottle gourd': { fil: 'Upo', icon: '🥒', key: 'upo' },
+  watercress: { fil: 'Kress', icon: '🌿', key: 'watercress' },
+  'young corn': { fil: 'Batang Mais', icon: '🌽', key: 'young_corn' },
+  'baby corn': { fil: 'Batang Mais', icon: '🌽', key: 'young_corn' },
+  zucchini: { fil: 'Kalabasang Zucchini', icon: '🥒', key: 'zucchini' },
+  chayote: { fil: 'Sayote', icon: '🍐', key: 'sayote' },
+  sayote: { fil: 'Sayote', icon: '🍐', key: 'sayote' },
+  moringa: { fil: 'Malunggay', icon: '🌿', key: 'malunggay' },
+  malunggay: { fil: 'Malunggay', icon: '🌿', key: 'malunggay' },
+  garlic: { fil: 'Bawang', icon: '🧄', key: 'bawang' },
+  bawang: { fil: 'Bawang', icon: '🧄', key: 'bawang' },
+  onion: { fil: 'Sibuyas', icon: '🧅', key: 'sibuyas' },
+  sibuyas: { fil: 'Sibuyas', icon: '🧅', key: 'sibuyas' },
+  ginger: { fil: 'Luya', icon: '🫚', key: 'luya' },
+  luya: { fil: 'Luya', icon: '🫚', key: 'luya' }
+};
+
+// Strips extra parenthesized/slash metadata so Tagalog names stay clean & natural
+export const cleanTagalogWord = (raw) => {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/\s*\/.*$/, '')
+    .trim();
+};
+
+export const getCropFilipinoName = (crop) => {
+  if (!crop) return 'Gulay';
+  const cleanId = String(crop.id || '').toLowerCase().trim();
+  const cleanName = String(crop.name || '').toLowerCase().trim();
+  const rawFil = String(crop.filipinoName || '').trim();
+
+  // 1. Direct dictionary match by ID
+  if (ENGLISH_TO_TAGALOG_MAP[cleanId]?.fil) {
+    return ENGLISH_TO_TAGALOG_MAP[cleanId].fil;
+  }
+  // 2. Direct dictionary match by English Name
+  if (ENGLISH_TO_TAGALOG_MAP[cleanName]?.fil) {
+    return ENGLISH_TO_TAGALOG_MAP[cleanName].fil;
+  }
+  // 3. Substring match against dictionary keys
+  for (const [key, val] of Object.entries(ENGLISH_TO_TAGALOG_MAP)) {
+    if (cleanName === key || cleanId === key) {
+      return val.fil;
+    }
+  }
+  for (const [key, val] of Object.entries(ENGLISH_TO_TAGALOG_MAP)) {
+    if (cleanName.includes(key) || cleanId.includes(key) || key.includes(cleanName)) {
+      return val.fil;
+    }
+  }
+  // 4. Sanitize existing filipinoName if present
+  if (rawFil) {
+    const cleaned = cleanTagalogWord(rawFil);
+    if (cleaned) return cleaned;
+  }
+  return cleanTagalogWord(crop.filipinoName || crop.name) || 'Gulay';
+};
+
+export const getCropEnglishName = (crop) => {
+  if (!crop) return 'Vegetable';
+  const cleanId = String(crop.id || '').toLowerCase().trim();
+  const cleanFil = cleanTagalogWord(crop.filipinoName || crop.name || '').toLowerCase();
+  const rawName = String(crop.name || '').trim();
+
+  // 1. Direct dictionary match by ID
+  if (TAGALOG_TO_ENGLISH_MAP[cleanId]?.en) {
+    return TAGALOG_TO_ENGLISH_MAP[cleanId].en;
+  }
+  // 2. Direct dictionary match by cleaned Tagalog Name
+  if (TAGALOG_TO_ENGLISH_MAP[cleanFil]?.en) {
+    return TAGALOG_TO_ENGLISH_MAP[cleanFil].en;
+  }
+  // 3. Substring match
+  for (const [key, val] of Object.entries(TAGALOG_TO_ENGLISH_MAP)) {
+    if (cleanFil === key || cleanId === key) {
+      return val.en;
+    }
+  }
+  for (const [key, val] of Object.entries(TAGALOG_TO_ENGLISH_MAP)) {
+    if (cleanFil.includes(key) || cleanId.includes(key) || key.includes(cleanFil)) {
+      return val.en;
+    }
+  }
+  // 4. Return clean English name
+  if (rawName && rawName.toLowerCase() !== cleanFil) {
+    return cleanTagalogWord(rawName);
+  }
+  return crop.name || crop.filipinoName || 'Vegetable';
+};
+
+const STAGE_DAYS_MAP = {
+  pechay: {
+    1: { fil: '5–7 araw', en: '5–7 days' },
+    2: { fil: '12–15 araw', en: '12–15 days' },
+    3: { fil: '18–22 araw', en: '18–22 days' },
+    4: { fil: '22–26 araw', en: '22–26 days' },
+    5: { fil: '25–30 araw', en: '25–30 days' }
+  },
+  mustasa: {
+    1: { fil: '5–7 araw', en: '5–7 days' },
+    2: { fil: '12–16 araw', en: '12–16 days' },
+    3: { fil: '18–22 araw', en: '18–22 days' },
+    4: { fil: '22–26 araw', en: '22–26 days' },
+    5: { fil: '25–32 araw', en: '25–32 days' }
+  },
+  kangkong: {
+    1: { fil: '4–6 araw', en: '4–6 days' },
+    2: { fil: '10–14 araw', en: '10–14 days' },
+    3: { fil: '15–18 araw', en: '15–18 days' },
+    4: { fil: '18–22 araw', en: '18–22 days' },
+    5: { fil: '20–25 araw', en: '20–25 days' }
+  },
+  letsugas: {
+    1: { fil: '6–8 araw', en: '6–8 days' },
+    2: { fil: '14–18 araw', en: '14–18 days' },
+    3: { fil: '20–24 araw', en: '20–24 days' },
+    4: { fil: '25–28 araw', en: '25–28 days' },
+    5: { fil: '28–35 araw', en: '28–35 days' }
+  },
+  labanos: {
+    1: { fil: '5–7 araw', en: '5–7 days' },
+    2: { fil: '12–16 araw', en: '12–16 days' },
+    3: { fil: '18–22 araw', en: '18–22 days' },
+    4: { fil: '24–28 araw', en: '24–28 days' },
+    5: { fil: '30–35 araw', en: '30–35 days' }
+  },
+  pipino: {
+    1: { fil: '7–10 araw', en: '7–10 days' },
+    2: { fil: '18–22 araw', en: '18–22 days' },
+    3: { fil: '28–32 araw', en: '28–32 days' },
+    4: { fil: '38–42 araw', en: '38–42 days' },
+    5: { fil: '45–50 araw', en: '45–50 days' }
+  },
+  sitaw: {
+    1: { fil: '7–10 araw', en: '7–10 days' },
+    2: { fil: '20–25 araw', en: '20–25 days' },
+    3: { fil: '30–35 araw', en: '30–35 days' },
+    4: { fil: '40–45 araw', en: '40–45 days' },
+    5: { fil: '45–55 araw', en: '45–55 days' }
+  },
+  okra: {
+    1: { fil: '7–10 araw', en: '7–10 days' },
+    2: { fil: '18–22 araw', en: '18–22 days' },
+    3: { fil: '30–35 araw', en: '30–35 days' },
+    4: { fil: '38–42 araw', en: '38–42 days' },
+    5: { fil: '45–50 araw', en: '45–50 days' }
+  },
+  kamatis: {
+    1: { fil: '10–14 araw', en: '10–14 days' },
+    2: { fil: '25–30 araw', en: '25–30 days' },
+    3: { fil: '40–45 araw', en: '40–45 days' },
+    4: { fil: '50–58 araw', en: '50–58 days' },
+    5: { fil: '60–70 araw', en: '60–70 days' }
+  },
+  talong: {
+    1: { fil: '10–14 araw', en: '10–14 days' },
+    2: { fil: '25–32 araw', en: '25–32 days' },
+    3: { fil: '40–48 araw', en: '40–48 days' },
+    4: { fil: '52–62 araw', en: '52–62 days' },
+    5: { fil: '65–75 araw', en: '65–75 days' }
+  },
+  sili: {
+    1: { fil: '10–14 araw', en: '10–14 days' },
+    2: { fil: '22–28 araw', en: '22–28 days' },
+    3: { fil: '38–45 araw', en: '38–45 days' },
+    4: { fil: '48–56 araw', en: '48–56 days' },
+    5: { fil: '60–70 araw', en: '60–70 days' }
+  }
+};
+
+const getDaysForStage = (filName, engName, stageNum, isFil = true) => {
+  const normFil = (filName || '').toLowerCase().trim();
+  const normEn = (engName || '').toLowerCase().trim();
+
+  let matchedKey = Object.keys(STAGE_DAYS_MAP).find(k => 
+    normFil.includes(k) || normEn.includes(k)
+  );
+
+  if (matchedKey && STAGE_DAYS_MAP[matchedKey][stageNum]) {
+    return isFil ? STAGE_DAYS_MAP[matchedKey][stageNum].fil : STAGE_DAYS_MAP[matchedKey][stageNum].en;
+  }
+
+  const fallbacks = {
+    1: isFil ? '5–7 araw' : '5–7 days',
+    2: isFil ? '15–20 araw' : '15–20 days',
+    3: isFil ? '25–30 araw' : '25–30 days',
+    4: isFil ? '35–45 araw' : '35–45 days',
+    5: isFil ? '45–60 araw' : '45–60 days'
+  };
+  return fallbacks[stageNum] || (isFil ? '25–30 araw' : '25–30 days');
+};
+
+const VEGETABLE_PRESETS = [
   {
-    id: 'tomato',
-    name: 'Tomato',
+    filipinoName: 'Pechay',
+    name: 'Pechay',
+    icon: '🥬',
+    daysToGrow: '25–30',
+    stageStep: 2,
+    stageDescEn: 'Tender broad green leaves are expanding rapidly.',
+    stageDescFil: 'Mabilis na lumalapad at lumalaki ang mga sariwang berdeng dahon.'
+  },
+  {
+    filipinoName: 'Mustasa',
+    name: 'Mustard Greens',
+    icon: '🥬',
+    daysToGrow: '25–32',
+    stageStep: 4,
+    stageDescEn: 'Crisp, pungent leaves nearing full mature rosette.',
+    stageDescFil: 'Malalapad at malulutong na maanghang na dahon; napakalapit nang anihin.'
+  },
+  {
+    filipinoName: 'Kangkong',
+    name: 'Water Spinach',
+    icon: '🌿',
+    daysToGrow: '20–25',
+    stageStep: 2,
+    stageDescEn: 'Rapid tender shoot and leaf elongation.',
+    stageDescFil: 'Mabilis na paghaba ng mga bagong tangkay at talbos.'
+  },
+  {
+    filipinoName: 'Letsugas',
+    name: 'Lettuce',
+    icon: '🥗',
+    daysToGrow: '25–35',
+    stageStep: 3,
+    stageDescEn: 'Forming tight, crisp heads with tender sweet foliage.',
+    stageDescFil: 'Bumubuo ng makakapal at malulutong na kumpol ng dahon.'
+  },
+  {
+    filipinoName: 'Labanos',
+    name: 'White Radish',
+    icon: '🥕',
+    daysToGrow: '30–35',
+    stageStep: 3,
+    stageDescEn: 'Crisp white root core thickening rapidly in loose soil.',
+    stageDescFil: 'Bumubuo at kumakapal ang puting ugat sa malambot na lupa.'
+  },
+  {
+    filipinoName: 'Pipino',
+    name: 'Cucumber',
+    icon: '🥒',
+    daysToGrow: '45–50',
+    stageStep: 4,
+    stageDescEn: 'Crisp dark green fruits sizing up evenly along trellises.',
+    stageDescFil: 'Tuwid, malulutong, at madilim na berdeng pipino sa balag.'
+  },
+  {
+    filipinoName: 'Sitaw',
+    name: 'String Beans',
+    icon: '🫛',
+    daysToGrow: '45–55',
+    stageStep: 4,
+    stageDescEn: 'Long slender pods developing crisp tenderness along trellises.',
+    stageDescFil: 'Humahaba at lumalambot ang mga pod ng sitaw sa balag.'
+  },
+  {
+    filipinoName: 'Okra',
+    name: 'Okra',
+    icon: '🌱',
+    daysToGrow: '45–50',
+    stageStep: 3,
+    stageDescEn: 'Blossoms setting tender green pods that grow rapidly.',
+    stageDescFil: 'Namumulaklak at lumalabas ang malalambot na daliri ng okra.'
+  },
+  {
     filipinoName: 'Kamatis',
-    variety: 'Kamatis (Diamante Max)',
+    name: 'Tomato',
     icon: '🍅',
-    yieldVal: '16.4 tons/ha',
-    confidence: '94.2%',
-    accuracyRate: '96.4%',
-    mape: '3.6%',
-    rmse: '0.18 t/ha',
-    sarimaBase: '14.80 t/ha',
-    lstmResidual: '+1.60 t/ha',
-    formula: '14.80 (SARIMA) + 1.60 (LSTM) = 16.40 t/ha',
-    ci95: '16.05 – 16.75 t/ha',
-    stageEn: 'Fruit Development',
-    stageFil: 'Lumalaking Bunga',
-    harvestEn: '18-22 days',
-    harvestFil: '18-22 araw',
-    riskEn: 'Low Risk',
-    riskFil: 'Mababang Panganib',
-    riskClass: 'risk-low',
-    driverEn: 'Optimal solar radiation and moderate rainfall favor fruit firmness and reduce cracking risks.',
-    driverFil: 'Maganda ang sikat ng araw at ulan para tumigas ang bunga at hindi pumutok.'
+    daysToGrow: '60–70',
+    stageStep: 4,
+    stageDescEn: 'Fruits sizing up and firming before color break.',
+    stageDescFil: 'Lumalaki at tumitigas ang mga bunga; malapit nang mamula.'
   },
   {
-    id: 'eggplant',
-    name: 'Eggplant',
     filipinoName: 'Talong',
-    variety: 'Talong (Dumaguete Long)',
+    name: 'Eggplant',
     icon: '🍆',
-    yieldVal: '18.2 tons/ha',
-    confidence: '91.8%',
-    accuracyRate: '95.8%',
-    mape: '4.2%',
-    rmse: '0.22 t/ha',
-    sarimaBase: '16.50 t/ha',
-    lstmResidual: '+1.70 t/ha',
-    formula: '16.50 (SARIMA) + 1.70 (LSTM) = 18.20 t/ha',
-    ci95: '17.77 – 18.63 t/ha',
-    stageEn: 'Vegetative Growth',
-    stageFil: 'Lumalagong Dahon at Sangay',
-    harvestEn: '25-30 days',
-    harvestFil: '25-30 araw',
-    riskEn: 'Low Risk',
-    riskFil: 'Mababang Panganib',
-    riskClass: 'risk-low',
-    driverEn: 'Nighttime temperatures (24°C) preserve flower buds and support healthy calyx elongation.',
-    driverFil: 'Maganda ang lamig sa gabi (24°C) para hindi malaglag ang bulaklak at maging maayos ang bunga.'
+    daysToGrow: '65–75',
+    stageStep: 2,
+    stageDescEn: 'Vigorous shoot growth and strong stalk establishment.',
+    stageDescFil: 'Mabilis na paghaba ng sangay at pagtibay ng ugat bago mamulaklak.'
   },
+  {
+    filipinoName: 'Sili',
+    name: 'Chili Pepper',
+    icon: '🌶️',
+    daysToGrow: '60–70',
+    stageStep: 3,
+    stageDescEn: 'Abundant blossoms and glossy young peppers developing.',
+    stageDescFil: 'Bukas na ang mga bulaklak at may maliliit nang bunga ng sili.'
+  }
+];
+
+// eslint-disable-next-line no-unused-vars
+const CROPS_DATA = [
   {
     id: 'pechay',
     name: 'Pechay',
     filipinoName: 'Pechay',
-    variety: 'Bok Choy / Sariwang Dahon',
     icon: '🥬',
-    yieldVal: '12.5 tons/ha',
-    confidence: '89.5%',
-    accuracyRate: '94.1%',
-    mape: '5.9%',
-    rmse: '0.26 t/ha',
-    sarimaBase: '11.10 t/ha',
-    lstmResidual: '+1.40 t/ha',
-    formula: '11.10 (SARIMA) + 1.40 (LSTM) = 12.50 t/ha',
-    ci95: '11.99 – 13.01 t/ha',
-    stageEn: 'Leaf Expansion',
-    stageFil: 'Lumalaking Dahon',
-    harvestEn: '5-7 days',
-    harvestFil: '5-7 araw',
-    riskEn: 'Moderate Risk',
-    riskFil: 'Katamtamang Panganib',
-    riskClass: 'risk-moderate',
-    driverEn: 'High relative humidity stimulates tender leaf growth; watch for drainage to avoid bacterial soft rot.',
-    driverFil: 'Mataas ang moisture sa hangin kaya mabilis lumaki ang dahon; ingatan lang ang kanal para hindi mabulok.'
+    daysToGrowEn: '25–30 days',
+    daysToGrowFil: '25–30 araw',
+    stageEn: 'Vegetative Foliage Growth',
+    stageFil: 'Paglaki ng Dahon at Tangkay',
+    stageStep: 2,
+    progressPercent: 40,
+    stageDescEn: 'Broad crisp green leaves are expanding rapidly in garden beds.',
+    stageDescFil: 'Mabilis na lumalapad at lumalaki ang mga sariwang berdeng dahon.'
   },
   {
-    id: 'bellpepper',
-    name: 'Bell Pepper',
-    filipinoName: 'Sili',
-    variety: 'Sili / Atsuete Pepper',
-    icon: '🌶️',
-    yieldVal: '9.8 tons/ha',
-    confidence: '93.0%',
-    accuracyRate: '96.8%',
-    mape: '3.2%',
-    rmse: '0.15 t/ha',
-    sarimaBase: '9.10 t/ha',
-    lstmResidual: '+0.70 t/ha',
-    formula: '9.10 (SARIMA) + 0.70 (LSTM) = 9.80 t/ha',
-    ci95: '9.51 – 10.09 t/ha',
-    stageEn: 'Early Flowering',
-    stageFil: 'Namumulaklak',
-    harvestEn: '14-16 days',
-    harvestFil: '14-16 araw',
-    riskEn: 'Low Risk',
-    riskFil: 'Mababang Panganib',
-    riskClass: 'risk-low',
-    driverEn: 'Moderate temperature and sunlight prevent flower drop and promote vibrant fruit pigmentation.',
-    driverFil: 'Tamang init sa araw ang pumipigil sa pagkalagas ng bulaklak at nagpapaganda sa kulay ng sili.'
+    id: 'mustasa',
+    name: 'Mustard Greens',
+    filipinoName: 'Mustasa',
+    icon: '🥬',
+    daysToGrowEn: '25–32 days',
+    daysToGrowFil: '25–32 araw',
+    stageEn: 'Ready for Harvest',
+    stageFil: 'Handa nang Anihin',
+    stageStep: 5,
+    progressPercent: 100,
+    stageDescEn: 'Crisp mature leaves reaching optimal tenderness for morning harvest.',
+    stageDescFil: 'Ganap nang malaki at malutong; handa nang anihin ngayong umaga.'
+  },
+  {
+    id: 'kangkong',
+    name: 'Water Spinach',
+    filipinoName: 'Kangkong',
+    icon: '🌿',
+    daysToGrowEn: '20–25 days',
+    daysToGrowFil: '20–25 araw',
+    stageEn: 'Vegetative Shoot Growth',
+    stageFil: 'Paglaki ng Dahon at Tangkay',
+    stageStep: 2,
+    progressPercent: 45,
+    stageDescEn: 'Rapid tender shoots branching out profusely.',
+    stageDescFil: 'Mabilis na sumasanga ang mga malalambot na usbong at talbos.'
+  },
+  {
+    id: 'cucumber',
+    name: 'Cucumber',
+    filipinoName: 'Pipino',
+    icon: '🥒',
+    daysToGrowEn: '45–50 days',
+    daysToGrowFil: '45–50 araw',
+    stageEn: 'Fruit Development',
+    stageFil: 'Paglaki ng Bunga',
+    stageStep: 4,
+    progressPercent: 75,
+    stageDescEn: 'Trellised vines setting straight, dark green crisp fruits.',
+    stageDescFil: 'Tuwid at malulutong na berdeng pipino sa balag.'
+  },
+  {
+    id: 'sitaw',
+    name: 'String Beans',
+    filipinoName: 'Sitaw',
+    icon: '🫛',
+    daysToGrowEn: '45–55 days',
+    daysToGrowFil: '45–55 araw',
+    stageEn: 'Pod Development',
+    stageFil: 'Paglaki ng Pod',
+    stageStep: 4,
+    progressPercent: 80,
+    stageDescEn: 'Long slender pods developing crisp tenderness along trellises.',
+    stageDescFil: 'Humahaba at lumalambot ang mga pod ng sitaw sa balag.'
+  },
+  {
+    id: 'tomato',
+    name: 'Tomato',
+    filipinoName: 'Kamatis',
+    icon: '🍅',
+    daysToGrowEn: '60–70 days',
+    daysToGrowFil: '60–70 araw',
+    stageEn: 'Fruit Development',
+    stageFil: 'Lumalaking Bunga',
+    stageStep: 4,
+    progressPercent: 75,
+    stageDescEn: 'Firm fruits sizing up and beginning color break.',
+    stageDescFil: 'Lumalaki at tumitigas ang mga bunga; malapit nang mamula.'
   }
 ];
 
@@ -304,10 +736,208 @@ const INSIGHTS_DATA = [
   }
 ];
 
-function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setActiveTab, onRefresh, lang = 'en' }) {
+function Dashboard({ 
+  userRole = 'farmer', 
+  user = null, 
+  systemStatus = {}, 
+  hasWeatherDataset: hasWeatherProp,
+  hasCropDataset: hasCropProp,
+  isLstmTrained: isLstmTrainedProp = false,
+  isCropModelTrained: isCropModelTrainedProp = false,
+  setActiveTab, 
+  onRefresh, 
+  lang = 'en' 
+}) {
+  const isFil = lang === 'fil';
   const [flippedCrops, setFlippedCrops] = useState({});
   const [slidRecs, setSlidRecs] = useState({});
   const [slidInsights, setSlidInsights] = useState({});
+  const [inspectingCrop, setInspectingCrop] = useState(null);
+
+  const hasWeather = hasWeatherProp !== undefined 
+    ? hasWeatherProp 
+    : Boolean(systemStatus?.weatherDatasetLoaded || (systemStatus?.weatherCount && systemStatus.weatherCount > 0));
+
+  const hasCrops = hasCropProp !== undefined 
+    ? hasCropProp 
+    : Boolean(
+        (systemStatus?.cropDatasetLoaded || (systemStatus?.cropCount && systemStatus.cropCount > 0)) && 
+        (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0)
+      );
+
+  const hasAnyDataset = hasWeather || hasCrops;
+
+  // LSTM AI Model Training Status Detection
+  const [lstmReady, setLstmReady] = useState(() => {
+    if (isLstmTrainedProp) return true;
+    if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') return true;
+    try {
+      return localStorage.getItem('climayield_lstm_trained') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (isLstmTrainedProp) {
+      setLstmReady(true);
+    } else if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') {
+      setLstmReady(true);
+    } else if (
+      systemStatus &&
+      systemStatus?.trainingStatus?.lstm === 'Not Trained' &&
+      systemStatus?.trainingStatus?.hybrid === 'Not Trained' &&
+      localStorage.getItem('climayield_lstm_trained') !== 'true'
+    ) {
+      setLstmReady(false);
+    }
+  }, [isLstmTrainedProp, systemStatus]);
+
+  useEffect(() => {
+    const handleLstm = (e) => setLstmReady(!!e.detail?.trained);
+    const handleStorage = (e) => {
+      if (e.key === 'climayield_lstm_trained') setLstmReady(e.newValue === 'true');
+    };
+    window.addEventListener('lstmTrainingUpdated', handleLstm);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('lstmTrainingUpdated', handleLstm);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // Crop AI Model Training Status Detection
+  const [isCropModelTrained, setIsCropModelTrained] = useState(() => {
+    if (isCropModelTrainedProp) return true;
+    if (systemStatus?.trainingStatus?.cropModelTrained === true) return true;
+    try {
+      return localStorage.getItem('climayield_crop_model_trained') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (isCropModelTrainedProp) {
+      setIsCropModelTrained(true);
+    } else if (systemStatus?.trainingStatus?.cropModelTrained === true) {
+      setIsCropModelTrained(true);
+    } else if (
+      systemStatus &&
+      systemStatus?.trainingStatus?.cropModelTrained === false &&
+      localStorage.getItem('climayield_crop_model_trained') !== 'true'
+    ) {
+      setIsCropModelTrained(false);
+    }
+  }, [isCropModelTrainedProp, systemStatus]);
+
+  useEffect(() => {
+    const handleCropModel = (e) => setIsCropModelTrained(!!e.detail?.trained);
+    const handleStorage = (e) => {
+      if (e.key === 'climayield_crop_model_trained') setIsCropModelTrained(e.newValue === 'true');
+    };
+    window.addEventListener('cropModelTrainedUpdated', handleCropModel);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('cropModelTrainedUpdated', handleCropModel);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // Crops loaded from inputted dataset (empty initially; automatically populated from Dev Side Data Management)
+  const [datasetCrops, setDatasetCrops] = useState(() => {
+    return getSavedDatasetCrops();
+  });
+
+  // Custom added vegetables from farmer
+  const [customCrops, setCustomCrops] = useState(() => {
+    try {
+      const saved = localStorage.getItem('climayield_custom_crops');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Sync automatically whenever the Developer Side uploads or updates a crop dataset
+  useEffect(() => {
+    const handleCropDatasetUpdate = (e) => {
+      setDatasetCrops(e.detail || []);
+    };
+    const handleStorageUpdate = (e) => {
+      if (e.key === 'climayield_dataset_crops') {
+        try {
+          setDatasetCrops(e.newValue ? JSON.parse(e.newValue) : []);
+        } catch {}
+      }
+    };
+    window.addEventListener('cropDatasetUpdated', handleCropDatasetUpdate);
+    window.addEventListener('storage', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('cropDatasetUpdated', handleCropDatasetUpdate);
+      window.removeEventListener('storage', handleStorageUpdate);
+    };
+  }, []);
+
+  // Sync if backend reports detected crops, or automatically wipe if dataset was removed
+  useEffect(() => {
+    if (!hasCrops) {
+      if (datasetCrops.length > 0) {
+        setDatasetCrops([]);
+      }
+      return;
+    }
+    if (isDatasetCropsCleared()) return;
+    if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
+      if (datasetCrops.length === 0 || systemStatus.detectedCrops.length > datasetCrops.length) {
+        setDatasetCrops(systemStatus.detectedCrops);
+        try {
+          localStorage.setItem('climayield_dataset_crops', JSON.stringify(systemStatus.detectedCrops));
+        } catch {}
+      }
+    }
+  }, [hasCrops, systemStatus, datasetCrops.length]);
+
+  // When crop AI model is trained, restore crops from the uploaded dataset only (no built-in defaults)
+  useEffect(() => {
+    if (!hasCrops) return;
+    if (isCropModelTrained && !isDatasetCropsCleared()) {
+      if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
+        setDatasetCrops(systemStatus.detectedCrops);
+      } else if (datasetCrops.length === 0) {
+        const saved = getSavedDatasetCrops();
+        if (saved && saved.length > 0) {
+          setDatasetCrops(saved);
+        }
+      }
+    }
+  }, [hasCrops, isCropModelTrained, datasetCrops.length, systemStatus]);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newCropForm, setNewCropForm] = useState({
+    filipinoName: 'Pechay',
+    name: 'Pechay',
+    icon: '🥬',
+    daysToGrow: isFil ? '5–7 araw' : '5–7 days',
+    stageStep: 1,
+    stageDesc: ''
+  });
+
+  // All active vegetables: crops only appear when uploaded from Dev side + custom added
+  const allCrops = [...datasetCrops, ...customCrops];
+
+  // Remove all vegetables from the dashboard
+  const handleClearAllVegetables = () => {
+    if (window.confirm(isFil ? 'Alisin ang lahat ng gulay sa dashboard?' : 'Remove all vegetables from the dashboard?')) {
+      clearDatasetCrops();
+      setDatasetCrops([]);
+      setCustomCrops([]);
+      try {
+        localStorage.removeItem('climayield_custom_crops');
+      } catch {}
+      toast.info(isFil ? 'Naalis na ang lahat ng gulay sa dashboard.' : 'All vegetables removed from the dashboard.');
+    }
+  };
 
   const handleCardFlip = (cropId) => {
     setFlippedCrops(prev => ({
@@ -330,17 +960,189 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
     }));
   };
 
-  const allFlipped = CROPS_DATA.every(c => !!flippedCrops[c.id]);
+  const allFlipped = allCrops.length > 0 && allCrops.every(c => !!flippedCrops[c.id]);
 
   const toggleFlipAll = () => {
     if (allFlipped) {
       setFlippedCrops({});
     } else {
       const allTrue = {};
-      CROPS_DATA.forEach(c => {
+      allCrops.forEach(c => {
         allTrue[c.id] = true;
       });
       setFlippedCrops(allTrue);
+    }
+  };
+
+  // Find match in Tagalog -> English dictionary
+  const findEnglishMatch = (val) => {
+    if (!val) return null;
+    const clean = val.toLowerCase().trim();
+    if (TAGALOG_TO_ENGLISH_MAP[clean]) {
+      return TAGALOG_TO_ENGLISH_MAP[clean];
+    }
+    for (const [key, data] of Object.entries(TAGALOG_TO_ENGLISH_MAP)) {
+      if (clean === key || clean.startsWith(key) || key.startsWith(clean)) {
+        return data;
+      }
+    }
+    return null;
+  };
+
+  // Find match in English -> Tagalog dictionary
+  const findTagalogMatch = (val) => {
+    if (!val) return null;
+    const clean = val.toLowerCase().trim();
+    if (ENGLISH_TO_TAGALOG_MAP[clean]) {
+      return ENGLISH_TO_TAGALOG_MAP[clean];
+    }
+    for (const [key, data] of Object.entries(ENGLISH_TO_TAGALOG_MAP)) {
+      if (clean === key || clean.startsWith(key) || key.startsWith(clean)) {
+        return data;
+      }
+    }
+    return null;
+  };
+
+  // When farmer selects a vegetable preset chip
+  const handlePresetSelect = (preset) => {
+    const stageNum = newCropForm.stageStep || preset.stageStep || 1;
+    const autoDays = getDaysForStage(preset.filipinoName, preset.name, stageNum, isFil);
+
+    setNewCropForm(prev => ({
+      ...prev,
+      filipinoName: preset.filipinoName,
+      name: preset.name,
+      icon: preset.icon,
+      daysToGrow: autoDays,
+      stageStep: stageNum,
+      stageDesc: isFil ? preset.stageDescFil : preset.stageDescEn
+    }));
+  };
+
+  // When farmer types or chooses a Tagalog vegetable name -> Auto English, Auto Icon, Auto Days
+  const handleFilipinoNameChange = (val) => {
+    const match = findEnglishMatch(val);
+    const matchedEn = match ? match.en : '';
+    const matchedIcon = match ? match.icon : '';
+    const stageNum = newCropForm.stageStep || 1;
+    const autoDays = getDaysForStage(val, matchedEn || newCropForm.name, stageNum, isFil);
+
+    setNewCropForm(prev => ({
+      ...prev,
+      filipinoName: val,
+      name: matchedEn || prev.name,
+      icon: matchedIcon || prev.icon,
+      daysToGrow: autoDays
+    }));
+  };
+
+  // When farmer types or chooses an English vegetable name -> Auto Tagalog, Auto Icon, Auto Days
+  const handleEnglishNameChange = (val) => {
+    const match = findTagalogMatch(val);
+    const matchedFil = match ? match.fil : '';
+    const matchedIcon = match ? match.icon : '';
+    const stageNum = newCropForm.stageStep || 1;
+    const autoDays = getDaysForStage(matchedFil || newCropForm.filipinoName, val, stageNum, isFil);
+
+    setNewCropForm(prev => ({
+      ...prev,
+      name: val,
+      filipinoName: matchedFil || prev.filipinoName,
+      icon: matchedIcon || prev.icon,
+      daysToGrow: autoDays
+    }));
+  };
+
+  // When farmer clicks any Plant Development Stage (P1..P5) -> Automatically calculate Days to Grow!
+  const handleStageSelect = (stepNum) => {
+    const stepObj = STAGE_STEPS.find(s => s.num === stepNum) || STAGE_STEPS[0];
+    const autoDays = getDaysForStage(newCropForm.filipinoName, newCropForm.name, stepNum, isFil);
+
+    setNewCropForm(prev => ({
+      ...prev,
+      stageStep: stepNum,
+      daysToGrow: autoDays,
+      stageDesc: isFil ? stepObj.titleFil : stepObj.titleEn
+    }));
+  };
+
+  const handleAddCropSubmit = (e) => {
+    e.preventDefault();
+    if (!newCropForm.filipinoName.trim() && !newCropForm.name.trim()) {
+      toast.warning(isFil ? 'Pakiusap ilagay ang pangalan ng gulay.' : 'Please enter a vegetable name.');
+      return;
+    }
+
+    const stepObj = STAGE_STEPS.find(s => s.num === Number(newCropForm.stageStep)) || STAGE_STEPS[0];
+    const pct = stepObj.num === 1 ? 20 : stepObj.num === 2 ? 40 : stepObj.num === 3 ? 60 : stepObj.num === 4 ? 80 : 100;
+
+    const filName = newCropForm.filipinoName.trim() || newCropForm.name.trim();
+    const engName = newCropForm.name.trim() || filName;
+
+    const rawDays = String(newCropForm.daysToGrow || getDaysForStage(filName, engName, stepObj.num, isFil)).replace(/(days|araw)/gi, '').trim();
+    const daysEn = `${rawDays} days`;
+    const daysFil = `${rawDays} araw`;
+
+    const cropObj = {
+      id: `custom_${Date.now()}`,
+      isCustom: true,
+      name: engName,
+      filipinoName: filName,
+      icon: newCropForm.icon || '🥬',
+      daysToGrowEn: daysEn,
+      daysToGrowFil: daysFil,
+      stageStep: stepObj.num,
+      stageEn: stepObj.titleEn,
+      stageFil: stepObj.titleFil,
+      progressPercent: pct,
+      stageDescEn: newCropForm.stageDesc || stepObj.titleEn,
+      stageDescFil: newCropForm.stageDesc || stepObj.titleFil
+    };
+
+    const updated = [cropObj, ...customCrops];
+    setCustomCrops(updated);
+    try {
+      localStorage.setItem('climayield_custom_crops', JSON.stringify(updated));
+    } catch {}
+
+    toast.success(isFil ? `🌱 Naidagdag na ang ${cropObj.filipinoName} sa listahan!` : `🌱 ${cropObj.name} added successfully!`);
+    setShowAddModal(false);
+    setNewCropForm({
+      filipinoName: 'Pechay',
+      name: 'Pechay',
+      icon: '🥬',
+      daysToGrow: isFil ? '5–7 araw' : '5–7 days',
+      stageStep: 1,
+      stageDesc: ''
+    });
+  };
+
+  const handleDeleteCrop = (cropId) => {
+    const cropToDelete = allCrops.find(c => c.id === cropId) || customCrops.find(c => c.id === cropId);
+    const cropName = isFil 
+      ? cropToDelete?.filipinoName || cropToDelete?.name 
+      : cropToDelete?.name || cropToDelete?.filipinoName;
+    const confirmMsg = isFil
+      ? `Sigurado ka bang nais mong tanggalin ang "${cropName || 'gulay na ito'}"?`
+      : `Are you sure you want to delete "${cropName || 'this vegetable'}"?`;
+
+    if (window.confirm(confirmMsg)) {
+      const updated = customCrops.filter(c => c.id !== cropId);
+      setCustomCrops(updated);
+      try {
+        localStorage.setItem('climayield_custom_crops', JSON.stringify(updated));
+      } catch {}
+
+      if (datasetCrops.some(c => c.id === cropId)) {
+        const updatedDataset = datasetCrops.filter(c => c.id !== cropId);
+        setDatasetCrops(updatedDataset);
+        try {
+          localStorage.setItem('climayield_dataset_crops', JSON.stringify(updatedDataset));
+        } catch {}
+      }
+
+      toast.info(isFil ? `🗑️ Natanggal na ang ${cropName || 'gulay'}.` : `🗑️ ${cropName || 'Vegetable'} deleted.`);
     }
   };
 
@@ -351,8 +1153,6 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
       document.querySelector(`[data-tab="${tab}"]`)?.click();
     }
   };
-
-  const isFil = lang === 'fil';
 
   // =========================================================================
   // 🧑‍🌾 1. FARMER SIDE DASHBOARD: Predictions + Recommendations + Insights
@@ -379,96 +1179,261 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
           </div>
         </div>
 
-        {/* Quick Summary Highlights */}
-        <div className="fd-summary-grid">
-          <div className="fd-summary-card">
-            <div className="fd-summary-icon">🌾</div>
-            <div className="fd-summary-info">
-              <div className="fd-summary-label">
-                {isFil ? 'Inaasahang Ani' : 'Average Projected Yield'}
-              </div>
-              <div className="fd-summary-value">
-                15.8 <span style={{ fontSize: '0.9rem' }}>tons/ha</span>
-              </div>
-              <div className="fd-summary-sub">
-                {isFil ? '↑ 4.2% mas mataas kaysa karaniwan' : '↑ 4.2% higher than seasonal baseline'}
+        {/* If no datasets exist from the Developer side, show nothing except the dedicated awaiting state */}
+        {!hasAnyDataset ? (
+          <div className="fd-empty-crops-card fd-no-datasets-global-card">
+            <div className="fd-empty-crops-icon-wrap" style={{ background: '#ecfdf5', borderColor: '#10b981' }}>
+              <span className="fd-empty-crops-icon">🌾</span>
+            </div>
+            <h3 className="fd-empty-crops-title">
+              {isFil 
+                ? 'Walang Aktibong Dataset mula sa Developer Side' 
+                : 'No Active Datasets from Developer Side'}
+            </h3>
+            <p className="fd-empty-crops-desc">
+              {isFil
+                ? 'Awtomatikong nakatago ang lahat ng impormasyon, pananim, at payo sa bukid dahil wala pang inilalagay na dataset ang developer sa Data Management o inalis ang mga ito. Kapag nag-upload o nag-load ng bagong dataset ang developer, awtomatikong lilitaw dito ang lahat ng datos.'
+                : 'All farm forecasts, vegetable development cards, and agricultural recommendations are hidden because no datasets have been uploaded on the Developer side (Data Management), or existing datasets were cleared. Once the developer loads a dataset, the dashboard will automatically populate.'}
+            </p>
+            <div className="fd-empty-crops-badge-row">
+              <div className="fd-dev-managed-badge">
+                <span>⚙️</span>
+                <span>
+                  {isFil
+                    ? 'Pinamamahalaan ang mga dataset sa Dev Side (Data Management)'
+                    : 'Datasets are managed exclusively on the Dev side (Data Management)'}
+                </span>
               </div>
             </div>
           </div>
+        ) : (
+          <>
+            {/* Quick Summary Highlights */}
+            <div className="fd-summary-grid">
+              <div className="fd-summary-card">
+                <div className="fd-summary-icon">🌾</div>
+                <div className="fd-summary-info">
+                  <div className="fd-summary-label">
+                    {isFil ? 'Inaasahang Ani' : 'Average Projected Yield'}
+                  </div>
+                  <div className="fd-summary-value">
+                    {lstmReady ? (
+                      <>15.8 <span style={{ fontSize: '0.9rem' }}>tons/ha</span></>
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>—</span>
+                    )}
+                  </div>
+                  <div className="fd-summary-sub">
+                    {lstmReady 
+                      ? (isFil ? '↑ 4.2% mas mataas kaysa karaniwan' : '↑ 4.2% higher than seasonal baseline')
+                      : (isFil ? 'Awtomatikong lalabas kapag nasanay ang LSTM' : 'Calibrated once LSTM is trained')}
+                  </div>
+                </div>
+              </div>
 
-          <div className="fd-summary-card">
-            <div className="fd-summary-icon">⚖️</div>
-            <div className="fd-summary-info">
-              <div className="fd-summary-label">
-                {isFil ? 'Panganib sa Ani' : 'Yield Instability Risk'}
+              <div className="fd-summary-card">
+                <div className="fd-summary-icon">⚖️</div>
+                <div className="fd-summary-info">
+                  <div className="fd-summary-label">
+                    {isFil ? 'Panganib sa Ani' : 'Yield Instability Risk'}
+                  </div>
+                  <div className="fd-summary-value" style={{ color: lstmReady ? '#16a34a' : '#f59e0b' }}>
+                    {lstmReady 
+                      ? (isFil ? 'Mababang Panganib' : 'Low Risk')
+                      : (isFil ? 'Naghihintay ng LSTM' : 'Pending LSTM')}
+                  </div>
+                  <div className="fd-summary-sub">
+                    {lstmReady 
+                      ? (isFil ? 'Maayos ang lagay ng panahon' : 'Stable climate conditions projected')
+                      : (isFil ? 'Sanayin muna ang LSTM model sa Dev side' : 'Train LSTM model on Dev side')}
+                  </div>
+                </div>
               </div>
-              <div className="fd-summary-value" style={{ color: '#16a34a' }}>
-                {isFil ? 'Mababang Panganib' : 'Low Risk'}
-              </div>
-              <div className="fd-summary-sub">
-                {isFil ? 'Maayos ang lagay ng panahon' : 'Stable climate conditions projected'}
+
+              <div className="fd-summary-card">
+                <div className="fd-summary-icon">🌦️</div>
+                <div className="fd-summary-info">
+                  <div className="fd-summary-label">
+                    {isFil ? 'Kondisyon sa Pagtatanim' : 'Growing Environment'}
+                  </div>
+                  <div className="fd-summary-value">
+                    {hasWeather ? (isFil ? 'Maayos' : 'Optimal') : (isFil ? 'Naghihintay ng Datos' : 'Awaiting Data')}
+                  </div>
+                  <div className="fd-summary-sub">
+                    {hasWeather 
+                      ? (isFil ? 'Sapat ang ulan at maayos ang panahon' : 'Adequate rainfall & balanced humidity')
+                      : (isFil ? 'Naghihintay ng weather dataset sa Dev side' : 'Awaiting weather dataset on Dev side')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="fd-summary-card">
-            <div className="fd-summary-icon">🌦️</div>
-            <div className="fd-summary-info">
-              <div className="fd-summary-label">
-                {isFil ? 'Kondisyon sa Pagtatanim' : 'Growing Environment'}
-              </div>
-              <div className="fd-summary-value">
-                {isFil ? 'Maayos' : 'Optimal'}
-              </div>
-              <div className="fd-summary-sub">
-                {isFil ? 'Sapat ang ulan at maayos ang panahon' : 'Adequate rainfall & balanced humidity'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 1: CROP PREDICTIONS */}
+        {/* SECTION 1: CROP PREDICTIONS & VEGETABLE DEVELOPMENT */}
         <div className="fd-section">
           <div className="fd-section-header">
             <div className="fd-section-title">
               <span>📈</span>
               <span>
                 {isFil
-                  ? 'Pagtataya ng Ani ng mga Gulay sa Quezon City'
-                  : 'Crop Yield Predictions (Quezon City Short-Cycle Vegetables)'}
+                  ? 'Mga Pananim na Mabilis Anihin at Yugto ng Paglaki'
+                  : 'Short-Cycle Vegetable Crops & Growth Development'}
               </span>
             </div>
             <div className="fd-section-actions">
-              <button 
-                className="fd-toggle-all-btn"
-                onClick={toggleFlipAll}
-                title={isFil ? 'I-flip ang lahat ng card nang sabay-sabay' : 'Flip all cards simultaneously'}
-              >
-                🔄 {allFlipped ? (isFil ? 'I-flip Lahat Pabalik' : 'Flip All to Front') : (isFil ? 'I-flip Lahat ng Card' : 'Flip All Cards')}
-              </button>
+              {isCropModelTrained && (
+                <button 
+                  type="button"
+                  className="fd-add-crop-btn"
+                  onClick={() => setShowAddModal(true)}
+                  title={isFil ? 'Magdagdag ng bagong gulay sa listahan' : 'Add a new vegetable to list'}
+                >
+                  <span className="btn-icon">➕</span>
+                  <span>{isFil ? 'Magdagdag ng Gulay' : 'Add Vegetable'}</span>
+                </button>
+              )}
+              {isCropModelTrained && customCrops.length > 0 && (
+                <button
+                  type="button"
+                  className="fd-clear-crops-btn fd-clear-custom-btn"
+                  onClick={() => {
+                    const confirmMsg = isFil
+                      ? 'Sigurado ka bang nais mong alisin ang lahat ng mano-manong naidagdag na gulay?'
+                      : 'Are you sure you want to delete all manually added vegetables?';
+                    if (window.confirm(confirmMsg)) {
+                      setCustomCrops([]);
+                      try {
+                        localStorage.removeItem('climayield_custom_crops');
+                      } catch {}
+                      toast.info(isFil ? '🗑️ Naalis na ang lahat ng mano-manong gulay.' : '🗑️ All manually added vegetables removed.');
+                    }
+                  }}
+                  title={isFil ? 'Alisin ang mga mano-manong naidagdag na gulay' : 'Delete all manually added vegetables'}
+                >
+                  <span>🗑️</span>
+                  <span>{isFil ? `Tanggalin Mano-mano (${customCrops.length})` : `Delete Manual (${customCrops.length})`}</span>
+                </button>
+              )}
+              {isCropModelTrained && allCrops.length > 0 && (
+                <>
+                  <button 
+                    type="button"
+                    className="fd-clear-crops-btn"
+                    onClick={handleClearAllVegetables}
+                    title={isFil ? 'Alisin ang lahat ng gulay sa dashboard' : 'Clear all vegetables from dashboard'}
+                  >
+                    <span>🗑️</span>
+                    <span>{isFil ? 'Alisin Lahat' : 'Clear All'}</span>
+                  </button>
+                  <button 
+                    className="fd-toggle-all-btn"
+                    onClick={toggleFlipAll}
+                    title={isFil ? 'I-flip ang lahat ng card nang sabay-sabay' : 'Flip all cards simultaneously'}
+                  >
+                    🔄 {allFlipped ? (isFil ? 'I-flip Lahat Pabalik' : 'Flip All to Front') : (isFil ? 'I-flip Lahat ng Card' : 'Flip All Cards')}
+                  </button>
+                </>
+              )}
               <button 
                 className="fd-section-btn"
                 onClick={() => navigateTab('predictions')}
               >
-                {isFil ? 'Tingnan Lahat ng Ani →' : 'View Full Predictions →'}
+                {isCropModelTrained 
+                  ? (isFil ? 'Tingnan Lahat ng Ani →' : 'View Full Predictions →')
+                  : (isFil ? 'Predictions (Naghihintay ng AI Model) →' : 'Predictions (Awaiting AI Model) →')}
               </button>
             </div>
           </div>
 
-          {/* Interactive Hint */}
-          <div className="fd-interactive-hint">
-            <span>🔄</span>
-            <span>
-              {isFil
-                ? 'I-click ang alinmang card (hal. Kamatis 🍅) upang mag-flip ito at lumabas ang tons, stage, at panahon ng pag-ani sa likod.'
-                : 'Click any card (e.g. Tomato 🍅) to flip it over like a card and reveal projected tons, growth stage, and harvest window.'}
-            </span>
-          </div>
+          {/* If crop AI model is not trained yet, hide all vegetables and show awaiting training state */}
+          {!isCropModelTrained ? (
+            <div className="fd-empty-crops-card">
+              <div className="fd-empty-crops-icon-wrap" style={{ background: '#ecfdf5', borderColor: '#10b981' }}>
+                <span className="fd-empty-crops-icon">🤖</span>
+              </div>
+              <h3 className="fd-empty-crops-title">
+                {isFil 
+                  ? 'Naghihintay ng Pagsasanay ng AI Model para sa Pananim' 
+                  : 'Awaiting AI Model Training for Crops'}
+              </h3>
+              <p className="fd-empty-crops-desc">
+                {isFil
+                  ? 'Ang lahat ng gulay, bilang ng araw ng paglaki, at yugto ng pananim ay lilitaw lamang dito kapag nasanay na ang AI model para sa mga pananim (SARIMA / LSTM / Hybrid) sa Model Training tab.'
+                  : 'All vegetables, growth days, and developmental stages will only appear here once you train the AI model for crops (SARIMA / LSTM / Hybrid) in the Model Training tab.'}
+              </p>
+              <div className="fd-empty-crops-badge-row">
+                <div className="fd-dev-managed-badge">
+                  <span>🧠</span>
+                  <span>
+                    {isFil
+                      ? 'Sanayin ang Crop Yield model sa Dev Side (Model Training)'
+                      : 'Train the Crop Yield model on Dev Side (Model Training)'}
+                  </span>
+                </div>
+                <button 
+                  type="button" 
+                  className="fd-empty-cta-btn"
+                  onClick={() => navigateTab('training')}
+                >
+                  <span>🚀</span>
+                  <span>{isFil ? 'Magsanay ng AI Model para sa Pananim →' : 'Train AI Model for Crops →'}</span>
+                </button>
+              </div>
+            </div>
+          ) : allCrops.length === 0 ? (
+            <div className="fd-empty-crops-card">
+              <div className="fd-empty-crops-icon-wrap">
+                <span className="fd-empty-crops-icon">🌱</span>
+              </div>
+              <h3 className="fd-empty-crops-title">
+                {isFil ? 'Naghihintay ng Dataset ng Pananim' : 'Awaiting Crop Dataset from Developer'}
+              </h3>
+              <p className="fd-empty-crops-desc">
+                {isFil
+                  ? 'Wala pang aktibong pananim sa dashboard. Kapag nag-upload o nag-load ng crop dataset sa Developer side (Data Management), awtomatikong lilitaw dito ang lahat ng gulay at yugto ng kanilang paglaki.'
+                  : 'No crops are currently loaded. Once a crop dataset is uploaded or activated on the Developer side (Data Management), all corresponding vegetables and growth stages will automatically appear here.'}
+              </p>
+              <div className="fd-empty-crops-badge-row">
+                <div className="fd-dev-managed-badge">
+                  <span>⚙️</span>
+                  <span>
+                    {isFil
+                      ? 'Ang mga dataset ay pinamamahalaan sa Dev Side (Data Management)'
+                      : 'Datasets are managed exclusively on the Dev side (Data Management)'}
+                  </span>
+                </div>
+                <button 
+                  type="button" 
+                  className="fd-empty-cta-btn outline"
+                  onClick={() => setShowAddModal(true)}
+                >
+                  <span>➕</span>
+                  <span>{isFil ? 'Mano-manong Magdagdag ng Gulay' : 'Add Vegetable Manually'}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Interactive Hint */}
+              <div className="fd-interactive-hint">
+                <span>💡</span>
+                <span>
+                  {isFil
+                    ? 'I-click ang alinmang card upang i-flip at basahin ang nakakatuwang fun facts ng bawat pananim.'
+                    : 'Click any card to flip and discover fun facts about each vegetable.'}
+                </span>
+              </div>
 
-          {/* 3D Flip Crop Cards Grid */}
-          <div className="fd-crops-grid">
-            {CROPS_DATA.map(crop => {
+              {/* 3D Flip Crop Cards Grid */}
+              <div className="fd-crops-grid">
+            {allCrops.map(crop => {
               const isFlipped = !!flippedCrops[crop.id];
+              const filName = getCropFilipinoName(crop);
+              const engName = getCropEnglishName(crop);
+              const primaryName = isFil ? filName : engName;
+              const secondaryName = isFil
+                ? (engName.toLowerCase() !== filName.toLowerCase() ? engName : null)
+                : (filName.toLowerCase() !== engName.toLowerCase() ? filName : null);
+              const funFactText = getVegetableFunFact(crop, lang);
 
               return (
                 <div
@@ -486,11 +1451,11 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                   title={
                     isFil
                       ? isFlipped
-                        ? `I-click para i-flip pabalik ang ${crop.filipinoName}`
-                        : `I-click upang makita ang impormasyon ng ${crop.filipinoName}`
+                        ? `I-click para i-flip pabalik ang ${primaryName}`
+                        : `I-click upang basahin ang fun facts ng ${primaryName}`
                       : isFlipped
-                      ? `Click to flip back ${crop.name}`
-                      : `Click to see the information of ${crop.name}`
+                      ? `Click to flip back ${primaryName}`
+                      : `Click to read fun facts of ${primaryName}`
                   }
                 >
                   <div className="fd-flip-card-inner">
@@ -499,20 +1464,50 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                       <div className="fd-card-top-bar">
                         <div className="fd-card-identity">
                           <div className="fd-card-icon-bubble">{crop.icon}</div>
-                          <div>
-                            <div className="fd-crop-name">{isFil ? crop.filipinoName : crop.name}</div>
-                            <div className="fd-crop-filipino">{crop.variety}</div>
+                          <div className="fd-card-name-group">
+                            <div className="fd-crop-name">
+                              {primaryName}
+                            </div>
+                            {secondaryName && (
+                              <div className="fd-crop-tagalog-badge">
+                                <span className={`fd-tagalog-pill ${isFil ? 'alt' : ''}`} title={isFil ? 'Pangalan sa Ingles' : 'Pangalan sa Tagalog / Filipino'}>
+                                  {isFil ? `(${secondaryName})` : `🇵🇭 ${secondaryName}`}
+                                </span>
+                              </div>
+                            )}
+                            <div className="fd-crop-shortcycle-badge">
+                              ⚡ {isFil ? 'Mabilis Anihin (Short-Cycle)' : 'Short-Cycle Vegetable'}
+                            </div>
                           </div>
                         </div>
-                        <span className={`fd-crop-risk ${crop.riskClass}`}>
-                          {isFil ? crop.riskFil : crop.riskEn}
-                        </span>
+                        {crop.isCustom && (
+                          <button
+                            type="button"
+                            className="fd-crop-delete-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCrop(crop.id);
+                            }}
+                            title={isFil ? `Tanggalin ang ${primaryName}` : `Delete ${primaryName}`}
+                          >
+                            <span className="btn-icon">🗑️</span>
+                            <span className="btn-label">{isFil ? 'Tanggalin' : 'Delete'}</span>
+                          </button>
+                        )}
                       </div>
 
                       <div className="fd-card-front-center">
-                        <div className="fd-card-hero-icon">{crop.icon}</div>
-                        <div className="fd-card-front-tagline">
-                          {isFil ? 'Gulay sa Quezon City' : 'QC Short-Cycle Crop'}
+                        <div 
+                          className="fd-card-hero-3d-box"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <AnimatedVegetableImage
+                            crop={{ ...crop, filipinoName: filName, name: engName }}
+                            height={132}
+                            lang={lang}
+                          />
                         </div>
                       </div>
 
@@ -520,8 +1515,8 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                         <span className="fd-flip-icon">🔄</span>
                         <span>
                           {isFil
-                            ? 'I-click para makita ang impormasyon ng mga pananim'
-                            : 'Click to see the information of these plants'}
+                            ? 'I-click para makita ang fun facts ng halaman'
+                            : 'Click to see plant fun facts'}
                         </span>
                       </div>
                     </div>
@@ -532,60 +1527,67 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                         <div className="fd-back-title">
                           <span className="icon">{crop.icon}</span>
                           <div>
-                            <div className="name">{isFil ? crop.filipinoName : crop.name}</div>
-                            <div className="variety">{crop.variety}</div>
+                            <div className="name">
+                              {primaryName}
+                            </div>
+                            {secondaryName && (
+                              <div className="fd-back-subname">
+                                {isFil ? `Ingles: ${secondaryName}` : `Tagalog: ${secondaryName}`}
+                              </div>
+                            )}
+                            <div className="variety">
+                              ⚡ {isFil ? 'Mabilis Anihin' : 'Short-Cycle'}
+                              {crop.isCustom && ` • ${isFil ? 'Mano-mano' : 'Manual'}`}
+                            </div>
                           </div>
                         </div>
-                        <span className="fd-back-flip-badge">
-                          🔄 {isFil ? 'Pabalik' : 'Flip Back'}
-                        </span>
-                      </div>
-
-                      {/* TONS / INAASAHANG ANI & ACCURACY RATE */}
-                      <div className="fd-back-yield-box">
-                        <div>
-                          <div className="fd-back-yield-label">{isFil ? 'Inaasahang Ani (Tons)' : 'Projected Yield'}</div>
-                          <div className="fd-back-yield-val">{crop.yieldVal}</div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div className="fd-back-yield-label">{isFil ? 'Posibleng Kawastuhan' : 'Possible Accuracy'}</div>
-                          <div className="fd-back-accuracy-badge">🎯 {crop.accuracyRate}</div>
-                        </div>
-                      </div>
-
-                      {/* MATHEMATICAL COMPUTATION BREAKDOWN */}
-                      <div className="fd-back-computation-strip">
-                        <div className="fd-back-comp-header">
-                          <span>📐 {isFil ? 'Pagkalkula ng Ani at Pormula:' : 'Yield & Accuracy Computation:'}</span>
-                        </div>
-                        <div className="fd-back-comp-formula">
-                          <code>{crop.formula}</code>
-                        </div>
-                        <div className="fd-back-comp-sub">
-                          <span>🎯 {isFil ? `Kawastuhan: 100% - ${crop.mape} (MAPE) = ${crop.accuracyRate}` : `Accuracy: 100% - ${crop.mape} (MAPE) = ${crop.accuracyRate}`}</span>
-                          <span>📐 {isFil ? `95% Saklaw: ${crop.ci95}` : `95% CI: ${crop.ci95}`}</span>
+                        <div className="fd-back-header-actions">
+                          {crop.isCustom && (
+                            <button
+                              type="button"
+                              className="fd-crop-delete-btn back"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCrop(crop.id);
+                              }}
+                              title={isFil ? `Tanggalin ang ${crop.filipinoName || crop.name}` : `Delete ${crop.name || crop.filipinoName}`}
+                            >
+                              <span>🗑️</span>
+                              <span>{isFil ? 'Tanggalin' : 'Delete'}</span>
+                            </button>
+                          )}
+                          <span className="fd-back-flip-badge">
+                            🔄 {isFil ? 'Pabalik' : 'Flip Back'}
+                          </span>
                         </div>
                       </div>
 
-                      {/* STAGE & HARVEST TIME */}
-                      <div className="fd-back-meta-grid">
-                        <div className="fd-back-meta-item">
-                          <div className="label">🌱 {isFil ? 'Stage ng Pananim' : 'Stage'}</div>
-                          <div className="val">{isFil ? crop.stageFil : crop.stageEn}</div>
+                      {/* Full-Card Fun Fact Only */}
+                      <div className="fd-back-funfact-card">
+                        <div className="fd-funfact-badge-row">
+                          <div className="fd-funfact-pill">
+                            <span className="fd-funfact-sparkle">💡</span>
+                            <span className="fd-funfact-pill-text">
+                              {isFil ? 'ALAM MO BA?' : 'FUN FACT'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="fd-back-meta-item">
-                          <div className="label">⏱️ {isFil ? 'Panahon ng Pag-ani' : 'Harvest Window'}</div>
-                          <div className="val">{isFil ? crop.harvestFil : crop.harvestEn}</div>
-                        </div>
-                      </div>
 
-                      {/* NOTE & FOOTER */}
-                      <div className="fd-back-note">
-                        💡 {isFil ? crop.driverFil : crop.driverEn}
+                        <div className="fd-funfact-content">
+                          <span className="fd-funfact-quote-glyph">“</span>
+                          <p className="fd-funfact-main-text">
+                            {funFactText}
+                          </p>
+                        </div>
+
+                        <div className="fd-funfact-card-footer">
+                          <span className="fd-funfact-veg-name">🌱 {primaryName}</span>
+                          <span className="fd-funfact-veg-badge">⚡ {isFil ? 'Mabilis Anihin' : 'Short-Cycle'}</span>
+                        </div>
                       </div>
 
                       <div className="fd-back-footer-hint">
-                        ↩️ {isFil ? 'I-click kahit saan para i-flip pabalik' : 'Click anywhere to flip back'}
+                        ↩️ {isFil ? 'I-click para i-flip pabalik' : 'Click anywhere to flip back'}
                       </div>
                     </div>
                   </div>
@@ -593,7 +1595,9 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
               );
             })}
           </div>
-        </div>
+        </>
+      )}
+    </div>
 
         {/* SECTION 2: RECOMMENDATIONS */}
         <div className="fd-section">
@@ -604,15 +1608,30 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                 {isFil ? 'Mga Payo at Gabay sa Bukid' : 'Actionable Farming Recommendations'}
               </span>
             </div>
-            <button 
-              className="fd-section-btn"
-              onClick={() => navigateTab('recommendations')}
-            >
-              {isFil ? 'Lahat ng Payo →' : 'All Recommendations →'}
-            </button>
+            {hasWeather && (
+              <button 
+                className="fd-section-btn"
+                onClick={() => navigateTab('recommendations')}
+              >
+                {isFil ? 'Lahat ng Payo →' : 'All Recommendations →'}
+              </button>
+            )}
           </div>
 
-          <div className="fd-recs-grid">
+          {!hasWeather ? (
+            <div className="fd-empty-crops-card" style={{ padding: '36px 20px' }}>
+              <span style={{ fontSize: '2rem', marginBottom: '10px' }}>🌦️</span>
+              <h4 style={{ margin: '0 0 6px 0', color: '#166534', fontSize: '1.1rem' }}>
+                {isFil ? 'Naghihintay ng Dataset ng Panahon mula sa Developer' : 'Awaiting Weather Dataset from Developer'}
+              </h4>
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.9rem', maxWidth: '520px' }}>
+                {isFil 
+                  ? 'Awtomatikong lilitaw ang mga payo at gabay sa bukid kapag nag-upload o nag-load ng weather dataset ang developer sa Data Management.'
+                  : 'Farming recommendations will automatically appear once a weather dataset is uploaded or activated on the Developer side.'}
+              </p>
+            </div>
+          ) : (
+            <div className="fd-recs-grid">
             {RECOMMENDATIONS_DATA.map(rec => {
               const isSlid = !!slidRecs[rec.id];
 
@@ -696,6 +1715,7 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
               );
             })}
           </div>
+          )}
         </div>
 
         {/* SECTION 3: FARMING INSIGHTS */}
@@ -711,7 +1731,20 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
             </div>
           </div>
 
-          <div className="fd-insights-grid">
+          {!hasWeather ? (
+            <div className="fd-empty-crops-card" style={{ padding: '36px 20px' }}>
+              <span style={{ fontSize: '2rem', marginBottom: '10px' }}>📊</span>
+              <h4 style={{ margin: '0 0 6px 0', color: '#166534', fontSize: '1.1rem' }}>
+                {isFil ? 'Naghihintay ng Datos mula sa Developer' : 'Awaiting Data from Developer'}
+              </h4>
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.9rem', maxWidth: '520px' }}>
+                {isFil
+                  ? 'Ang mga kaalaman at pananaw sa pagsasaka ay nakabatay sa mga dataset na inilalagay ng developer sa Data Management.'
+                  : 'Farming insights are generated from active datasets managed on the Developer side.'}
+              </p>
+            </div>
+          ) : (
+            <div className="fd-insights-grid">
             {INSIGHTS_DATA.map(insight => {
               const isSlid = !!slidInsights[insight.id];
 
@@ -791,7 +1824,383 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
               );
             })}
           </div>
+          )}
         </div>
+      </>
+    )}
+
+        {/* ADD VEGETABLE MODAL */}
+        {showAddModal && (
+          <div className="fd-modal-overlay" onClick={() => setShowAddModal(false)}>
+            <div className="fd-modal-dialog" onClick={(e) => e.stopPropagation()}>
+              <div className="fd-modal-header">
+                <div className="fd-modal-title">
+                  <span className="icon">🌱</span>
+                  <div>
+                    <h3>{isFil ? 'Magdagdag ng Bagong Gulay (Short-Cycle)' : 'Add New Vegetable (Short-Cycle)'}</h3>
+                    <p>{isFil ? 'Araw ng paglaki at kasalukuyang yugto ng pananim' : 'Days to grow & current plant development stage'}</p>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  className="fd-modal-close-btn"
+                  onClick={() => setShowAddModal(false)}
+                  title={isFil ? 'Isara' : 'Close'}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddCropSubmit} className="fd-modal-form">
+                <div className="fd-modal-body">
+                  {/* Manually Added Vegetables Management & Delete List */}
+                  {customCrops.length > 0 && (
+                    <div className="fd-modal-custom-manager">
+                      <div className="fd-modal-custom-manager-head">
+                        <div className="title">
+                          <span className="badge-icon">📋</span>
+                          <span className="badge-text">
+                            {isFil
+                              ? `Mga Mano-manong Naidagdag na Gulay (${customCrops.length})`
+                              : `Manually Added Vegetables (${customCrops.length})`}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="fd-modal-clear-all-custom-btn"
+                          onClick={() => {
+                            const confirmMsg = isFil
+                              ? 'Sigurado ka bang nais mong alisin ang lahat ng mano-manong naidagdag na gulay?'
+                              : 'Are you sure you want to delete all manually added vegetables?';
+                            if (window.confirm(confirmMsg)) {
+                              setCustomCrops([]);
+                              try {
+                                localStorage.removeItem('climayield_custom_crops');
+                              } catch {}
+                              toast.info(isFil ? '🗑️ Naalis na ang lahat ng mano-manong gulay.' : '🗑️ All manual vegetables removed.');
+                            }
+                          }}
+                        >
+                          🗑️ {isFil ? 'Alisin Lahat' : 'Delete All'}
+                        </button>
+                      </div>
+                      <div className="fd-modal-custom-crop-list">
+                        {customCrops.map((c) => (
+                          <div key={c.id} className="fd-modal-custom-crop-row">
+                            <div className="crop-meta">
+                              <span className="crop-emoji">{c.icon}</span>
+                              <div className="crop-text">
+                                <span className="crop-title">
+                                  {isFil ? (c.filipinoName || c.name) : (c.name || c.filipinoName)}
+                                </span>
+                                <span className="crop-sub">
+                                  ⏱️ {isFil ? (c.daysToGrowFil || c.daysToGrowEn) : (c.daysToGrowEn || c.daysToGrowFil)} • 🌱 {isFil ? c.stageFil : c.stageEn}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="fd-modal-delete-item-btn"
+                              onClick={() => handleDeleteCrop(c.id)}
+                              title={isFil ? `Tanggalin ang ${c.filipinoName || c.name}` : `Delete ${c.name || c.filipinoName}`}
+                            >
+                              <span>🗑️</span>
+                              <span>{isFil ? 'Tanggalin' : 'Delete'}</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preset Shortcuts */}
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>⚡</span>
+                      <span>{isFil ? 'Pumili sa Mabilis Anihin na Gulay (Tagalog):' : 'Select Short-Cycle Vegetable:'}</span>
+                    </label>
+                    <div className="fd-preset-chips">
+                      {VEGETABLE_PRESETS.map((p, idx) => {
+                        const isSelected = isFil
+                          ? newCropForm.filipinoName.toLowerCase() === p.filipinoName.toLowerCase()
+                          : newCropForm.name.toLowerCase() === p.name.toLowerCase();
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            className={`fd-preset-chip ${isSelected ? 'selected' : ''}`}
+                            onClick={() => handlePresetSelect(p)}
+                          >
+                            <span>{p.icon}</span>
+                            <strong>{isFil ? p.filipinoName : p.name}</strong>
+                            {p.name.toLowerCase() !== p.filipinoName.toLowerCase() && (
+                              <span className="preset-english-sub">
+                                ({isFil ? p.name : p.filipinoName})
+                              </span>
+                            )}
+                            <span className="fd-preset-days-badge">{p.daysToGrow}d</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Real-time Animated Vegetable Image Preview in Add Modal */}
+                  <div style={{
+                    marginBottom: '14px',
+                    padding: '10px 14px',
+                    borderRadius: '16px',
+                    background: 'radial-gradient(circle at 50% 50%, #f0fdf4 0%, #ffffff 100%)',
+                    border: '1.5px solid #86efac',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px'
+                  }}>
+                    <div style={{ width: '110px', height: '90px', flexShrink: 0 }}>
+                      <AnimatedVegetableImage
+                        crop={{ name: newCropForm.name, filipinoName: newCropForm.filipinoName, id: newCropForm.name.toLowerCase() }}
+                        height={85}
+                        showBadge={false}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.94rem', fontWeight: '800', color: '#14532d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>✨</span>
+                        <span>{isFil ? 'Tunay na Larawan ng Gulay' : 'Actual Vegetable Preview'}</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#166534', marginTop: '3px' }}>
+                        {isFil 
+                          ? 'Awtomatikong ipinapakita ang tunay na larawan at animation ng napiling gulay.' 
+                          : 'High-definition animated photo automatically updates as you select a vegetable.'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Icon Selector */}
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>🎨</span>
+                      <span>{isFil ? 'Icon / Simbolo ng Gulay:' : 'Vegetable Emoji Icon:'}</span>
+                    </label>
+                    <div className="fd-emoji-grid">
+                      {EMOJI_OPTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className={`fd-emoji-btn ${newCropForm.icon === emoji ? 'active' : ''}`}
+                          onClick={() => setNewCropForm({ ...newCropForm, icon: emoji })}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Names Row: English First when in English, Tagalog First when in Tagalog */}
+                  <div className="fd-form-row">
+                    {isFil ? (
+                      <>
+                        <div className="fd-form-group">
+                          <label className="fd-form-label">
+                            <span>🇵🇭</span>
+                            <span>Pangalan ng Gulay sa Filipino / Tagalog: *</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            list="tagalog-vegetables-list"
+                            className="fd-form-input fd-tagalog-input"
+                            placeholder="Hal. Pechay, Mustasa, Kangkong, Kamatis"
+                            value={newCropForm.filipinoName}
+                            onChange={(e) => handleFilipinoNameChange(e.target.value)}
+                          />
+                          <datalist id="tagalog-vegetables-list">
+                            {Object.keys(TAGALOG_TO_ENGLISH_MAP).map((k) => (
+                              <option key={k} value={k.charAt(0).toUpperCase() + k.slice(1)} />
+                            ))}
+                          </datalist>
+                          <div className="fd-input-subtext">
+                            👉 Pangunahing pangalan sa Tagalog
+                          </div>
+                        </div>
+
+                        <div className="fd-form-group">
+                          <label className="fd-form-label">
+                            <span>🌐</span>
+                            <span>Pangalan sa English (Awtomatiko):</span>
+                          </label>
+                          <input
+                            type="text"
+                            list="english-vegetables-list"
+                            className="fd-form-input fd-english-input"
+                            placeholder="Hal. Tomato, Eggplant, Mustard"
+                            value={newCropForm.name}
+                            onChange={(e) => handleEnglishNameChange(e.target.value)}
+                          />
+                          <datalist id="english-vegetables-list">
+                            {Object.values(TAGALOG_TO_ENGLISH_MAP).map((entry, idx) => (
+                              <option key={idx} value={entry.en} />
+                            ))}
+                          </datalist>
+                          <div className="fd-input-subtext fd-auto-subtext">
+                            ⚡ Kusang nag-a-update ayon sa Tagalog
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="fd-form-group">
+                          <label className="fd-form-label">
+                            <span>🌐</span>
+                            <span>Vegetable Name (English): *</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            list="english-vegetables-list"
+                            className="fd-form-input fd-english-input"
+                            placeholder="e.g. Tomato, Cucumber, Mustard Greens"
+                            value={newCropForm.name}
+                            onChange={(e) => handleEnglishNameChange(e.target.value)}
+                          />
+                          <datalist id="english-vegetables-list">
+                            {Object.values(TAGALOG_TO_ENGLISH_MAP).map((entry, idx) => (
+                              <option key={idx} value={entry.en} />
+                            ))}
+                          </datalist>
+                          <div className="fd-input-subtext">
+                            👉 Primary English name
+                          </div>
+                        </div>
+
+                        <div className="fd-form-group">
+                          <label className="fd-form-label">
+                            <span>🇵🇭</span>
+                            <span>Tagalog / Filipino Name (Auto-filled):</span>
+                          </label>
+                          <input
+                            type="text"
+                            list="tagalog-vegetables-list"
+                            className="fd-form-input fd-tagalog-input"
+                            placeholder="e.g. Kamatis, Pipino, Mustasa"
+                            value={newCropForm.filipinoName}
+                            onChange={(e) => handleFilipinoNameChange(e.target.value)}
+                          />
+                          <datalist id="tagalog-vegetables-list">
+                            {Object.keys(TAGALOG_TO_ENGLISH_MAP).map((k) => (
+                              <option key={k} value={k.charAt(0).toUpperCase() + k.slice(1)} />
+                            ))}
+                          </datalist>
+                          <div className="fd-input-subtext fd-auto-subtext">
+                            ⚡ Auto-updates from English
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Days to Grow - Auto calculated from Stage */}
+                  <div className="fd-form-group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label className="fd-form-label">
+                        <span>⏱️</span>
+                        <span>{isFil ? 'Araw ng Paglaki (Days to Grow):' : 'Days to Grow:'} *</span>
+                      </label>
+                      <span className="fd-auto-pill">
+                        ⚡ {isFil ? 'Awtomatiko ayon sa Yugto' : 'Auto-calculated from Stage'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      className="fd-form-input fd-days-input"
+                      placeholder={isFil ? 'Hal. 5–7 araw' : 'e.g. 5–7 days'}
+                      value={newCropForm.daysToGrow}
+                      onChange={(e) => setNewCropForm({ ...newCropForm, daysToGrow: e.target.value })}
+                    />
+                    <div className="fd-input-subtext">
+                      {isFil
+                        ? '💡 Kusang nagbabago ang bilang ng araw kapag pinindot ang Yugto ng Paglaki sa ibaba'
+                        : '💡 Automatically updates days whenever you click a Growth Stage below'}
+                    </div>
+                  </div>
+
+                  {/* Plant Development Stage Selector */}
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>🌱</span>
+                      <span>{isFil ? 'Kasalukuyang Yugto ng Paglaki (Pindutin para mag-auto ang Araw):' : 'Current Plant Development Stage (Click to auto-set Days):'}</span>
+                    </label>
+                    <div className="fd-stage-selector">
+                      {STAGE_STEPS.map((step) => {
+                        const isActive = Number(newCropForm.stageStep) === step.num;
+                        return (
+                          <button
+                            key={step.num}
+                            type="button"
+                            className={`fd-stage-btn ${isActive ? 'active' : ''}`}
+                            onClick={() => handleStageSelect(step.num)}
+                          >
+                            <span className="stage-icon">{step.icon}</span>
+                            <span className="stage-title">{isFil ? step.shortFil : step.shortEn}</span>
+                            <span className="stage-num">P{step.num}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fd-modal-footer">
+                  <button
+                    type="button"
+                    className="fd-modal-btn reset"
+                    onClick={() => {
+                      setNewCropForm({
+                        filipinoName: '',
+                        name: '',
+                        icon: '🥬',
+                        daysToGrow: '',
+                        stageStep: 1,
+                        stageDesc: ''
+                      });
+                      toast.info(isFil ? 'Nalinis na ang form.' : 'Form cleared.');
+                    }}
+                    title={isFil ? 'Linisin ang nilagay sa form' : 'Clear form fields'}
+                  >
+                    <span>🗑️</span>
+                    <span>{isFil ? 'Linisin ang Form' : 'Clear Form'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="fd-modal-btn cancel"
+                    onClick={() => setShowAddModal(false)}
+                  >
+                    {isFil ? 'Kanselahin' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    className="fd-modal-btn submit"
+                  >
+                    <span>💾</span>
+                    <span>{isFil ? 'I-save ang Gulay' : 'Save Vegetable'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+
+        {/* Full Interactive Vegetable Inspection & Agronomic Guide Modal */}
+        {inspectingCrop && (
+          <VegetableImageModal
+            crop={inspectingCrop}
+            isOpen={!!inspectingCrop}
+            onClose={() => setInspectingCrop(null)}
+            lang={lang}
+          />
+        )}
       </div>
     );
   }
@@ -814,8 +2223,10 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
       {/* Dev Hero Banner */}
       <div className="dev-hero-card">
         <div className="dev-hero-text">
-          <h2>
-            <span>🤖</span>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <DevHeroBadge gradient="cyan">
+              <DevDashboardLogo size={24} isActive={false} />
+            </DevHeroBadge>
             <span>Trained AI Models Dashboard</span>
           </h2>
           <p>
@@ -849,7 +2260,9 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
           <div>
             <div className="dev-model-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div className="dev-model-icon-box">📈</div>
+                <div className="dev-model-icon-box">
+                  <DevSarimaIcon size={30} />
+                </div>
                 <div className="dev-model-title-box">
                   <h3>SARIMA Model</h3>
                   <div className="dev-model-type-tag">Statistical Time Series</div>
@@ -901,7 +2314,9 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
           <div>
             <div className="dev-model-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div className="dev-model-icon-box">🧠</div>
+                <div className="dev-model-icon-box">
+                  <DevLstmIcon size={30} />
+                </div>
                 <div className="dev-model-title-box">
                   <h3>LSTM Neural Network</h3>
                   <div className="dev-model-type-tag">Deep Learning (RNN)</div>
@@ -953,7 +2368,9 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
           <div>
             <div className="dev-model-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div className="dev-model-icon-box">🔀</div>
+                <div className="dev-model-icon-box">
+                  <DevHybridIcon size={30} />
+                </div>
                 <div className="dev-model-title-box">
                   <h3>SARIMA–LSTM Hybrid</h3>
                   <div className="dev-model-type-tag">Ensemble Architecture</div>
@@ -1041,7 +2458,7 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                 <td>
                   <button 
                     className="dev-hero-btn secondary"
-                    style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#0f172a', borderColor: '#cbd5e1' }}
+                    style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#ffffff', borderColor: '#38bdf8' }}
                     onClick={() => navigateTab('training')}
                   >
                     Configure
@@ -1064,7 +2481,7 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
                 <td>
                   <button 
                     className="dev-hero-btn secondary"
-                    style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#0f172a', borderColor: '#cbd5e1' }}
+                    style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#ffffff', borderColor: '#38bdf8' }}
                     onClick={() => navigateTab('training')}
                   >
                     Configure
@@ -1100,23 +2517,23 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
 
         {/* Dataset Readiness Note */}
         <div style={{
-          marginTop: '18px',
-          padding: '12px 16px',
-          borderRadius: '10px',
-          background: systemStatus?.datasetLoaded ? '#f0fdf4' : '#fffbeb',
-          border: `1px solid ${systemStatus?.datasetLoaded ? '#bbf7d0' : '#fef3c7'}`,
+          marginTop: '20px',
+          padding: '16px 20px',
+          borderRadius: '12px',
+          background: systemStatus?.datasetLoaded ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+          border: `1.5px solid ${systemStatus?.datasetLoaded ? 'rgba(52, 211, 153, 0.45)' : 'rgba(251, 191, 36, 0.45)'}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '10px',
-          fontSize: '0.86rem'
+          gap: '12px',
+          fontSize: '0.88rem'
         }}>
           <div>
-            <strong style={{ color: systemStatus?.datasetLoaded ? '#15803d' : '#92400e' }}>
+            <strong style={{ color: systemStatus?.datasetLoaded ? '#34d399' : '#fbbf24', fontSize: '0.92rem' }}>
               {systemStatus?.datasetLoaded ? '📁 Dataset Status: Ready' : '⚠️ Dataset Status: Not Loaded'}
             </strong>
-            <span style={{ marginLeft: '8px', color: '#475569' }}>
+            <span style={{ marginLeft: '10px', color: '#cbd5e1', lineHeight: '1.45' }}>
               {systemStatus?.datasetLoaded 
                 ? `Active training dataset loaded (${systemStatus?.datasetShape?.rows || 0} historical records available for model fitting). Fleet status: ${totalTrainedCount}/3 models trained.`
                 : 'Upload or import training data before fitting SARIMA and LSTM models.'}
@@ -1125,7 +2542,7 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
           {!systemStatus?.datasetLoaded && (
             <button 
               className="dev-hero-btn secondary"
-              style={{ padding: '6px 14px', fontSize: '0.82rem', color: '#92400e', borderColor: '#fcd34d' }}
+              style={{ padding: '7px 16px', fontSize: '0.82rem', color: '#fbbf24', borderColor: 'rgba(251, 191, 36, 0.6)' }}
               onClick={() => navigateTab('data')}
             >
               Go to Data Management →
@@ -1137,27 +2554,29 @@ function Dashboard({ userRole = 'farmer', user = null, systemStatus = {}, setAct
         {totalTrainedCount > 0 && (
           <div style={{
             marginTop: '16px',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #f0fbf4, #e8f8f0)',
-            border: '1.5px solid #a3e0b2',
+            padding: '18px 22px',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.14) 0%, rgba(139, 92, 246, 0.14) 100%)',
+            border: '1.5px solid rgba(6, 182, 212, 0.45)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '12px'
+            gap: '14px'
           }}>
             <div>
-              <div style={{ fontWeight: 'bold', color: '#14532d', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📊</span> AI Training Results Dashboard Ready ({totalTrainedCount}/3 Models Evaluated)
+              <div style={{ fontWeight: '800', color: '#ffffff', fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <DevDashboardLogo size={22} isActive={false} />
+                <span>AI Training Results Dashboard Ready ({totalTrainedCount}/3 Models Evaluated)</span>
               </div>
-              <div style={{ fontSize: '0.84rem', color: '#3f624d', marginTop: '3px' }}>
+              <div style={{ fontSize: '0.86rem', color: '#94a3b8', marginTop: '4px' }}>
                 SARIMA Hyperparameter AIC Search and Model Registry Benchmark tables are calibrated with SARIMA-LSTM Hybrid Model evaluations.
               </div>
             </div>
             <button
               className="dev-hero-btn primary"
-              style={{ padding: '8px 18px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ padding: '9px 20px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}
               onClick={() => navigateTab('training')}
             >
               <span>📈</span> View Result Dashboard →

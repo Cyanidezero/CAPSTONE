@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="basilLeaf" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="40%" stop-color="#22c55e"/>
+      <stop offset="85%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </radialGradient>
+    <filter id="basilShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#basilShadow)">
+    <!-- Central Stalk -->
+    <path d="M110 195 L110 65" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- Bottom Left Leaf -->
+    <g transform="rotate(-35 85 145)">
+      <path d="M85 145 C50 145 40 115 85 105 C130 115 120 145 85 145 Z" fill="url(#basilLeaf)"/>
+      <path d="M85 145 Q85 125 85 105" fill="none" stroke="#bbf7d0" stroke-width="2"/>
+      <path d="M85 130 Q70 125 60 128" fill="none" stroke="#bbf7d0" stroke-width="1.2"/>
+      <path d="M85 125 Q100 120 110 123" fill="none" stroke="#bbf7d0" stroke-width="1.2"/>
+    </g>
+
+    <!-- Bottom Right Leaf -->
+    <g transform="rotate(35 135 145)">
+      <path d="M135 145 C100 145 90 115 135 105 C180 115 170 145 135 145 Z" fill="url(#basilLeaf)"/>
+      <path d="M135 145 Q135 125 135 105" fill="none" stroke="#bbf7d0" stroke-width="2"/>
+      <path d="M135 130 Q120 125 110 128" fill="none" stroke="#bbf7d0" stroke-width="1.2"/>
+      <path d="M135 125 Q150 120 160 123" fill="none" stroke="#bbf7d0" stroke-width="1.2"/>
+    </g>
+
+    <!-- Upper Left Leaf -->
+    <g transform="rotate(-45 85 95)">
+      <path d="M85 95 C55 95 48 70 85 62 C122 70 115 95 85 95 Z" fill="url(#basilLeaf)"/>
+      <path d="M85 95 Q85 78 85 62" fill="none" stroke="#bbf7d0" stroke-width="1.8"/>
+    </g>
+
+    <!-- Upper Right Leaf -->
+    <g transform="rotate(45 135 95)">
+      <path d="M135 95 C105 95 98 70 135 62 C172 70 165 95 135 95 Z" fill="url(#basilLeaf)"/>
+      <path d="M135 95 Q135 78 135 62" fill="none" stroke="#bbf7d0" stroke-width="1.8"/>
+    </g>
+
+    <!-- Crown Terminal Leaves (Top) -->
+    <g>
+      <path d="M110 65 C95 65 92 40 110 32 C128 40 125 65 110 65 Z" fill="url(#basilLeaf)"/>
+      <path d="M110 65 L110 32" fill="none" stroke="#bbf7d0" stroke-width="1.8"/>
+    </g>
+
+    <!-- Shiny gloss highlights on rounded leaves -->
+    <ellipse cx="78" cy="120" rx="10" ry="4" transform="rotate(-20 78 120)" fill="#ffffff" opacity="0.4"/>
+    <ellipse cx="142" cy="120" rx="10" ry="4" transform="rotate(20 142 120)" fill="#ffffff" opacity="0.4"/>
+  </g>
+</svg>

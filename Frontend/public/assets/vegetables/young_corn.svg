@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cornCob" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#facc15"/>
+      <stop offset="80%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="cornHusk" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="60%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#86efac"/>
+    </linearGradient>
+    <filter id="cornShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#ca8a04" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#cornShadow)">
+    <!-- Silk threads at the tip -->
+    <g stroke="#ca8a04" stroke-width="1.5" stroke-linecap="round" fill="none">
+      <path d="M165 48 Q180 30 195 25"/>
+      <path d="M168 52 Q188 40 200 42"/>
+      <path d="M162 45 Q175 22 188 15"/>
+    </g>
+
+    <!-- Baby Corn Cob (Slender, tapered cone) -->
+    <path d="M72 175 C85 145 115 95 162 48 C168 52 170 58 165 65 C125 110 95 160 82 182 Z" fill="url(#cornCob)"/>
+
+    <!-- Miniature kernel texture grid -->
+    <g stroke="#a16207" stroke-width="1" stroke-linecap="round" opacity="0.5">
+      <line x1="88" y1="165" x2="98" y2="175"/>
+      <line x1="100" y1="148" x2="110" y2="158"/>
+      <line x1="112" y1="130" x2="122" y2="140"/>
+      <line x1="125" y1="112" x2="135" y2="122"/>
+      <line x1="138" y1="92" x2="148" y2="102"/>
+      <line x1="150" y1="72" x2="160" y2="82"/>
+    </g>
+
+    <!-- Husk leaves wrapping the base -->
+    <path d="M45 200 C50 170 65 140 85 130 C75 160 70 185 60 202 Z" fill="url(#cornHusk)"/>
+    <path d="M75 202 C85 180 100 150 115 145 C100 170 95 195 85 205 Z" fill="url(#cornHusk)"/>
+  </g>
+</svg>

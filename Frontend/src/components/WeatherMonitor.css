@@ -549,7 +549,7 @@
 }
 
 /* ========================================================= */
-/* 7-DAY FORECAST SECTION (Google Range Sliders)             */
+/* 7-DAY FORECAST SECTION: FARMER CONDITIONS & GUIDANCE       */
 /* ========================================================= */
 .gw-7day-section {
   background: #ffffff;
@@ -560,12 +560,49 @@
   margin-bottom: 20px;
 }
 
-.gw-7day-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #202124;
+.gw-7day-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
+
+.gw-7day-title {
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 3px;
+}
+
+.gw-7day-subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.gw-7day-table-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 10px;
+}
+
+.gw-th-day { width: 95px; flex-shrink: 0; }
+.gw-th-rain { width: 95px; flex-shrink: 0; }
+.gw-th-temp { width: 115px; flex-shrink: 0; }
+.gw-th-acc { width: 85px; flex-shrink: 0; }
+.gw-th-cond { flex: 1; }
 
 .gw-7day-list {
   display: flex;
@@ -574,89 +611,240 @@
 }
 
 .gw-7day-row {
-  display: grid;
-  grid-template-columns: 100px 70px 140px 1fr;
+  display: flex;
   align-items: center;
-  padding: 10px 14px;
+  gap: 14px;
+  padding: 12px 16px;
   border-radius: 12px;
-  background: #f8f9fa;
-  border: 1px solid #edf0f2;
-  transition: all 0.2s;
-}
-
-@media (max-width: 650px) {
-  .gw-7day-row {
-    grid-template-columns: 80px 50px 1fr;
-  }
-  .gw-7day-condition {
-    display: none;
-  }
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
 }
 
 .gw-7day-row:hover {
-  background: #f1f3f4;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.gw-7day-day {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #202124;
-}
-
-.gw-7day-pop {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #1a73e8;
-}
-
-.gw-7day-condition {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #5f6368;
-}
-
-.gw-7day-range-wrapper {
+.gw-7day-row-metrics {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
-.gw-temp-low {
-  font-size: 0.88rem;
-  color: #5f6368;
-  font-weight: 600;
-  min-width: 30px;
-  text-align: right;
+.gw-7day-day-group {
+  display: flex;
+  flex-direction: column;
+  width: 95px;
+  flex-shrink: 0;
 }
 
-.gw-temp-high {
-  font-size: 0.92rem;
-  color: #202124;
+.gw-7day-day {
+  font-size: 0.94rem;
   font-weight: 700;
-  min-width: 30px;
+  color: #0f172a;
 }
 
-/* Google-style horizontal temperature slider bar */
-.gw-range-bar-track {
+.gw-7day-date-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+}
+
+.gw-7day-pop {
+  width: 95px;
+  flex-shrink: 0;
+}
+
+.gw-rain-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  flex-wrap: wrap;
+}
+
+.gw-rain-amt {
+  font-family: var(--font-mono, monospace);
+}
+
+.gw-rain-mae {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+.gw-rain-dry {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* Temperature Column */
+.gw-7day-temp-col {
+  display: flex;
+  flex-direction: column;
+  width: 115px;
+  flex-shrink: 0;
+}
+
+.gw-temp-range-text {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+}
+
+.gw-temp-low-val {
+  color: #2563eb;
+}
+
+.gw-temp-dash {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.gw-temp-high-val {
+  color: #ea580c;
+}
+
+.gw-temp-sub-label {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Farmer Condition Card */
+.gw-farmer-cond-card {
   flex: 1;
-  height: 6px;
-  background: #e8eaed;
-  border-radius: 4px;
-  position: relative;
-  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
 
-.gw-range-bar-fill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #4285f4 0%, #34a853 45%, #fbbc05 80%, #ea4335 100%);
+.gw-farmer-cond-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gw-farmer-cond-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.gw-farmer-cond-name {
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.gw-farmer-cond-raw {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.gw-farmer-cond-desc {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.79rem;
+  line-height: 1.35;
+  color: #334155;
+  font-weight: 500;
+}
+
+.gw-farmer-leaf {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Severity Theme Colors */
+.gw-farmer-cond-extreme-heat {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+.gw-farmer-cond-extreme-heat .gw-farmer-cond-name {
+  color: #be123c;
+}
+
+.gw-farmer-cond-warm {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.gw-farmer-cond-warm .gw-farmer-cond-name {
+  color: #b45309;
+}
+
+.gw-farmer-cond-heavy-rain {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.gw-farmer-cond-heavy-rain .gw-farmer-cond-name {
+  color: #b91c1c;
+}
+
+.gw-farmer-cond-rain {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.gw-farmer-cond-rain .gw-farmer-cond-name {
+  color: #1d4ed8;
+}
+
+.gw-farmer-cond-dry {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.gw-farmer-cond-dry .gw-farmer-cond-name {
+  color: #15803d;
+}
+
+.gw-farmer-cond-optimal {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.gw-farmer-cond-optimal .gw-farmer-cond-name {
+  color: #15803d;
+}
+
+/* Responsive */
+@media (max-width: 920px) {
+  .gw-7day-table-header {
+    display: none;
+  }
+  .gw-7day-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .gw-7day-row-metrics {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+  .gw-farmer-cond-card {
+    width: 100%;
+  }
 }
 
 /* ========================================================= */
@@ -753,48 +941,159 @@
   margin-bottom: 24px;
 }
 
+.gw-agro-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
 .gw-agro-title {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #202124;
-  margin-bottom: 14px;
+  color: #1e293b;
+  margin: 0;
+}
+
+.gw-agro-filter-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.gw-agro-filter-btn {
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.gw-agro-filter-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.gw-agro-filter-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
 }
 
 .gw-agro-alerts {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .gw-alert-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: 12px;
   font-size: 0.88rem;
   line-height: 1.45;
+  transition: all 0.2s ease;
 }
 
 .gw-alert-warning {
-  background: #fef7e0;
-  border-left: 4px solid #f9ab00;
-  color: #7a4f01;
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  color: #78350f;
 }
 
 .gw-alert-info {
-  background: #e8f0fe;
-  border-left: 4px solid #1a73e8;
-  color: #174ea6;
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  color: #1e3a8a;
 }
 
 .gw-alert-success {
-  background: #e6f4ea;
-  border-left: 4px solid #1e8e3e;
-  color: #137333;
+  background: #f0fdf4;
+  border-left: 4px solid #16a34a;
+  color: #14532d;
+}
+
+.gw-alert-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.gw-alert-badge-live {
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #047857;
+  background: #d1fae5;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+.gw-alert-badge-model {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 2px 9px;
+  border-radius: 6px;
+  border: 1px solid #bfdbfe;
+}
+
+.gw-alert-source-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #ffffff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.gw-alert-trained {
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  border-right: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.gw-alert-trained:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .gw-agro-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .gw-agro-filter-group {
+    width: 100%;
+    overflow-x: auto;
+  }
 }
 
 /* ========================================================= */
@@ -847,5 +1146,842 @@
   color: #ffffff;
   border-color: #166534;
 }
+
+/* ========================================================= */
+/* 🛑 AWAITING AI MODEL TRAINING STATE FOR 24H & 7D FORECAST */
+/* ========================================================= */
+
+.gw-forecast-awaiting-card {
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 20px;
+  padding: 42px 24px;
+  text-align: center;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.gw-awaiting-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.gw-awaiting-icon {
+  font-size: 2.2rem;
+}
+
+.gw-awaiting-pulse-ring {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px solid #f59e0b;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: gw-awaiting-pulse 2.4s infinite ease-out;
+}
+
+@keyframes gw-awaiting-pulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.gw-awaiting-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.gw-awaiting-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 rgba(245, 158, 11, 0.4);
+  animation: gw-pulse-dot 1.8s infinite;
+}
+
+@keyframes gw-pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.gw-awaiting-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.gw-awaiting-desc {
+  max-width: 650px;
+  font-size: 0.92rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.gw-awaiting-steps {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.gw-awaiting-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.gw-awaiting-step.done {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.gw-awaiting-step.active {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1.5px solid #fcd34d;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
+.gw-awaiting-step.pending {
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+}
+
+.gw-awaiting-step .step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: currentColor;
+  color: #ffffff;
+}
+
+.gw-awaiting-steps .step-arrow {
+  color: #cbd5e1;
+  font-weight: bold;
+}
+
+.gw-awaiting-btn-training {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 24px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  transition: all 0.2s ease;
+}
+
+.gw-awaiting-btn-training:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.3);
+}
+
+/* ========================================================= */
+/* 🎯 AI CLIMATOLOGY MAE METRICS ACCURACY PANEL & BADGES     */
+/* ========================================================= */
+
+.gw-mae-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-family: var(--font-mono, monospace);
+}
+
+.gw-feels-mae {
+  font-size: 0.78rem;
+  color: #1e40af;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.gw-mini-mae {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Dedicated MAE Engine Panel */
+.gw-mae-panel {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 22px 24px;
+  border: 1.5px solid #dbeafe;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.06);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gw-mae-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8, #10b981);
+}
+
+.gw-mae-dev-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  color: #854d0e;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.gw-mae-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #eab308;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
+  flex-shrink: 0;
+}
+
+.gw-mae-dev-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.gw-mae-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.gw-mae-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.gw-mae-badge-icon {
+  font-size: 1.8rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gw-mae-badge-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.gw-mae-status-pill {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.gw-mae-status-pill.active {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.gw-mae-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.gw-mae-subtitle {
+  font-size: 0.86rem;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 720px;
+}
+
+.gw-mae-actions {
+  display: flex;
+  align-items: center;
+}
+
+.gw-mae-toggle-btn {
+  background: #f8fafc;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.gw-mae-toggle-btn.active {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.3);
+}
+
+.gw-mae-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* 4-Item Grid */
+.gw-mae-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.gw-mae-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.gw-mae-card:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.gw-mae-card.temp-max {
+  border-left: 3.5px solid #ef4444;
+}
+
+.gw-mae-card.temp-min {
+  border-left: 3.5px solid #06b6d4;
+}
+
+.gw-mae-card.rain {
+  border-left: 3.5px solid #3b82f6;
+}
+
+.gw-mae-card.humidity {
+  border-left: 3.5px solid #10b981;
+}
+
+.gw-mae-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gw-mae-card-icon {
+  font-size: 1.15rem;
+}
+
+.gw-mae-card-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.gw-mae-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gw-mae-val-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.gw-mae-stat-num {
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.1;
+}
+
+.gw-mae-stat-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.gw-mae-acc-pill {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+}
+
+.gw-mae-acc-pill .acc-lbl {
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #15803d;
+}
+
+.gw-mae-context {
+  font-size: 0.74rem;
+  color: #64748b;
+  line-height: 1.4;
+  padding-top: 4px;
+  border-top: 1px dashed #f1f5f9;
+}
+
+.gw-mae-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.gw-mae-formula {
+  font-size: 0.78rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gw-formula-lbl {
+  font-weight: 700;
+}
+
+.gw-mae-formula code {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-family: var(--font-mono, monospace);
+  border: 1px solid #e2e8f0;
+}
+
+.gw-mae-verified-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #047857;
+}
+
+/* Hourly MAE Extensions */
+.gw-hourly-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gw-hourly-mae-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.gw-hourly-sub-mae {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+/* 7-Day Header and Row MAE Elements */
+.gw-7day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gw-7day-header-mae-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+
+.gw-rain-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  flex-wrap: wrap;
+}
+
+.gw-rain-mae {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+.gw-7day-mae-accuracy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.gw-7day-mae-accuracy .mae-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.gw-7day-mae-accuracy .mae-acc-sub {
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+/* ========================================================= */
+/* FARMER-FRIENDLY SIMPLE ADVISORY CARDS                     */
+/* ========================================================= */
+.gw-farmer-danger-box {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid #f59e0b;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #1e293b;
+}
+
+.gw-farmer-danger-tag {
+  font-weight: 800;
+  color: #b45309;
+}
+
+.gw-farmer-danger-text {
+  font-weight: 500;
+  color: #334155;
+}
+
+.gw-farmer-crops-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+}
+
+.gw-farmer-crops-label {
+  font-weight: 700;
+  color: #15803d;
+}
+
+.gw-farmer-crop-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.gw-farmer-crop-pill {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.gw-farmer-action-box {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  margin-top: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.gw-farmer-action-title {
+  font-size: 0.80rem;
+  font-weight: 800;
+  color: #166534;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.gw-farmer-action-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gw-farmer-action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: #1e293b;
+}
+
+.gw-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.gw-step-text {
+  flex: 1;
+}
+
+/* Empty advisories state */
+.gw-no-advisories-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 20px;
+  background: radial-gradient(circle at 50% 30%, #f8fafc 0%, #ffffff 80%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  margin: 10px 0;
+}
+
+.gw-no-advisories-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.gw-no-advisories-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.gw-no-advisories-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #64748b;
+  max-width: 540px;
+  margin: 0;
+}
+
+/* ========================================================= */
+/* Empty State when Weather Dataset is not uploaded         */
+/* ========================================================= */
+.gw-no-weather-dataset-card {
+  background: radial-gradient(circle at 50% 30%, #f0fdf4 0%, #ffffff 85%);
+  border: 2px dashed #86efac;
+  border-radius: 24px;
+  padding: 56px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(22, 101, 52, 0.05);
+  margin: 16px 0 32px 0;
+}
+
+.gw-no-weather-icon-wrap {
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 2px solid #86efac;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(22, 101, 52, 0.12);
+  margin-bottom: 18px;
+}
+
+.gw-no-weather-icon {
+  font-size: 2.4rem;
+}
+
+.gw-no-weather-title {
+  margin: 0 0 10px 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #14532d;
+}
+
+.gw-no-weather-desc {
+  margin: 0 0 24px 0;
+  max-width: 640px;
+  color: #166534;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.gw-no-weather-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.gw-dev-managed-badge {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(6, 95, 70, 0.08);
+}
+
+
 
 

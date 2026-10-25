@@ -49,9 +49,38 @@ async function initDatabase() {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS weather_data (
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                date_recorded VARCHAR(50) DEFAULT NULL,
+                rainfall DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+                max_temp DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+                min_temp DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+                humidity DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+                wind_speed DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+                source VARCHAR(100) DEFAULT 'upload',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS crop_yield_data (
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                date_recorded VARCHAR(50) DEFAULT NULL,
+                crop_name VARCHAR(100) NOT NULL DEFAULT 'Pechay',
+                crop_yield DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+                unit VARCHAR(20) DEFAULT 'tons/ha',
+                source VARCHAR(100) DEFAULT 'upload',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS agricultural_data (
                 id INT(11) NOT NULL AUTO_INCREMENT,
                 date_recorded VARCHAR(50) DEFAULT NULL,
+                crop_name VARCHAR(100) NOT NULL DEFAULT 'Pechay',
                 rainfall DECIMAL(8,2) NOT NULL DEFAULT 0.00,
                 max_temp DECIMAL(8,2) NOT NULL DEFAULT 0.00,
                 min_temp DECIMAL(8,2) NOT NULL DEFAULT 0.00,
@@ -73,6 +102,12 @@ async function initDatabase() {
                 PRIMARY KEY (id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
+
+        try {
+            await connection.query(`ALTER TABLE agricultural_data ADD COLUMN crop_name VARCHAR(100) NOT NULL DEFAULT 'Pechay' AFTER date_recorded`);
+        } catch (colErr) {
+            // Column already exists or table freshly created
+        }
 
         connection.release();
         return true;

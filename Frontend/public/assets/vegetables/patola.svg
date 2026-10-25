@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="patBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="35%" stop-color="#16a34a"/>
+      <stop offset="75%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <filter id="patShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#patShadow)">
+    <!-- Stem & vine tendril -->
+    <path d="M185 45 Q168 55 158 68" fill="none" stroke="#15803d" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M185 45 Q200 32 195 20" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Slender ridged gourd body -->
+    <path d="M160 68 C135 85 98 125 65 160 C42 185 30 195 25 192 C22 188 32 175 52 148 C90 102 135 72 160 68 Z" fill="url(#patBody)"/>
+
+    <!-- 10 Distinct Longitudinal Sharp Ridges (Characteristic of Philippine Patola) -->
+    <g stroke="#86efac" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8">
+      <path d="M152 75 C128 92 90 132 58 168"/>
+      <path d="M142 80 C118 98 82 138 50 174"/>
+      <path d="M132 88 C108 106 74 145 44 180"/>
+    </g>
+    <g stroke="#052e16" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6">
+      <path d="M156 72 C132 88 94 128 62 165"/>
+      <path d="M146 78 C122 95 86 135 54 171"/>
+    </g>
+
+    <!-- Blossom tip end -->
+    <circle cx="25" cy="192" r="3.5" fill="#ca8a04"/>
+  </g>
+</svg>

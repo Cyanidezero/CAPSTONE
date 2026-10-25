@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { login, signup } from '../services/api';
+import { isFarmerOnlyMode } from '../utils/portalMode';
 import './Login.css';
 
 function Login({ onLoginSuccess }) {
+  const isFarmerOnly = isFarmerOnlyMode();
   const [isDev, setIsDev] = useState(false);
   const [email, setEmail] = useState('farmer@agri.coop');
   const [password, setPassword] = useState('password123');
@@ -25,6 +27,7 @@ function Login({ onLoginSuccess }) {
   });
 
   const toggleMode = (targetIsDev) => {
+    if (isFarmerOnly) return; // Prevent switching to dev when in dedicated farmer mode
     setIsDev(targetIsDev);
     if (targetIsDev) {
       if (email === 'farmer@agri.coop') setEmail('dev@agri.coop');
@@ -42,7 +45,7 @@ function Login({ onLoginSuccess }) {
     }
 
     setLoading(true);
-    const role = isDev ? 'dev' : 'farmer';
+    const role = isFarmerOnly ? 'farmer' : (isDev ? 'dev' : 'farmer');
 
     try {
       // Call backend API
@@ -155,47 +158,49 @@ function Login({ onLoginSuccess }) {
                 {isPeeking ? 'Restore' : 'View BG'}
               </button>
               <span className="account-badge">
-                {isDev ? 'Dev Portal' : 'Farmer Portal'}
+                {isFarmerOnly ? 'Farmer Portal' : (isDev ? 'Dev Portal' : 'Farmer Portal')}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Farmer vs Dev Side Interactive Switch */}
-        <div className="switch-wrapper">
-          <span 
-            className={`switch-label ${!isDev ? 'active-farm' : ''}`}
-            onClick={() => toggleMode(false)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMode(false); }}
-          >
-            🌾 FarmerSide
-          </span>
+        {/* Farmer vs Dev Side Interactive Switch (Only in dual-mode) */}
+        {!isFarmerOnly && (
+          <div className="switch-wrapper">
+            <span 
+              className={`switch-label ${!isDev ? 'active-farm' : ''}`}
+              onClick={() => toggleMode(false)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMode(false); }}
+            >
+              🌾 FarmerSide
+            </span>
 
-          <div 
-            className={`toggle-track ${isDev ? 'is-dev' : ''}`}
-            onClick={() => toggleMode(!isDev)}
-            title="Toggle between Farmer and Dev login modes"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMode(!isDev); }}
-          >
-            <div className="toggle-knob">
-              {isDev ? '💻' : '🌾'}
+            <div 
+              className={`toggle-track ${isDev ? 'is-dev' : ''}`}
+              onClick={() => toggleMode(!isDev)}
+              title="Toggle between Farmer and Dev login modes"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMode(!isDev); }}
+            >
+              <div className="toggle-knob">
+                {isDev ? '💻' : '🌾'}
+              </div>
             </div>
-          </div>
 
-          <span 
-            className={`switch-label ${isDev ? 'active-dev' : ''}`}
-            onClick={() => toggleMode(true)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMode(true); }}
-          >
-            💻 DevSide
-          </span>
-        </div>
+            <span 
+              className={`switch-label ${isDev ? 'active-dev' : ''}`}
+              onClick={() => toggleMode(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMode(true); }}
+            >
+              💻 DevSide
+            </span>
+          </div>
+        )}
 
         {/* Active Panel Form */}
         <div className="panel">

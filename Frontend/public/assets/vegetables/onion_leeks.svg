@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="leekShank" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="35%" stop-color="#e2e8f0"/>
+      <stop offset="65%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+    <filter id="leekShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#leekShadow)">
+    <!-- Thick cylindrical white shank -->
+    <rect x="96" y="105" width="28" height="92" rx="6" fill="url(#leekShank)"/>
+    <!-- Roots -->
+    <g stroke="#cbd5e1" stroke-width="1.8" stroke-linecap="round" fill="none">
+      <path d="M102 198 L98 214"/><path d="M110 198 L110 216"/><path d="M118 198 L122 214"/>
+    </g>
+
+    <!-- Fanning broad V-shaped leek foliage -->
+    <path d="M96 115 C85 85 65 55 45 35 C65 40 85 65 104 95 Z" fill="#15803d"/>
+    <path d="M124 115 C135 85 155 55 175 35 C155 40 135 65 116 95 Z" fill="#15803d"/>
+    <path d="M104 105 C102 75 105 45 110 20 C115 45 118 75 116 105 Z" fill="#166534"/>
+  </g>
+</svg>

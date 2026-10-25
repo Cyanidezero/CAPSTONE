@@ -1,9 +1,8 @@
 import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../utils/apiConfig';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
   timeout: 30000,
 });
 
@@ -56,6 +55,11 @@ export const trainHybrid = async (params = {}) => {
 
 export const predict = async (modelType = 'hybrid', steps = 30) => {
   const res = await api.post('/predict', { modelType, steps });
+  return res.data;
+};
+
+export const getLatestTraining = async () => {
+  const res = await api.get('/training/latest');
   return res.data;
 };
 

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="upoGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f0fdf4"/>
+      <stop offset="35%" stop-color="#bbf7d0"/>
+      <stop offset="75%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </radialGradient>
+    <filter id="upoShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#15803d" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <g filter="url(#upoShadow)">
+    <!-- Vine stem -->
+    <path d="M150 40 Q138 48 130 60" fill="none" stroke="#15803d" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- Bottle Gourd Body (Elongated, wider bottom, smooth waist) -->
+    <path d="M130 60 C120 72 110 88 102 105 C90 125 70 145 55 165 C40 185 52 200 75 198 C105 195 130 175 140 145 C148 120 142 95 135 72 L130 60 Z" fill="url(#upoGrad)"/>
+
+    <!-- Subtle smooth contours & highlight -->
+    <path d="M125 72 C115 95 105 120 85 152 C75 168 65 178 60 175" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+  </g>
+</svg>

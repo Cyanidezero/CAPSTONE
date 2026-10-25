@@ -102,7 +102,12 @@
   flex-direction: column;
   gap: 8px;
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
+}
+
+.auto-model-group {
+  flex: 1.6;
+  min-width: 280px;
 }
 
 .rec-control-group label {
@@ -113,7 +118,6 @@
   color: #2b4d34;
 }
 
-.rec-control-group select,
 .rec-control-group input {
   padding: 12px 16px;
   border-radius: 14px;
@@ -127,11 +131,108 @@
   min-height: 48px;
 }
 
-.rec-control-group select:focus,
 .rec-control-group input:focus {
   border-color: #22c55e;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+/* Automatic Model Basis Status Card */
+.rec-auto-model-badge {
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #c8e2cf;
+  background: #f7fdf9;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.25s ease;
+}
+
+.rec-auto-model-badge.badge-trained {
+  border-color: #86efac;
+  background: linear-gradient(135deg, #f0fdf4 0%, #f4fbf6 100%);
+  box-shadow: 0 3px 10px rgba(34, 197, 94, 0.08);
+}
+
+.rec-auto-model-badge.badge-standby {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.rec-auto-model-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rec-status-indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dot-active {
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+  animation: pulse-green 2s infinite ease-in-out;
+}
+
+.dot-standby {
+  background: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+}
+
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.rec-auto-model-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #12381f;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-auto-model-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #276738;
+  font-weight: 600;
+}
+
+.rec-badge-metric {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.rec-badge-sep {
+  color: #86efac;
+}
+
+.rec-badge-status {
+  background: #dcfce7;
+  color: #14532d;
+  padding: 1px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.rec-badge-waiting {
+  color: #92400e;
+  font-weight: 600;
 }
 
 .btn-rec-generate {
@@ -170,13 +271,113 @@
   padding: 26px;
   border: 1.5px solid #d4e8da;
   box-shadow: 0 6px 18px rgba(25, 60, 30, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.rec-results-card h3 {
+/* Prediction Basis Evidence Banner */
+.rec-prediction-basis-banner {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e8f9ed 100%);
+  border: 1.5px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rec-basis-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-basis-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid #86efac;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.15);
+}
+
+.rec-basis-header h4 {
+  margin: 0 0 3px 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #12381f;
+  letter-spacing: -0.01em;
+}
+
+.rec-basis-header p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #276738;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.rec-basis-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.rec-basis-stat {
+  background: #ffffff;
+  border: 1px solid #c8e8d1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rec-basis-stat .lbl {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #4b6352;
+  letter-spacing: 0.4px;
+}
+
+.rec-basis-stat .val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #12381f;
+}
+
+.rec-basis-stat .val.highlight {
+  color: #166534;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-basis-stat .val.safe {
+  color: #15803d;
+}
+
+.rec-basis-stat .val.danger {
+  color: #b91c1c;
+}
+
+.rec-basis-stat .val.accuracy {
+  color: #047857;
+}
+
+.rec-results-title-row h3 {
   font-size: 1.25rem;
   font-weight: 800;
   color: #12381f;
-  margin: 0 0 18px 0;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -256,12 +457,62 @@
   border: 1px solid #86efac;
 }
 
+/* Prediction Basis Badge inside card */
+.rec-prediction-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #f5fbf7;
+  border: 1px solid #d1fae5;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  color: #166534;
+  line-height: 1.4;
+}
+
+.rec-prediction-badge .icon {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.rec-prediction-badge .text strong {
+  color: #0f381c;
+}
+
 .rec-suggestion-text {
-  font-size: 1rem;
+  font-size: 0.98rem;
   line-height: 1.6;
   color: #1a3822;
   font-weight: 500;
   margin: 0;
+}
+
+/* Action Direct Checklist inside card */
+.rec-action-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f8fafc;
+  border-left: 3px solid #10b981;
+  padding: 8px 12px;
+  border-radius: 0 10px 10px 0;
+  margin-top: 4px;
+}
+
+.rec-action-item .action-tag {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rec-action-item .action-desc {
+  font-size: 0.88rem;
+  color: #1e293b;
+  font-weight: 600;
 }
 
 /* Empty / Prompt State */
@@ -282,7 +533,7 @@
   color: #3b5f44;
   font-size: 1.05rem;
   line-height: 1.5;
-  max-width: 520px;
+  max-width: 540px;
   margin: 0 auto;
 }
 
@@ -370,4 +621,52 @@
   line-height: 1.5;
   font-weight: 500;
   margin: 0;
+}
+
+/* Empty State Card */
+.rec-empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  background: radial-gradient(circle at 50% 30%, #f0fdf4 0%, #ffffff 80%);
+  border: 2px dashed #86efac;
+  border-radius: 24px;
+  margin: 16px 0;
+  box-shadow: 0 8px 24px rgba(22, 101, 52, 0.05);
+}
+
+.rec-empty-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+}
+
+.rec-empty-state-card h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #14532d;
+  margin: 0 0 10px 0;
+}
+
+.rec-empty-state-card p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #166534;
+  max-width: 580px;
+  margin: 0 0 20px 0;
+}
+
+.rec-empty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid #a7f3d0;
 }

@@ -1,33 +1,90 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../utils/apiConfig';
+import { 
+  extractCropsFromDataset, 
+  saveDatasetCrops,
+  clearDatasetCrops 
+} from '../utils/cropDatasetParser';
+import { DevDataManagementLogo, DevHeroBadge } from './DevIcons';
+import './Datamanagement.css';
 
 function DataManagement({ onDataUpload }) {
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
   const [validationReport, setValidationReport] = useState(null);
+  const [activePreviewTab, setActivePreviewTab] = useState('combined'); // 'combined' | 'weather' | 'crops'
 
-  const handleUploadFile = useCallback(async (file) => {
+  // Dedicated Repository State
+  const [datasetsStatus, setDatasetsStatus] = useState({
+    weather: { loaded: false, count: 0, columns: [], preview: [], dateRange: null },
+    crops: { loaded: false, count: 0, columns: [], preview: [], detectedCrops: [], dateRange: null },
+    combined: { loaded: false, count: 0, columns: [], preview: [], readyForTraining: false }
+  });
+
+  const weatherFileInputRef = useRef(null);
+  const cropFileInputRef = useRef(null);
+
+  // Fetch status of both repositories from backend
+  const fetchDatasetsStatus = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/datasets`);
+      if (res.data.success) {
+        setDatasetsStatus({
+          weather: res.data.weather || { loaded: false, count: 0, columns: [], preview: [], dateRange: null },
+          crops: res.data.crops || { loaded: false, count: 0, columns: [], preview: [], detectedCrops: [], dateRange: null },
+          combined: res.data.combined || { loaded: false, count: 0, columns: [], preview: [], readyForTraining: false }
+        });
+      }
+    } catch (err) {
+      console.warn('Could not fetch datasets status:', err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDatasetsStatus();
+  }, [fetchDatasetsStatus]);
+
+  // Core file upload handler with repository targeting
+  const handleUploadFile = useCallback(async (file, targetType = 'auto') => {
+    if (!file) return;
+
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('datasetType', targetType);
 
     setUploading(true);
-    setUploadResult(null);
+
+    // Extract crops directly from file content for client-side caching
+    try {
+      const textContent = await file.text();
+      const detectedCrops = extractCropsFromDataset(textContent, file.name);
+      if (detectedCrops && detectedCrops.length > 0) {
+        saveDatasetCrops(detectedCrops);
+        toast.success(`🌾 Detected ${detectedCrops.length} vegetables in dataset: ${detectedCrops.map(c => c.name).join(', ')}. Synced to Farm Dashboard!`);
+      }
+    } catch (parseErr) {
+      console.warn('Client-side crop parse note:', parseErr);
+    }
 
     try {
       const response = await axios.post(`${API_URL}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        params: {
+          type: targetType
+        }
       });
 
       if (response.data.success) {
-        setUploadResult(response.data);
         setValidationReport(response.data.validationReport);
-        toast.success('Dataset uploaded and validated successfully!');
+        if (response.data.detectedCrops && response.data.detectedCrops.length > 0) {
+          saveDatasetCrops(response.data.detectedCrops);
+        }
+        toast.success(response.data.message || 'Dataset uploaded and saved successfully!');
+        await fetchDatasetsStatus();
         if (onDataUpload) onDataUpload();
       } else {
         const msg = response.data.error || 'Unknown upload error';
@@ -43,105 +100,29 @@ function DataManagement({ onDataUpload }) {
       }
     } finally {
       setUploading(false);
+      if (weatherFileInputRef.current) weatherFileInputRef.current.value = '';
+      if (cropFileInputRef.current) cropFileInputRef.current.value = '';
     }
-  }, [onDataUpload]);
+  }, [onDataUpload, fetchDatasetsStatus]);
 
-  const onDrop = useCallback(async (acceptedFiles) => {
+
+
+  // Weather Dropzone handler
+  const onWeatherDrop = useCallback(async (acceptedFiles) => {
     const file = acceptedFiles[0];
     if (!file) return;
-    await handleUploadFile(file);
+    await handleUploadFile(file, 'weather');
   }, [handleUploadFile]);
 
-  const loadSampleData = async () => {
-    const csvContent = `Date,Rainfall,Max_Temp,Min_Temp,Humidity,Crop_Yield
-2024-01-01,12.5,28.3,22.1,65,4.2
-2024-01-02,8.2,29.1,23.4,58,4.5
-2024-01-03,0.0,31.2,24.8,45,4.8
-2024-01-04,15.8,27.5,21.9,72,3.9
-2024-01-05,5.3,30.4,23.7,55,4.6
-2024-01-06,2.1,32.0,25.1,48,4.9
-2024-01-07,0.0,33.1,25.5,42,5.1
-2024-01-08,18.4,26.8,21.2,78,3.8
-2024-01-09,10.2,28.0,22.5,68,4.3
-2024-01-10,4.5,29.5,23.0,60,4.7
-2024-01-11,0.0,31.8,24.2,50,4.9
-2024-01-12,7.6,28.9,22.8,62,4.4
-2024-01-13,14.1,27.2,21.5,74,4.0
-2024-01-14,3.2,30.1,23.6,56,4.7
-2024-01-15,0.0,32.5,24.9,46,5.0
-2024-01-16,9.5,28.4,22.3,64,4.5
-2024-01-17,16.2,26.9,21.0,76,3.9
-2024-01-18,6.8,29.8,23.2,58,4.6
-2024-01-19,1.5,31.5,24.5,52,4.8
-2024-01-20,0.0,33.0,25.3,44,5.2`;
+  // Crop Yield Dropzone handler
+  const onCropDrop = useCallback(async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    await handleUploadFile(file, 'crops');
+  }, [handleUploadFile]);
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const file = new File([blob], 'sample_agricultural_data.csv', { type: 'text/csv' });
-    await handleUploadFile(file);
-  };
-
-  // Dedicated El Niño Climate Anomaly Dataset (High Heat, Rainfall Deficit, Drought Stress)
-  const loadElNinoData = async () => {
-    const csvContent = `Date,Rainfall,Max_Temp,Min_Temp,Humidity,Crop_Yield,El_Nino_Yield
-2024-03-01,0.0,34.8,26.2,46,2.8,2.7
-2024-03-02,0.0,35.4,26.8,42,2.7,2.6
-2024-03-03,0.0,36.2,27.1,39,2.5,2.4
-2024-03-04,0.0,36.8,27.5,41,2.4,2.3
-2024-03-05,0.0,35.9,26.9,44,2.6,2.5
-2024-03-06,1.2,34.2,26.0,49,2.9,2.8
-2024-03-07,0.0,36.5,27.3,38,2.4,2.3
-2024-03-08,0.0,37.1,27.8,36,2.3,2.2
-2024-03-09,0.0,36.4,27.0,40,2.5,2.4
-2024-03-10,0.0,35.8,26.5,43,2.7,2.6
-2024-03-11,0.5,34.9,26.1,47,2.8,2.7
-2024-03-12,0.0,36.7,27.4,39,2.4,2.3
-2024-03-13,0.0,37.3,28.0,35,2.2,2.1
-2024-03-14,0.0,36.9,27.6,38,2.4,2.3
-2024-03-15,0.0,35.7,26.7,42,2.6,2.5
-2024-03-16,0.0,36.1,27.0,40,2.5,2.4
-2024-03-17,0.8,34.5,26.2,48,2.8,2.7
-2024-03-18,0.0,36.8,27.5,39,2.4,2.3
-2024-03-19,0.0,37.4,28.1,36,2.2,2.1
-2024-03-20,0.0,36.2,27.2,41,2.5,2.4`;
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const file = new File([blob], 'el_nino_drought_stress_data.csv', { type: 'text/csv' });
-    await handleUploadFile(file);
-    toast.info('☀️ El Niño Climate Anomaly Dataset loaded: Low rainfall (-48%), high heat index (35–37°C), severe drought stress.');
-  };
-
-  // Dedicated La Niña Extreme Precipitation Dataset (Monsoon Surges, Soil Saturation, Flood Stress)
-  const loadLaNinaData = async () => {
-    const csvContent = `Date,Rainfall,Max_Temp,Min_Temp,Humidity,Crop_Yield,La_Nina_Yield
-2024-08-01,42.5,28.1,23.5,89,3.4,3.2
-2024-08-02,68.0,27.4,23.0,94,3.1,2.9
-2024-08-03,85.2,26.8,22.8,96,2.8,2.7
-2024-08-04,54.6,27.6,23.2,92,3.2,3.0
-2024-08-05,92.4,26.5,22.5,98,2.7,2.5
-2024-08-06,78.1,27.0,22.9,95,2.9,2.8
-2024-08-07,38.2,28.5,23.8,88,3.5,3.3
-2024-08-08,64.7,27.2,23.1,93,3.0,2.9
-2024-08-09,112.5,25.9,22.1,99,2.5,2.4
-2024-08-10,88.0,26.6,22.6,97,2.7,2.6
-2024-08-11,45.3,28.0,23.4,90,3.3,3.1
-2024-08-12,58.9,27.5,23.0,92,3.1,2.9
-2024-08-13,76.4,26.9,22.7,95,2.9,2.8
-2024-08-14,95.0,26.2,22.3,98,2.6,2.5
-2024-08-15,62.1,27.3,23.1,93,3.0,2.9
-2024-08-16,35.4,28.7,24.0,87,3.6,3.4
-2024-08-17,82.8,26.7,22.6,96,2.8,2.7
-2024-08-18,104.2,26.0,22.2,99,2.5,2.4
-2024-08-19,69.5,27.1,22.9,94,3.0,2.9
-2024-08-20,48.0,27.9,23.3,91,3.3,3.1`;
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const file = new File([blob], 'la_nina_monsoon_deluge_data.csv', { type: 'text/csv' });
-    await handleUploadFile(file);
-    toast.info('🌧️ La Niña Extreme Monsoon Dataset loaded: Heavy rainfall (+64%), high humidity (90–99%), soil saturation stress.');
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+  const { getRootProps: getWeatherRootProps, getInputProps: getWeatherInputProps, isDragActive: isWeatherDragActive } = useDropzone({
+    onDrop: onWeatherDrop,
     accept: {
       'text/csv': ['.csv'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
@@ -151,150 +132,598 @@ function DataManagement({ onDataUpload }) {
     multiple: false
   });
 
+  const { getRootProps: getCropRootProps, getInputProps: getCropInputProps, isDragActive: isCropDragActive } = useDropzone({
+    onDrop: onCropDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
+    },
+    maxSize: 16 * 1024 * 1024,
+    multiple: false
+  });
+
+  // Action: Input Crop Yield Dataset Preset (Replaced Baseline Climatology!)
+  const handleInputCropYieldPreset = async () => {
+    setUploading(true);
+    try {
+      const response = await axios.post(`${API_URL}/datasets/preset/crops`);
+      if (response.data.success) {
+        toast.success(response.data.message || '🌾 Crop yield dataset loaded! Weather dataset was preserved.');
+        if (response.data.detectedCrops && response.data.detectedCrops.length > 0) {
+          saveDatasetCrops(response.data.detectedCrops);
+        }
+        await fetchDatasetsStatus();
+        if (onDataUpload) onDataUpload();
+      }
+    } catch (err) {
+      toast.error('Failed to load crop yield dataset: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Action: Load Weather Scenario (El Niño)
+  const handleLoadElNinoWeather = async () => {
+    setUploading(true);
+    try {
+      const response = await axios.post(`${API_URL}/datasets/preset/weather`, { scenario: 'elnino' });
+      if (response.data.success) {
+        toast.info(response.data.message || '☀️ El Niño weather scenario loaded! Existing crop yields were preserved.');
+        await fetchDatasetsStatus();
+        if (onDataUpload) onDataUpload();
+      }
+    } catch (err) {
+      toast.error('Failed to load El Niño scenario: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Action: Load Weather Scenario (La Niña)
+  const handleLoadLaNinaWeather = async () => {
+    setUploading(true);
+    try {
+      const response = await axios.post(`${API_URL}/datasets/preset/weather`, { scenario: 'lanina' });
+      if (response.data.success) {
+        toast.info(response.data.message || '🌧️ La Niña monsoon scenario loaded! Existing crop yields were preserved.');
+        await fetchDatasetsStatus();
+        if (onDataUpload) onDataUpload();
+      }
+    } catch (err) {
+      toast.error('Failed to load La Niña scenario: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Action: Clear Dataset Repository
+  const handleClearRepository = async (type) => {
+    const label = type === 'weather' ? 'Weather records' : type === 'crops' ? 'Crop yield records' : 'All datasets';
+    const note = type === 'weather' ? 'Crop yield records will NOT be deleted.' : type === 'crops' ? 'Weather records will NOT be deleted.' : '';
+    if (!window.confirm(`Are you sure you want to clear ${label}? ${note}`)) {
+      return;
+    }
+    try {
+      const res = await axios.post(`${API_URL}/datasets/clear`, { type });
+      if (res.data.success) {
+        toast.info(res.data.message);
+
+        // Instantly synchronize and clear Farmer side state
+        if (type === 'crops' || type === 'all') {
+          clearDatasetCrops();
+          try {
+            localStorage.removeItem('climayield_custom_crops');
+            localStorage.removeItem('climayield_crop_model_trained');
+          } catch {}
+          window.dispatchEvent(new CustomEvent('cropDatasetUpdated', { detail: [] }));
+          window.dispatchEvent(new CustomEvent('cropModelTrainedUpdated', { detail: { trained: false } }));
+        }
+
+        if (type === 'weather' || type === 'all') {
+          try {
+            localStorage.removeItem('climayield_ai_forecasts');
+            localStorage.removeItem('climayield_latest_training');
+            localStorage.removeItem('climayield_lstm_trained');
+          } catch {}
+          window.dispatchEvent(new CustomEvent('aiTrainingCompleted', { detail: null }));
+          window.dispatchEvent(new CustomEvent('lstmTrainingUpdated', { detail: { trained: false } }));
+        }
+
+        await fetchDatasetsStatus();
+        if (onDataUpload) onDataUpload();
+      }
+    } catch (err) {
+      toast.error('Failed to clear dataset: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  // Determine current active preview data based on selected tab
+  const getActivePreviewData = () => {
+    if (activePreviewTab === 'weather') {
+      return {
+        columns: datasetsStatus.weather.columns,
+        rows: datasetsStatus.weather.preview,
+        totalRows: datasetsStatus.weather.count,
+        title: '🌦️ Weather Dataset Repository'
+      };
+    } else if (activePreviewTab === 'crops') {
+      return {
+        columns: datasetsStatus.crops.columns,
+        rows: datasetsStatus.crops.preview,
+        totalRows: datasetsStatus.crops.count,
+        title: '🌾 Crop Yield Dataset Repository'
+      };
+    }
+    // Combined / Synchronized Matrix
+    return {
+      columns: datasetsStatus.combined.columns,
+      rows: datasetsStatus.combined.preview,
+      totalRows: datasetsStatus.combined.count,
+      title: '⚡ Synchronized Agro-Climatic Intelligence Matrix (Joined by Date)'
+    };
+  };
+
+  const previewInfo = getActivePreviewData();
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2>📁 Data Management <span style={{ fontSize: '0.85rem', color: '#166534', background: '#dcfce7', padding: '3px 10px', borderRadius: '12px', fontWeight: '700' }}>Developer Tool</span></h2>
-          <p style={{ color: '#7f8c8d', marginBottom: '16px' }}>
-            Upload real-time weather and crop yield datasets in CSV or Excel format. Dev-only climate scenario presets are provided below.
+    <div className="dm-container">
+      {/* Hidden File Inputs for Direct Repository Uploads */}
+      <input 
+        type="file" 
+        ref={weatherFileInputRef} 
+        style={{ display: 'none' }} 
+        accept=".csv,.xlsx,.xls"
+        onChange={(e) => {
+          if (e.target.files?.[0]) handleUploadFile(e.target.files[0], 'weather');
+        }}
+      />
+      <input 
+        type="file" 
+        ref={cropFileInputRef} 
+        style={{ display: 'none' }} 
+        accept=".csv,.xlsx,.xls"
+        onChange={(e) => {
+          if (e.target.files?.[0]) handleUploadFile(e.target.files[0], 'crops');
+        }}
+      />
+
+      {/* Dev Hero Banner */}
+      <div className="dm-hero-banner">
+        <div className="dm-hero-text">
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <DevHeroBadge gradient="emerald">
+              <DevDataManagementLogo size={24} isActive={false} />
+            </DevHeroBadge>
+            <span>Dual Dataset Repositories &amp; Climatology Engine</span>
+            <span className="dm-badge-dev">Independent Storage</span>
+          </h2>
+          <p>
+            Upload and store <strong>Weather Datasets</strong> and <strong>Crop Yield Datasets</strong> separately. Uploading crops will <em>never overwrite</em> existing weather data, and uploading weather will preserve your crop yields. Both datasets are automatically joined by date for AI model training.
           </p>
         </div>
+      </div>
 
-        {/* Dataset Preset Buttons (Baseline, El Niño, La Niña) */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button 
-            type="button"
-            className="btn-secondary" 
-            onClick={loadSampleData}
-            disabled={uploading}
-            style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.84rem' }}
-            title="Load standard climatology dataset"
-          >
-            📁 Baseline Data
-          </button>
-          <button 
-            type="button"
-            className="btn-secondary" 
-            onClick={loadElNinoData}
-            disabled={uploading}
-            style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.84rem', background: '#fffbeb', borderColor: '#fde68a', color: '#b45309', fontWeight: '700' }}
-            title="Load El Niño high heat index & drought stress dataset"
-          >
-            ☀️ Load El Niño Data
-          </button>
-          <button 
-            type="button"
-            className="btn-secondary" 
-            onClick={loadLaNinaData}
-            disabled={uploading}
-            style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.84rem', background: '#f0f9ff', borderColor: '#bae6fd', color: '#0369a1', fontWeight: '700' }}
-            title="Load La Niña extreme precipitation & flood surge dataset"
-          >
-            🌧️ Load La Niña Data
-          </button>
+      {/* SEPARATE DATASET STORAGE HUBS (Weather Bay & Crop Bay) */}
+      <div className="dm-repo-section">
+        <div className="dm-section-title">
+          <span>🗄️</span>
+          <span>Dedicated Dataset Storage Hub (Separate Storage Places)</span>
+        </div>
+
+        <div className="dm-repo-grid">
+          {/* Storage Bay 1: Weather Dataset Storage */}
+          <div className="dm-repo-card weather-bay">
+            <div className="dm-repo-header">
+              <div className="dm-repo-title-group">
+                <span className="dm-repo-icon">🌦️</span>
+                <div>
+                  <h3 className="dm-repo-title">Weather Dataset Storage</h3>
+                  <span className="dm-repo-subtitle">MySQL table: <code>weather_data</code></span>
+                </div>
+              </div>
+              <span className={`dm-status-pill ${datasetsStatus.weather.loaded ? 'active' : 'empty'}`}>
+                {datasetsStatus.weather.loaded 
+                  ? `🟢 ${datasetsStatus.weather.count} Records Stored` 
+                  : '⚪ Empty / Awaiting Data'}
+              </span>
+            </div>
+
+            <p className="dm-repo-desc">
+              Stores agro-meteorological observations: Rainfall (mm), Max Temp (°C), Min Temp (°C), Relative Humidity (%), and Wind Speed.
+            </p>
+
+            <div className="dm-repo-meta">
+              <div className="dm-meta-item">
+                <span className="dm-meta-label">Date Range:</span>
+                <span className="dm-meta-value">
+                  {datasetsStatus.weather.dateRange 
+                    ? `${datasetsStatus.weather.dateRange.start} → ${datasetsStatus.weather.dateRange.end}` 
+                    : 'No weather records'}
+                </span>
+              </div>
+              <div className="dm-meta-item">
+                <span className="dm-meta-label">Variables:</span>
+                <span className="dm-meta-value">Rainfall, TMax, TMin, Humidity, Wind</span>
+              </div>
+            </div>
+
+            {/* Weather Dropzone */}
+            <div {...getWeatherRootProps()} className={`dm-mini-dropzone ${isWeatherDragActive ? 'dragging' : ''}`}>
+              <input {...getWeatherInputProps()} />
+              <div className="dm-mini-dropzone-content">
+                <span className="dm-mini-icon">📥</span>
+                <div>
+                  <strong>Drop Weather CSV/Excel here</strong> or click to browse
+                  <p className="dm-mini-hint">Saves directly to Weather Storage without touching crops</p>
+                </div>
+              </div>
+            </div>
+
+            {datasetsStatus.weather.loaded && (
+              <div className="dm-repo-actions">
+                <button 
+                  type="button" 
+                  className="dm-btn-clear"
+                  style={{ width: '100%' }}
+                  onClick={() => handleClearRepository('weather')}
+                  disabled={uploading}
+                  title="Clear only weather records"
+                >
+                  <span>🗑️</span> Clear Weather Records
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Storage Bay 2: Crop Yield Dataset Storage */}
+          <div className="dm-repo-card crops-bay">
+            <div className="dm-repo-header">
+              <div className="dm-repo-title-group">
+                <span className="dm-repo-icon">🌾</span>
+                <div>
+                  <h3 className="dm-repo-title">Crop Yield Dataset Storage</h3>
+                  <span className="dm-repo-subtitle">MySQL table: <code>crop_yield_data</code></span>
+                </div>
+              </div>
+              <span className={`dm-status-pill ${datasetsStatus.crops.loaded ? 'active' : 'empty'}`}>
+                {datasetsStatus.crops.loaded 
+                  ? `🟢 ${datasetsStatus.crops.count} Records Stored` 
+                  : '⚪ Empty / Awaiting Data'}
+              </span>
+            </div>
+
+            <p className="dm-repo-desc">
+              Stores historical crop harvest yields (tons/ha), vegetable cultivars, and field production logs across Quezon City urban farms.
+            </p>
+
+            <div className="dm-repo-meta">
+              <div className="dm-meta-item">
+                <span className="dm-meta-label">Date Range:</span>
+                <span className="dm-meta-value">
+                  {datasetsStatus.crops.dateRange 
+                    ? `${datasetsStatus.crops.dateRange.start} → ${datasetsStatus.crops.dateRange.end}` 
+                    : 'No crop records'}
+                </span>
+              </div>
+              <div className="dm-meta-item">
+                <span className="dm-meta-label">Detected Vegetables:</span>
+                <span className="dm-meta-value">
+                  {datasetsStatus.crops.detectedCrops?.length > 0
+                    ? `${datasetsStatus.crops.detectedCrops.length} varieties identified`
+                    : 'Pechay, Mustard Greens, Tomato, etc.'}
+                </span>
+              </div>
+            </div>
+
+            {/* Detected Vegetable Chips */}
+            {datasetsStatus.crops.detectedCrops?.length > 0 && (
+              <div className="dm-crops-chip-row">
+                {datasetsStatus.crops.detectedCrops.map(c => (
+                  <span key={c.id || c.name} className="dm-crop-badge-chip">
+                    {c.icon || '🥬'} {c.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Crop Yield Dropzone */}
+            <div {...getCropRootProps()} className={`dm-mini-dropzone ${isCropDragActive ? 'dragging' : ''}`}>
+              <input {...getCropInputProps()} />
+              <div className="dm-mini-dropzone-content">
+                <span className="dm-mini-icon">📥</span>
+                <div>
+                  <strong>Drop Crop Yield CSV/Excel here</strong> or click to browse
+                  <p className="dm-mini-hint">Saves directly to Crop Storage without touching weather</p>
+                </div>
+              </div>
+            </div>
+
+            {datasetsStatus.crops.loaded && (
+              <div className="dm-repo-actions">
+                <button 
+                  type="button" 
+                  className="dm-btn-clear"
+                  style={{ width: '100%' }}
+                  onClick={() => handleClearRepository('crops')}
+                  disabled={uploading}
+                  title="Clear only crop yield records"
+                >
+                  <span>🗑️</span> Clear Crop Yields
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'dragging' : ''}`}>
-        <input {...getInputProps()} />
-        {isDragActive ? (
-          <p>Drop the files here ...</p>
-        ) : (
-          <div>
-            <p style={{ fontSize: '3rem', marginBottom: '10px' }}>📤</p>
-            <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-              Drag & drop your dataset here
-            </p>
-            <p style={{ color: '#7f8c8d' }}>
-              or click to browse (CSV, XLSX, XLS)
-            </p>
-            <p style={{ color: '#95a5a6', fontSize: '0.8rem', marginTop: '10px' }}>
-              Max file size: 16MB · Expected: Rainfall, Max_Temp, Min_Temp, Humidity, Crop_Yield
-            </p>
+      {/* SYNCHRONIZATION STATUS BANNER */}
+      <div className="dm-sync-banner">
+        <div className="dm-sync-content">
+          <div className="dm-sync-badge">
+            <span className="dm-sync-icon">⚡</span>
+            <span>AI Synchronization Status:</span>
           </div>
-        )}
+          <div className="dm-sync-details">
+            {datasetsStatus.weather.loaded && datasetsStatus.crops.loaded ? (
+              <span className="dm-sync-ready">
+                ✅ <strong>Fully Synchronized &amp; Linked:</strong> {datasetsStatus.combined.count} aligned records ready for SARIMA, LSTM, and Hybrid model training.
+              </span>
+            ) : datasetsStatus.weather.loaded ? (
+              <span className="dm-sync-partial">
+                🌦️ <strong>Weather Data Active ({datasetsStatus.weather.count} records):</strong> Input crop yield records below to train yield models with full weather context.
+              </span>
+            ) : datasetsStatus.crops.loaded ? (
+              <span className="dm-sync-partial">
+                🌾 <strong>Crop Yields Active ({datasetsStatus.crops.count} records):</strong> Upload weather records to give machine learning models climate features.
+              </span>
+            ) : (
+              <span className="dm-sync-empty">
+                ⚪ <strong>Awaiting Datasets:</strong> Upload weather records and crop yield records into their respective storage places or load the calibrated presets below.
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* Climate & Crop Scenario Presets Grid */}
+      <div className="dm-scenarios-section">
+        <div className="dm-section-title">
+          <span>🔬</span>
+          <span>Calibrated Agricultural &amp; Climate Presets</span>
+        </div>
+
+        <div className="dm-scenarios-grid">
+          {/* Card 1: INPUT CROP YIELD DATASETS (Transformed from Baseline Climatology) */}
+          <div className="dm-scenario-card cropyield-preset">
+            <div>
+              <div className="dm-scenario-header">
+                <div className="dm-scenario-icon crop-icon">🌾</div>
+                <div className="dm-scenario-info">
+                  <h4>Input Crop Yield Datasets</h4>
+                  <span className="dm-scenario-tag crop-tag">CROP YIELDS &amp; HARVESTS</span>
+                </div>
+              </div>
+              <p className="dm-scenario-desc" style={{ marginTop: '10px' }}>
+                Standard historical urban agricultural records for Quezon City farms. Features calibrated multi-vegetable yield records (tons/ha) for Pechay, Mustard Greens, Water Spinach, Tomato, Cucumber, String Beans, Eggplant, and Chili. Stored safely in Crop Storage without touching weather data.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+              <button
+                type="button"
+                className="dm-scenario-btn cropyield-btn"
+                onClick={handleInputCropYieldPreset}
+                disabled={uploading}
+              >
+                <span>🌾</span> Input Crop Yield Dataset
+              </button>
+              <button
+                type="button"
+                className="dm-scenario-sub-btn"
+                onClick={() => cropFileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <span>📂</span> Upload Custom Crop File
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: El Niño Weather Scenario */}
+          <div className="dm-scenario-card elnino">
+            <div>
+              <div className="dm-scenario-header">
+                <div className="dm-scenario-icon">☀️</div>
+                <div className="dm-scenario-info">
+                  <h4>El Niño Drought Stress</h4>
+                  <span className="dm-scenario-tag">Warm Phase (Weather)</span>
+                </div>
+              </div>
+              <p className="dm-scenario-desc" style={{ marginTop: '10px' }}>
+                Simulates severe dry spell conditions: prolonged heat index spikes (35–37°C), low precipitation (-48%), and root moisture deficit stress. Loads into Weather Storage; existing crop yields are preserved.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="dm-scenario-btn"
+              onClick={handleLoadElNinoWeather}
+              disabled={uploading}
+            >
+              <span>☀️</span> Load El Niño Weather
+            </button>
+          </div>
+
+          {/* Card 3: La Niña Weather Scenario */}
+          <div className="dm-scenario-card lanina">
+            <div>
+              <div className="dm-scenario-header">
+                <div className="dm-scenario-icon">🌧️</div>
+                <div className="dm-scenario-info">
+                  <h4>La Niña Monsoon Deluge</h4>
+                  <span className="dm-scenario-tag">Cold Phase (Weather)</span>
+                </div>
+              </div>
+              <p className="dm-scenario-desc" style={{ marginTop: '10px' }}>
+                Simulates extreme monsoon surges: heavy daily downpours (up to 112 mm), elevated relative humidity (90–99%), and soil waterlogging pressure. Loads into Weather Storage; existing crop yields are preserved.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="dm-scenario-btn"
+              onClick={handleLoadLaNinaWeather}
+              disabled={uploading}
+            >
+              <span>🌧️</span> Load La Niña Weather
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+
+      {/* Loading state indicator */}
       {uploading && (
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <p>Uploading and validating dataset with backend...</p>
+        <div className="dm-loading-box">
           <div className="loading-spinner">⏳</div>
+          <span>Processing, cleaning, and storing dataset in MySQL repository...</span>
         </div>
       )}
 
+      {/* Validation Report */}
       {validationReport && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>📋 Validation Report</h3>
-          <div className="card">
-            {validationReport.warnings && validationReport.warnings.length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                <h4 style={{ color: '#e67e22' }}>ℹ️ Observations & Warnings</h4>
-                <ul>
-                  {validationReport.warnings.map((warning, idx) => (
-                    <li key={idx} style={{ marginTop: '4px' }}>{warning}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {Object.keys(validationReport.missingValues || {}).length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                <h4 style={{ color: '#e74c3c' }}>🔍 Missing Values (Imputed with Column Means)</h4>
-                <ul>
-                  {Object.entries(validationReport.missingValues).map(([col, count]) => (
-                    <li key={col}>{col}: {count} missing values</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {validationReport.duplicates > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                <h4 style={{ color: '#e67e22' }}>🔄 Duplicates Handled</h4>
-                <p>Found and cleaned {validationReport.duplicates} duplicate rows</p>
-              </div>
-            )}
-
+        <div className="dm-report-card">
+          <div className="dm-report-header">
+            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📋</span> Data Quality &amp; Validation Report
+            </h3>
             {validationReport.isValid && (
-              <div style={{ color: '#27ae60', fontWeight: '600', marginTop: '5px' }}>
-                ✅ Dataset passed validation & successfully saved to backend
-              </div>
+              <span className="dm-report-status-badge">
+                ✅ Schema Verified &amp; Stored
+              </span>
             )}
           </div>
+
+          {validationReport.warnings && validationReport.warnings.length > 0 && (
+            <div style={{
+              background: 'rgba(245, 158, 11, 0.12)',
+              border: '1px solid rgba(251, 191, 36, 0.4)',
+              borderRadius: 'var(--radius-md)',
+              padding: '12px 16px',
+              marginBottom: '12px',
+              color: '#fbbf24',
+              fontSize: '0.88rem'
+            }}>
+              <strong style={{ color: '#fef3c7' }}>⚠️ Observations &amp; Warnings:</strong>
+              <ul style={{ margin: '6px 0 0 18px', color: '#fde68a' }}>
+                {validationReport.warnings.map((warning, idx) => (
+                  <li key={idx}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {Object.keys(validationReport.missingValues || {}).length > 0 && (
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(248, 113, 113, 0.4)',
+              borderRadius: 'var(--radius-md)',
+              padding: '12px 16px',
+              marginBottom: '12px',
+              color: '#f87171',
+              fontSize: '0.88rem'
+            }}>
+              <strong style={{ color: '#fee2e2' }}>🔍 Missing Values Handled (Imputed via Column Mean):</strong>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                {Object.entries(validationReport.missingValues).map(([col, count]) => (
+                  <span key={col} style={{ background: 'rgba(239, 68, 68, 0.25)', color: '#fecaca', border: '1px solid rgba(248, 113, 113, 0.35)', padding: '2px 8px', borderRadius: '6px', fontWeight: '600', fontSize: '0.8rem' }}>
+                    {col}: {count} imputed
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {validationReport.duplicates > 0 && (
+            <div style={{ fontSize: '0.88rem', color: '#38bdf8', marginTop: '6px' }}>
+              🔄 Deduplication: Cleaned {validationReport.duplicates} duplicate rows.
+            </div>
+          )}
         </div>
       )}
 
-      {uploadResult && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>📊 Dataset Preview ({uploadResult.shape?.rows} rows × {uploadResult.shape?.columns} columns)</h3>
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  {uploadResult.columns?.slice(0, 8).map(col => (
-                    <th key={col}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {uploadResult.preview?.slice(0, 10).map((row, idx) => (
-                  <tr key={idx}>
-                    {uploadResult.columns?.slice(0, 8).map(col => (
-                      <td key={col}>
-                        {row[col] !== undefined && row[col] !== null 
-                          ? String(row[col]).substring(0, 15) 
-                          : '-'}
-                      </td>
+      {/* DATASET REPOSITORY PREVIEW & TABS */}
+      {(datasetsStatus.weather.count > 0 || datasetsStatus.crops.count > 0 || datasetsStatus.combined.count > 0) && (
+        <div className="dm-preview-card">
+          <div className="dm-preview-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📊</span> {previewInfo.title}
+              </h3>
+              <span className="dm-shape-badge">
+                {previewInfo.totalRows} records stored
+              </span>
+            </div>
+
+            {/* View Switcher Tabs */}
+            <div className="dm-tab-group">
+              <button 
+                type="button"
+                className={`dm-tab-btn ${activePreviewTab === 'combined' ? 'active' : ''}`}
+                onClick={() => setActivePreviewTab('combined')}
+              >
+                <span>⚡</span> Unified Matrix ({datasetsStatus.combined.count})
+              </button>
+              <button 
+                type="button"
+                className={`dm-tab-btn ${activePreviewTab === 'weather' ? 'active' : ''}`}
+                onClick={() => setActivePreviewTab('weather')}
+              >
+                <span>🌦️</span> Weather Repository ({datasetsStatus.weather.count})
+              </button>
+              <button 
+                type="button"
+                className={`dm-tab-btn ${activePreviewTab === 'crops' ? 'active' : ''}`}
+                onClick={() => setActivePreviewTab('crops')}
+              >
+                <span>🌾</span> Crop Yields Repository ({datasetsStatus.crops.count})
+              </button>
+            </div>
+          </div>
+
+          {previewInfo.rows && previewInfo.rows.length > 0 ? (
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    {previewInfo.columns?.slice(0, 8).map(col => (
+                      <th key={col}>{col}</th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <p style={{ marginTop: '10px', color: '#7f8c8d' }}>
-              Showing first {Math.min(10, uploadResult.preview?.length || 0)} rows
-            </p>
-          </div>
+                </thead>
+                <tbody>
+                  {previewInfo.rows.slice(0, 10).map((row, idx) => (
+                    <tr key={idx}>
+                      {previewInfo.columns?.slice(0, 8).map(col => (
+                        <td key={col} style={{ fontFamily: typeof row[col] === 'number' ? 'var(--font-mono)' : 'inherit', color: '#e2e8f0' }}>
+                          {row[col] !== undefined && row[col] !== null 
+                            ? String(row[col]).substring(0, 22) 
+                            : '-'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="dm-empty-preview">
+              <p>No records stored in this repository yet. Upload a dataset or load a preset above.</p>
+            </div>
+          )}
+
+          <p style={{ marginTop: '12px', color: '#94a3b8', fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span>Showing sample preview rows. All stored data is persisted in XAMPP MySQL.</span>
+            <span style={{ color: '#38bdf8', fontWeight: 600 }}>Active in AI Training Pipeline</span>
+          </p>
         </div>
       )}
     </div>

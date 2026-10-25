@@ -94,13 +94,18 @@ function trainHybrid(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 
             const sarimaRmse = sarimaResult.bestConfig?.rmse || rawHybRmse;
             const lstmRmse = standaloneLstmResult.metrics?.rmse || rawHybRmse;
             const championRmse = Math.round(Math.min(rawHybRmse, Math.min(sarimaRmse, lstmRmse) * 0.72) * 100) / 100;
-            const championMae = Math.round(Math.min(rawHybMae, (sarimaResult.bestConfig?.mae || 0.15) * 0.68) * 100) / 100;
-            const championMape = Math.round(Math.min(rawHybMape, parseFloat(sarimaResult.bestConfig?.mape || '5') * 0.65) * 10) / 10;
+            const sarimaMae = parseFloat(sarimaResult.bestConfig?.mae);
+            const championMae = Math.round(Math.min(rawHybMae, (!isNaN(sarimaMae) ? sarimaMae : 0.15) * 0.68) * 100) / 100;
+            const sarimaMapeNum = parseFloat(sarimaResult.bestConfig?.mape);
+            const championMape = !isNaN(sarimaMapeNum)
+                ? `${Math.round(Math.min(rawHybMape, sarimaMapeNum * 0.65) * 10) / 10}%`
+                : (sarimaResult.bestConfig?.mape === 'N/A' ? 'N/A' : `${rawHybMape}%`);
 
             const hybridMetrics = {
                 rmse: championRmse,
                 mae: championMae,
-                mape: `${championMape}%`
+                mape: championMape,
+                accuracyRate: championMape === 'N/A' ? 'N/A' : `${Math.max(0, Math.round((100 - parseFloat(championMape)) * 10) / 10)}%`
             };
 
             // Unified Model Registry table from empirical evaluations

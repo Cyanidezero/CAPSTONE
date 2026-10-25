@@ -1,0 +1,368 @@
+/* ========================================================= */
+/* 📲 PWA BROWSER DOWNLOAD & INSTALL PROMPT MODAL            */
+/* ========================================================= */
+.pwa-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+  animation: pwaFadeIn 0.25s ease-out;
+}
+
+@keyframes pwaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.pwa-modal-card {
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(22, 101, 52, 0.12);
+  width: 100%;
+  max-width: 440px;
+  padding: 28px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: pwaSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pwaSlideUp {
+  from { transform: translateY(24px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.theme-dev .pwa-modal-card {
+  background: #0f172a;
+  color: #f8fafc;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(6, 182, 212, 0.25);
+}
+
+/* Downloading View */
+.pwa-download-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.pwa-download-icon-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.pwa-download-spinner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid #e2e8f0;
+  border-top-color: #16a34a;
+  animation: pwaSpin 1s linear infinite;
+}
+
+.theme-dev .pwa-download-spinner {
+  border-color: #1e293b;
+  border-top-color: #06b6d4;
+}
+
+@keyframes pwaSpin {
+  to { transform: rotate(360deg); }
+}
+
+.pwa-download-icon {
+  font-size: 2rem;
+  z-index: 2;
+}
+
+.pwa-download-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.theme-dev .pwa-download-title {
+  color: #f8fafc;
+}
+
+.pwa-download-desc {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  min-height: 40px;
+  line-height: 1.45;
+}
+
+.theme-dev .pwa-download-desc {
+  color: #94a3b8;
+}
+
+.pwa-progress-track {
+  width: 100%;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+  position: relative;
+}
+
+.theme-dev .pwa-progress-track {
+  background: #1e293b;
+}
+
+.pwa-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  border-radius: 10px;
+  transition: width 0.18s ease-out;
+}
+
+.theme-dev .pwa-progress-fill {
+  background: linear-gradient(90deg, #0284c7, #06b6d4);
+}
+
+.pwa-progress-label {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #15803d;
+  font-family: var(--font-mono, monospace);
+  margin-top: 4px;
+}
+
+.theme-dev .pwa-progress-label {
+  color: #38bdf8;
+}
+
+/* Prompt View */
+.pwa-prompt-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pwa-app-badge-icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #14532d 0%, #15803d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px -5px rgba(21, 128, 61, 0.4);
+  margin-bottom: 4px;
+}
+
+.theme-dev .pwa-app-badge-icon {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4);
+}
+
+.pwa-icon-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.3) 0%, transparent 70%);
+  z-index: 1;
+}
+
+.theme-dev .pwa-icon-glow {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.3) 0%, transparent 70%);
+}
+
+.pwa-icon-emoji {
+  font-size: 2.2rem;
+  z-index: 2;
+}
+
+.pwa-prompt-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.pwa-brand-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.theme-dev .pwa-brand-name {
+  color: #38bdf8;
+}
+
+.pwa-brand-sub {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.theme-dev .pwa-brand-sub {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.pwa-prompt-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.theme-dev .pwa-prompt-title {
+  color: #f8fafc;
+}
+
+.pwa-prompt-desc {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.theme-dev .pwa-prompt-desc {
+  color: #94a3b8;
+}
+
+.pwa-features-list {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 16px 0;
+  text-align: left;
+}
+
+.theme-dev .pwa-features-list {
+  background: #131d35;
+  border-color: #1e293b;
+}
+
+.pwa-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.theme-dev .pwa-feature-item {
+  color: #cbd5e1;
+}
+
+.pwa-feat-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.theme-dev .pwa-feat-check {
+  background: #083344;
+  color: #38bdf8;
+}
+
+.pwa-prompt-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pwa-btn-cancel {
+  flex: 1;
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pwa-btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.theme-dev .pwa-btn-cancel {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.theme-dev .pwa-btn-cancel:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.pwa-btn-confirm {
+  flex: 1.4;
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(22, 101, 52, 0.35);
+  transition: all 0.2s;
+}
+
+.pwa-btn-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 101, 52, 0.45);
+}
+
+.theme-dev .pwa-btn-confirm {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+  color: #030712;
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+}
+
+.theme-dev .pwa-btn-confirm:hover {
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.45);
+}

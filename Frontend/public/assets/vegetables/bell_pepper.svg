@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bellGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="40%" stop-color="#ef4444"/>
+      <stop offset="80%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </radialGradient>
+    <linearGradient id="bellStem" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <filter id="bellShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#991b1b" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#bellShadow)">
+    <!-- Stout green stem -->
+    <path d="M110 65 C108 45 115 25 125 22 C128 22 126 35 120 50 L118 65 Z" fill="url(#bellStem)"/>
+    <!-- Calyx star lobes -->
+    <polygon points="110,65 100,60 102,70 92,72 102,78 100,88 110,80 120,88 118,78 128,72 118,70 120,60" fill="#15803d"/>
+
+    <!-- Bell Pepper Lobes (Blocky, plump) -->
+    <!-- Left lobe -->
+    <path d="M68 85 C55 115 58 160 82 178 C95 185 105 178 105 165 C105 130 95 85 68 85 Z" fill="url(#bellGrad)"/>
+    <!-- Right lobe -->
+    <path d="M152 85 C165 115 162 160 138 178 C125 185 115 178 115 165 C115 130 125 85 152 85 Z" fill="url(#bellGrad)"/>
+    <!-- Center front lobe -->
+    <path d="M80 80 C80 72 140 72 140 80 C145 110 142 165 128 182 C120 188 100 188 92 182 C78 165 75 110 80 80 Z" fill="url(#bellGrad)"/>
+
+    <!-- Lobe crease shadows -->
+    <path d="M96 82 C94 110 94 150 96 178" fill="none" stroke="#7f1d1d" stroke-width="2.5" opacity="0.5"/>
+    <path d="M124 82 C126 110 126 150 124 178" fill="none" stroke="#7f1d1d" stroke-width="2.5" opacity="0.5"/>
+
+    <!-- Bright glossy highlights -->
+    <ellipse cx="88" cy="105" rx="12" ry="25" transform="rotate(-15 88 105)" fill="#ffffff" opacity="0.45"/>
+    <ellipse cx="132" cy="105" rx="8" ry="18" transform="rotate(15 132 105)" fill="#ffffff" opacity="0.3"/>
+  </g>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sigGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="50%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="sigShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#15803d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#sigShadow)">
+    <!-- Stem -->
+    <path d="M180 50 Q168 55 160 65" fill="none" stroke="#15803d" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Central Square Pod core -->
+    <path d="M160 65 L48 178 L58 188 L170 75 Z" fill="#15803d"/>
+
+    <!-- Wavy Frilled Wings (Top & Bottom Winged edges) -->
+    <path d="M160 65 Q145 68 140 78 Q125 82 120 92 Q105 96 100 106 Q85 110 80 120 Q65 124 58 135 L48 178"
+          fill="none" stroke="url(#sigGrad)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M170 75 Q155 88 150 98 Q135 102 130 112 Q115 116 110 126 Q95 130 90 140 Q75 144 68 155 L58 188"
+          fill="none" stroke="url(#sigGrad)" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

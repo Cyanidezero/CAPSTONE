@@ -1,55 +1,236 @@
-body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ========================================================= */
+/* ClimaYield-X Global Design System Tokens & Base Styles   */
+/* ========================================================= */
+
+:root {
+  /* Core Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Corner Radii Scale */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-full: 9999px;
+
+  /* Elevation & Multi-layer Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.11);
+  --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.15);
+
+  /* Animation Easings */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 0.15s var(--ease-spring);
+  --transition-normal: 0.25s var(--ease-spring);
+  --transition-smooth: 0.35s var(--ease-spring);
+
+  /* Shared Semantic Colors */
+  --color-success: #16a34a;
+  --color-success-hover: #15803d;
+  --color-success-bg: #dcfce7;
+  --color-success-border: #86efac;
+
+  --color-warning: #f59e0b;
+  --color-warning-hover: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-danger-border: #fca5a5;
+
+  --color-info: #0284c7;
+  --color-info-hover: #0369a1;
+  --color-info-bg: #e0f2fe;
+  --color-info-border: #bae6fd;
+
+  /* ------------------------------------------------------- */
+  /* FARMER THEME: Warm, Organic, Earthy, Friendly & Legible  */
+  /* ------------------------------------------------------- */
+  --theme-farmer-bg: radial-gradient(circle at 8% 12%, rgba(34, 197, 94, 0.32) 0%, transparent 45%),
+                     radial-gradient(circle at 92% 14%, rgba(245, 158, 11, 0.28) 0%, transparent 45%),
+                     radial-gradient(circle at 12% 88%, rgba(16, 185, 129, 0.25) 0%, transparent 45%),
+                     radial-gradient(circle at 88% 88%, rgba(251, 191, 36, 0.30) 0%, transparent 45%),
+                     radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.18) 0%, transparent 55%),
+                     linear-gradient(145deg, #e1f5e6 0%, #edf8f1 32%, #fff8dc 68%, #daf2e0 100%);
+  --theme-farmer-header: linear-gradient(135deg, #093318 0%, #14532d 50%, #15803d 100%);
+  --theme-farmer-header-glow: rgba(22, 101, 52, 0.35);
+  --theme-farmer-primary: #15803d;
+  --theme-farmer-primary-hover: #166534;
+  --theme-farmer-primary-gradient: linear-gradient(135deg, #14532d 0%, #15803d 50%, #22c55e 100%);
+  --theme-farmer-primary-glow: rgba(34, 197, 94, 0.35);
+  --theme-farmer-accent: #d97706;
+  --theme-farmer-accent-soft: #fef3c7;
+  --theme-farmer-card-bg: linear-gradient(145deg, #ffffff 0%, #f4fbf6 50%, #e6f7ec 100%);
+  --theme-farmer-card-bg-elevated: linear-gradient(145deg, #ffffff 0%, #fffdf2 50%, #fef3c7 100%);
+  --theme-farmer-card-border: #86efac;
+  --theme-farmer-card-border-hover: #22c55e;
+  --theme-farmer-card-shadow: 0 8px 24px rgba(20, 70, 30, 0.08);
+  --theme-farmer-card-shadow-hover: 0 14px 34px rgba(20, 70, 30, 0.12);
+  --theme-farmer-text-title: #0d2815;
+  --theme-farmer-text-body: #25422d;
+  --theme-farmer-text-muted: #52735a;
+  --theme-farmer-nav-bg: rgba(255, 255, 255, 0.94);
+  --theme-farmer-nav-border: #d2e8d7;
+
+  /* ------------------------------------------------------- */
+  /* DEVELOPER THEME: Cyber Obsidian & Electric Neon Console */
+  /* ------------------------------------------------------- */
+  --theme-dev-bg: radial-gradient(circle at 12% 12%, rgba(6, 182, 212, 0.18) 0%, transparent 45%),
+                  radial-gradient(circle at 88% 85%, rgba(139, 92, 246, 0.18) 0%, transparent 45%),
+                  radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.14) 0%, transparent 60%),
+                  linear-gradient(135deg, #060913 0%, #0a1120 45%, #050811 100%);
+  --theme-dev-header: linear-gradient(135deg, #030712 0%, #0b1329 45%, #0f1c3f 100%);
+  --theme-dev-header-glow: rgba(6, 182, 212, 0.3);
+  --theme-dev-primary: #06b6d4;
+  --theme-dev-primary-hover: #0891b2;
+  --theme-dev-primary-gradient: linear-gradient(135deg, #0284c7 0%, #06b6d4 50%, #38bdf8 100%);
+  --theme-dev-primary-glow: rgba(6, 182, 212, 0.45);
+  --theme-dev-accent: #8b5cf6;
+  --theme-dev-accent-soft: rgba(139, 92, 246, 0.15);
+  --theme-dev-card-bg: #0d1527;
+  --theme-dev-card-bg-elevated: #111d35;
+  --theme-dev-card-border: #1e2e4a;
+  --theme-dev-card-border-hover: #06b6d4;
+  --theme-dev-card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --theme-dev-card-shadow-hover: 0 14px 40px rgba(6, 182, 212, 0.22);
+  --theme-dev-text-title: #f8fafc;
+  --theme-dev-text-body: #94a3b8;
+  --theme-dev-text-muted: #64748b;
+  --theme-dev-nav-bg: rgba(11, 19, 36, 0.95);
+  --theme-dev-nav-border: #1e2e4a;
 }
 
-body:has(.theme-farmer) {
-  background: radial-gradient(circle at 12% 18%, rgba(220, 252, 231, 0.6) 0%, transparent 45%),
-              radial-gradient(circle at 88% 82%, rgba(187, 247, 208, 0.5) 0%, transparent 45%),
-              linear-gradient(135deg, #eef7f0 0%, #e2f0e5 50%, #d6eadb 100%) !important;
+/* ========================================================= */
+/* BASE RESETS & GLOBAL RULES                                */
+/* ========================================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  line-height: 1.5;
+  transition: background 0.4s ease;
+}
+
+/* Dynamic Fixed Body Background for Farmer Theme */
+body:has(.theme-farmer),
+body.theme-farmer {
+  background: 
+    radial-gradient(rgba(21, 128, 61, 0.08) 1.5px, transparent 1.5px),
+    var(--theme-farmer-bg) !important;
+  background-size: 26px 26px, 100% 100% !important;
   background-attachment: fixed !important;
 }
 
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Dynamic Fixed Body Background for Dev Theme */
+body:has(.theme-dev),
+body.theme-dev {
+  background: var(--theme-dev-bg) !important;
+  background-attachment: fixed !important;
 }
 
-/* Scrollbar styling */
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Smooth Focus Ring Accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--theme-farmer-primary);
+  outline-offset: 2px;
+}
+
+.theme-dev button:focus-visible,
+.theme-dev input:focus-visible,
+.theme-dev select:focus-visible,
+.theme-dev a:focus-visible {
+  outline-color: var(--theme-dev-primary);
+}
+
+/* Modern Rounded Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #94a3b8;
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #64748b;
 }
 
-/* Toast overrides */
+.theme-farmer ::-webkit-scrollbar-thumb {
+  background: #86efac;
+}
+.theme-farmer ::-webkit-scrollbar-thumb:hover {
+  background: #22c55e;
+}
+
+.theme-dev ::-webkit-scrollbar-thumb {
+  background: #93c5fd;
+}
+.theme-dev ::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+/* Toast Notifications Overrides */
 .Toastify__toast {
-  border-radius: 10px !important;
-  font-family: inherit !important;
+  border-radius: 14px !important;
+  font-family: var(--font-sans) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15) !important;
+  font-weight: 500 !important;
 }
 
 .Toastify__toast--success {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%) !important;
+}
+
+.theme-dev .Toastify__toast--success {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
 }
 
 .Toastify__toast--error {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
 }
+
+.Toastify__toast--info {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
+}
