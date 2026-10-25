@@ -1,15 +1,26 @@
 // Shared regression / forecast-accuracy metrics used by SARIMA, LSTM and Hybrid models.
 //
-// Formulas (e = actual - predicted, n = number of evaluated points):
-//   RMSE  = sqrt( Σ e² / n )
-//   MAE   = Σ |e| / n
-//   MAPE  = (100 / n_valid) · Σ |e| / |actual|      (Mean Absolute Percentage Error)
-//   Accuracy = 100% − MAPE
-//   MASE  = MAE / MAE_naive                          (MAE_naive = in-sample seasonal-naive MAE)
+// 1. Mean Absolute Error (MAE):
+//    MAE = (1 / n) * Σ |A_i - P_i|
+//    Measures the average absolute difference between actual and predicted yields.
 //
-// MAPE is undefined when an actual value is 0 (common for rainfall). It is therefore marked
-// unreliable (returned as null → "N/A") when too many actual values are zero / near-zero.
-
+// 2. Root Mean Square Error (RMSE):
+//    RMSE = sqrt( (1 / n) * Σ (A_i - P_i)^2 )
+//    Measures the average magnitude of prediction errors, giving more weight to larger errors.
+//
+// 3. Mean Absolute Percentage Error (MAPE):
+//    MAPE = (100 / n) * Σ |(A_i - P_i) / A_i|
+//    Measures the average percentage difference between actual and predicted yields.
+//
+// 4. Prediction Accuracy:
+//    Prediction Accuracy (%) = 100 - MAPE(%)
+//    (e.g., if MAPE = 8%, Prediction Accuracy = 100% - 8% = 92%)
+//
+// Where:
+//   n   = number of observations
+//   A_i = actual yield
+//   P_i = predicted yield
+//
 const round = (v, dp = 2) => (v === null || v === undefined || !isFinite(v) ? null : Math.round(v * 10 ** dp) / 10 ** dp);
 
 function computeMetrics(actual, predicted, options = {}) {
