@@ -72,6 +72,8 @@ app.get('/api/status', (req, res) => {
         combinedCount: global.currentDataset?.length || 0,
         trainingStatus: global.trainingStatus,
         detectedCrops: global.detectedCrops || [],
+        latestTraining: global.lastTrainedResult || null,
+        allForecasts: global.latestForecasts || {},
         datasetShape: global.currentDataset ? {
             rows: global.currentDataset.length,
             columns: Object.keys(global.currentDataset[0] || {})
@@ -162,6 +164,8 @@ app.post('/api/reset', async (req, res) => {
     global.latestForecasts = {};
     global.lastTrainedResult = null;
     try {
+        const stateFile = path.join(__dirname, 'data/model_state.json');
+        if (fs.existsSync(stateFile)) fs.removeSync(stateFile);
         await pool.query('TRUNCATE TABLE weather_data');
         await pool.query('TRUNCATE TABLE crop_yield_data');
         await pool.query('TRUNCATE TABLE agricultural_data');
@@ -231,6 +235,20 @@ app.listen(PORT, async () => {
             }
         } catch (loadErr) {
             console.warn('Could not auto-load records from MySQL:', loadErr.message);
+        }
+    }
+
+    // Auto-restore persistent model training state if present
+    const stateFile = path.join(__dirname, 'data/model_state.json');
+    if (fs.existsSync(stateFile)) {
+        try {
+            const saved = fs.readJsonSync(stateFile);
+            if (saved?.trainingStatus) global.trainingStatus = saved.trainingStatus;
+            if (saved?.lastTrainedResult) global.lastTrainedResult = saved.lastTrainedResult;
+            if (saved?.latestForecasts) global.latestForecasts = saved.latestForecasts;
+            console.log('🧠 Restored AI training state and forecasts from persistent storage.');
+        } catch (e) {
+            console.warn('Could not restore model state:', e.message);
         }
     }
 });

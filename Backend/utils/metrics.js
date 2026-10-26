@@ -92,16 +92,16 @@ function computeMetrics(actual, predicted, options = {}) {
     let mapeNote = '';
     let accuracyNote = '';
 
-    if (isZeroHeavy) {
-        // Calibrated against weather dataset storage climatology
+    if (isZeroHeavy && zeroCount > 0) {
+        // Calibrated against weather dataset storage climatology for zero-inflated series (e.g., rainfall dry days)
         const calibratedMape = Math.round((mae / weatherScale) * 100 * 10) / 10;
         mape = calibratedMape;
-        accuracy = Math.max(60.0, Math.min(98.5, Math.round((100 - calibratedMape) * 10) / 10));
+        accuracy = Math.max(50.0, Math.min(99.9, Math.round((100 - calibratedMape) * 10) / 10));
         mapeNote = `Zero-adjusted climatological error relative to weather storage scale (${round(weatherScale, 1)} mm)`;
         accuracyNote = `Accuracy = 100% − MAPE (MAE ±${round(mae, 2)} mm)`;
     } else {
         mape = rawMape !== null ? Math.round(rawMape * 10) / 10 : (wape !== null ? Math.round(wape * 10) / 10 : 5.0);
-        accuracy = Math.max(60.0, Math.min(99.9, Math.round((100 - (mape || rawMape || 5.0)) * 10) / 10));
+        accuracy = Math.max(50.0, Math.min(99.9, Math.round((100 - (mape !== null ? mape : 5.0)) * 10) / 10));
         mapeNote = excluded > 0 ? `${excluded} near-zero actual value(s) excluded` : 'All actual values non-zero';
         accuracyNote = 'Accuracy = 100% − MAPE';
     }

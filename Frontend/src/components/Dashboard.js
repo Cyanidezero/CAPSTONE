@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { DevDashboardLogo, DevSarimaIcon, DevLstmIcon, DevHybridIcon, DevHeroBadge } from './DevIcons';
 import { AnimatedVegetableImage, VegetableImageModal } from './AnimatedVegetable';
@@ -8,6 +8,12 @@ import {
   isDatasetCropsCleared
 } from '../utils/cropDatasetParser';
 import { getVegetableFunFact } from '../utils/vegetableFunFacts';
+import { API_URL } from '../utils/apiConfig';
+import { calculateCropHarvestInfo } from '../utils/harvestWeatherAlerts';
+import { 
+  dispatchHarvestAndClimateAlerts, 
+  sendTestAlertToPhone 
+} from '../utils/mobileNotificationService';
 import './Dashboard.css';
 
 const STAGE_STEPS = [
@@ -754,6 +760,33 @@ function Dashboard({
   const [slidInsights, setSlidInsights] = useState({});
   const [inspectingCrop, setInspectingCrop] = useState(null);
 
+  const [liveWeather, setLiveWeather] = useState({
+    temp: 29,
+    humidity: 84,
+    precipitation: 0.8,
+    weatherCode: 53, // Drizzle detection ready
+    condition: 'Drizzle'
+  });
+
+  useEffect(() => {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=14.6760&longitude=121.0437&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&timezone=Asia/Manila')
+      .then(r => r.json())
+      .then(d => {
+        if (d?.current) {
+          setLiveWeather({
+            temp: Math.round(d.current.temperature_2m),
+            humidity: Math.round(d.current.relative_humidity_2m),
+            precipitation: Number(d.current.precipitation) || 0,
+            weatherCode: Number(d.current.weather_code) || 2,
+            condition: (d.current.weather_code >= 51 && d.current.weather_code <= 57) 
+              ? 'Drizzle' 
+              : (d.current.precipitation > 0 ? 'Rain' : 'Partly Cloudy')
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const hasWeather = hasWeatherProp !== undefined 
     ? hasWeatherProp 
     : Boolean(systemStatus?.weatherDatasetLoaded || (systemStatus?.weatherCount && systemStatus.weatherCount > 0));
@@ -769,8 +802,9 @@ function Dashboard({
 
   // LSTM AI Model Training Status Detection
   const [lstmReady, setLstmReady] = useState(() => {
-    if (isLstmTrainedProp) return true;
+    if (isLstmTrainedProp !== undefined) return Boolean(isLstmTrainedProp);
     if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') return true;
+    if (systemStatus?.trainingStatus?.lstm === 'Not Trained' && systemStatus?.trainingStatus?.hybrid === 'Not Trained') return false;
     try {
       return localStorage.getItem('climayield_lstm_trained') === 'true';
     } catch {
@@ -779,32 +813,208 @@ function Dashboard({
   });
 
   useEffect(() => {
-    if (isLstmTrainedProp) {
-      setLstmReady(true);
+    if (isLstmTrainedProp !== undefined) {
+      setLstmReady(Boolean(isLstmTrainedProp));
     } else if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') {
       setLstmReady(true);
     } else if (
       systemStatus &&
       systemStatus?.trainingStatus?.lstm === 'Not Trained' &&
-      systemStatus?.trainingStatus?.hybrid === 'Not Trained' &&
-      localStorage.getItem('climayield_lstm_trained') !== 'true'
+      systemStatus?.trainingStatus?.hybrid === 'Not Trained'
     ) {
       setLstmReady(false);
     }
   }, [isLstmTrainedProp, systemStatus]);
 
+  // Helper to compute projected yield directly from trained LSTM model records
+  const computeProjectedYieldFromStorage = () => {
+    try {
+      // Must only produce yield if LSTM or Hybrid model is actually trained!
+      const isTrained = 
+        (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') ||
+        (systemStatus?.trainingStatus?.lstm !== 'Not Trained' && localStorage.getItem('climayield_lstm_trained') === 'true');
+      
+      if (!isTrained) return null;
+
+      const allForecasts = JSON.parse(localStorage.getItem('climayield_ai_forecasts') || '{}');
+      const latestTraining = JSON.parse(localStorage.getItem('climayield_latest_training') || 'null');
+      const yieldRecord = allForecasts.Crop_Yield || allForecasts.El_Nino_Yield || allForecasts.La_Nina_Yield || 
+        (latestTraining && ((latestTraining.target || '').includes('Yield') || (latestTraining.target || '').includes('Crop') || (latestTraining.modelType || '').toUpperCase().includes('LSTM') || (latestTraining.modelType || '').toUpperCase().includes('HYBRID')) ? latestTraining : null) ||
+        (allForecasts._latest && (allForecasts._latest.target?.includes('Yield') || allForecasts._latest.target?.includes('Crop') || allForecasts._latest.unit === 'tons/ha') ? allForecasts._latest : null);
+
+      if (yieldRecord) {
+        // Must be from an LSTM or Hybrid run, NEVER SARIMA alone
+        const mType = (yieldRecord.modelType || '').toUpperCase();
+        const isLstm = mType.includes('LSTM') || mType.includes('HYBRID');
+        if (!isLstm) return null;
+
+        let avg = null;
+        if (typeof yieldRecord.averageProjected === 'number') {
+          avg = yieldRecord.averageProjected;
+        } else if (typeof yieldRecord.statistics?.mean === 'number') {
+          avg = yieldRecord.statistics.mean;
+        } else if (typeof yieldRecord.statisticalDecomposition?.mean === 'number') {
+          avg = yieldRecord.statisticalDecomposition.mean;
+        } else if (Array.isArray(yieldRecord.forecast) && yieldRecord.forecast.length > 0) {
+          avg = yieldRecord.forecast.reduce((a, b) => a + b, 0) / yieldRecord.forecast.length;
+        } else if (Array.isArray(yieldRecord.rawForecast) && yieldRecord.rawForecast.length > 0) {
+          avg = yieldRecord.rawForecast.reduce((a, b) => a + b, 0) / yieldRecord.rawForecast.length;
+        }
+
+        if (avg !== null && !isNaN(avg) && avg > 0) {
+          let diffPct = null;
+          if (yieldRecord.percentageVsBaseline !== undefined && yieldRecord.percentageVsBaseline !== null) {
+            diffPct = Number(yieldRecord.percentageVsBaseline);
+          } else {
+            const rawBase = yieldRecord.historicalBaseline || yieldRecord.statistics?.historicalBaseline || yieldRecord.statisticalDecomposition?.historicalBaseline;
+            const baseline = (rawBase && !isNaN(rawBase) && rawBase > 0)
+              ? Number(rawBase)
+              : 5.92;
+            diffPct = ((avg - baseline) / baseline) * 100;
+          }
+
+          return {
+            avg: Math.round(avg * 10) / 10,
+            diffPct: Math.round(Math.abs(diffPct) * 10) / 10,
+            isHigher: diffPct >= 0
+          };
+        }
+      }
+
+      const latestStr = localStorage.getItem('climayield_latest_training');
+      if (latestStr) {
+        const latest = JSON.parse(latestStr);
+        const mType = (latest.modelType || '').toUpperCase();
+        const isLstm = mType.includes('LSTM') || mType.includes('HYBRID');
+        if (isLstm && (latest.target?.includes('Yield') || latest.unit === 'tons/ha')) {
+          let avg = null;
+          if (typeof latest.averageProjected === 'number') {
+            avg = latest.averageProjected;
+          } else if (typeof latest.statistics?.mean === 'number') {
+            avg = latest.statistics.mean;
+          } else if (Array.isArray(latest.forecast) && latest.forecast.length > 0) {
+            avg = latest.forecast.reduce((a, b) => a + b, 0) / latest.forecast.length;
+          }
+          if (avg !== null && !isNaN(avg) && avg > 0) {
+            let diffPct = null;
+            if (latest.percentageVsBaseline !== undefined && latest.percentageVsBaseline !== null) {
+              diffPct = Number(latest.percentageVsBaseline);
+            } else {
+              const rawBase = latest.historicalBaseline || latest.statistics?.historicalBaseline;
+              const baseline = (rawBase && !isNaN(rawBase) && rawBase > 0)
+                ? Number(rawBase)
+                : 5.92;
+              diffPct = ((avg - baseline) / baseline) * 100;
+            }
+            return {
+              avg: Math.round(avg * 10) / 10,
+              diffPct: Math.round(Math.abs(diffPct) * 10) / 10,
+              isHigher: diffPct >= 0
+            };
+          }
+        }
+      }
+    } catch {}
+    return null;
+  };
+
+  const [projectedYieldData, setProjectedYieldData] = useState(() => computeProjectedYieldFromStorage());
+
   useEffect(() => {
-    const handleLstm = (e) => setLstmReady(!!e.detail?.trained);
-    const handleStorage = (e) => {
-      if (e.key === 'climayield_lstm_trained') setLstmReady(e.newValue === 'true');
+    const syncYield = (e) => {
+      if (e?.detail?.trained === false) {
+        setLstmReady(false);
+        setProjectedYieldData(null);
+        return;
+      }
+      const payload = e?.detail?.payload || e?.detail;
+      const mType = (payload?.modelType || '').toUpperCase();
+      // Only process LSTM or Hybrid payloads for projected yield
+      if (mType && !mType.includes('LSTM') && !mType.includes('HYBRID')) {
+        return;
+      }
+      setLstmReady(true);
+      const avg = payload?.averageProjected || payload?.statistics?.mean || payload?.statisticalDecomposition?.mean;
+      if (typeof avg === 'number' && !isNaN(avg)) {
+        let diffPct = null;
+        if (payload?.percentageVsBaseline !== undefined && payload?.percentageVsBaseline !== null) {
+          diffPct = Number(payload.percentageVsBaseline);
+        } else {
+          const rawBase = payload?.historicalBaseline || payload?.statistics?.historicalBaseline;
+          const baseline = (rawBase && !isNaN(rawBase) && rawBase > 0)
+            ? Number(rawBase)
+            : 5.92;
+          diffPct = ((avg - baseline) / baseline) * 100;
+        }
+        setProjectedYieldData({
+          avg: Math.round(avg * 10) / 10,
+          diffPct: Math.round(Math.abs(diffPct) * 10) / 10,
+          isHigher: diffPct >= 0
+        });
+      } else {
+        const data = computeProjectedYieldFromStorage();
+        setProjectedYieldData(data);
+      }
     };
-    window.addEventListener('lstmTrainingUpdated', handleLstm);
-    window.addEventListener('storage', handleStorage);
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'climayield_ai_forecasts' || e.key === 'climayield_latest_training' || e.key === 'climayield_lstm_trained') {
+        if (localStorage.getItem('climayield_lstm_trained') !== 'true') {
+          setLstmReady(false);
+          setProjectedYieldData(null);
+        } else {
+          const data = computeProjectedYieldFromStorage();
+          setProjectedYieldData(data);
+        }
+      }
+    };
+
+    window.addEventListener('lstmTrainingUpdated', syncYield);
+    window.addEventListener('aiTrainingCompleted', syncYield);
+    window.addEventListener('storage', handleStorageChange);
+
+    fetch(`${API_URL}/training/latest`)
+      .then(r => r.json())
+      .then(res => {
+        if (res?.success) {
+          const isLstmBackendTrained = 
+            res.trainingStatus?.lstm === 'Trained' || 
+            res.trainingStatus?.hybrid === 'Trained';
+          if (!isLstmBackendTrained) {
+            setProjectedYieldData(null);
+            return;
+          }
+          const yf = res.allForecasts?.Crop_Yield || (res.latest?.target?.includes('Yield') ? res.latest : null);
+          const mType = (yf?.modelType || '').toUpperCase();
+          const isLstmRecord = mType.includes('LSTM') || mType.includes('HYBRID');
+          if (isLstmRecord && yf?.forecast && yf.forecast.length > 0) {
+            const avg = yf.averageProjected || (yf.forecast.reduce((a, b) => a + b, 0) / yf.forecast.length);
+            let diffPct = null;
+            if (yf.percentageVsBaseline !== undefined && yf.percentageVsBaseline !== null) {
+              diffPct = Number(yf.percentageVsBaseline);
+            } else {
+              const rawBase = yf.historicalBaseline;
+              const baseline = (rawBase && !isNaN(rawBase) && rawBase > 0)
+                ? Number(rawBase)
+                : 5.92;
+              diffPct = ((avg - baseline) / baseline) * 100;
+            }
+            setProjectedYieldData({
+              avg: Math.round(avg * 10) / 10,
+              diffPct: Math.round(Math.abs(diffPct) * 10) / 10,
+              isHigher: diffPct >= 0
+            });
+          }
+        }
+      })
+      .catch(() => {});
+
     return () => {
-      window.removeEventListener('lstmTrainingUpdated', handleLstm);
-      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lstmTrainingUpdated', syncYield);
+      window.removeEventListener('aiTrainingCompleted', syncYield);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [systemStatus]);
 
   // Crop AI Model Training Status Detection
   const [isCropModelTrained, setIsCropModelTrained] = useState(() => {
@@ -924,7 +1134,38 @@ function Dashboard({
   });
 
   // All active vegetables: crops only appear when uploaded from Dev side + custom added
-  const allCrops = [...datasetCrops, ...customCrops];
+  const allCrops = useMemo(() => [...datasetCrops, ...customCrops], [datasetCrops, customCrops]);
+
+  // Automated mobile push notification dispatch for harvest & weather alerts
+  useEffect(() => {
+    if (allCrops && allCrops.length > 0) {
+      dispatchHarvestAndClimateAlerts(allCrops, liveWeather, isFil, false);
+    }
+  }, [allCrops, liveWeather, isFil]);
+
+  const handleTriggerMobileAlerts = async () => {
+    const res = await sendTestAlertToPhone(isFil);
+    if (res.success) {
+      toast.success(
+        isFil 
+          ? '🔔 Aktibo na ang Mobile Alerts sa iyong cellphone! May darating na notification kapag may anihin o ambon.' 
+          : '🔔 Mobile Alerts activated! You will receive phone notifications for harvest readiness and weather advisories.'
+      );
+      dispatchHarvestAndClimateAlerts(allCrops, liveWeather, isFil, true);
+    } else if (res.reason === 'denied') {
+      toast.warn(
+        isFil 
+          ? 'Naka-block ang notifications sa browser. Paki-pindot ang lock icon sa browser at i-allow ang Notifications.' 
+          : 'Notifications are blocked. Please tap the lock icon in your browser address bar and select Allow Notifications.'
+      );
+    } else if (res.reason === 'unsupported') {
+      toast.info(
+        isFil
+          ? 'Buksan ang app sa Google Chrome o Safari sa cellphone upang makatanggap ng phone alerts.'
+          : 'Open the app in Chrome or Safari on your mobile phone to receive push notifications.'
+      );
+    }
+  };
 
   // Remove all vegetables from the dashboard
   const handleClearAllVegetables = () => {
@@ -1173,9 +1414,20 @@ function Dashboard({
                 : 'Quezon City Short-Cycle Crop Forecasting • Yield Instability Monitoring & Decision Support'}
             </p>
           </div>
-          <div className="fd-hero-badge">
-            <div className="title">{isFil ? 'Lokasyon ng Bukid' : 'Farm Location'}</div>
-            <div className="val">📍 Quezon City, PH</div>
+          <div className="fd-hero-badge-group">
+            <div className="fd-hero-badge">
+              <div className="title">{isFil ? 'Lokasyon ng Bukid' : 'Farm Location'}</div>
+              <div className="val">📍 Quezon City, PH</div>
+            </div>
+            <button
+              type="button"
+              className="fd-mobile-alerts-trigger"
+              onClick={handleTriggerMobileAlerts}
+              title={isFil ? 'Paganahin o i-test ang alerto sa cellphone' : 'Enable or test mobile phone notifications'}
+            >
+              <span className="fd-mobile-bell-icon">🔔</span>
+              <span>{isFil ? 'Mobile Phone Alerts' : 'Mobile Phone Alerts'}</span>
+            </button>
           </div>
         </div>
 
@@ -1217,16 +1469,22 @@ function Dashboard({
                     {isFil ? 'Inaasahang Ani' : 'Average Projected Yield'}
                   </div>
                   <div className="fd-summary-value">
-                    {lstmReady ? (
-                      <>15.8 <span style={{ fontSize: '0.9rem' }}>tons/ha</span></>
+                    {lstmReady && projectedYieldData ? (
+                      <>{projectedYieldData.avg.toFixed(1)} <span style={{ fontSize: '0.9rem' }}>tons/ha</span></>
                     ) : (
-                      <span style={{ color: '#94a3b8' }}>—</span>
+                      <span style={{ color: '#94a3b8', fontSize: '1.6rem', fontWeight: 600 }}>—</span>
                     )}
                   </div>
                   <div className="fd-summary-sub">
-                    {lstmReady 
-                      ? (isFil ? '↑ 4.2% mas mataas kaysa karaniwan' : '↑ 4.2% higher than seasonal baseline')
-                      : (isFil ? 'Awtomatikong lalabas kapag nasanay ang LSTM' : 'Calibrated once LSTM is trained')}
+                    {lstmReady && projectedYieldData ? (
+                      isFil
+                        ? `${projectedYieldData.isHigher ? '↑' : '↓'} ${projectedYieldData.diffPct}% ${projectedYieldData.isHigher ? 'mas mataas kaysa karaniwan' : 'mas mababa kaysa karaniwan'}`
+                        : `${projectedYieldData.isHigher ? '↑' : '↓'} ${projectedYieldData.diffPct}% ${projectedYieldData.isHigher ? 'higher' : 'lower'} than seasonal baseline`
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>
+                        {isFil ? 'Awtomatikong lalabas kapag sinanay ang LSTM' : 'Calibrated once LSTM is trained'}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1434,6 +1692,7 @@ function Dashboard({
                 ? (engName.toLowerCase() !== filName.toLowerCase() ? engName : null)
                 : (filName.toLowerCase() !== engName.toLowerCase() ? filName : null);
               const funFactText = getVegetableFunFact(crop, lang);
+              const cropHarvest = calculateCropHarvestInfo(crop, lang);
 
               return (
                 <div
@@ -1494,6 +1753,14 @@ function Dashboard({
                             <span className="btn-label">{isFil ? 'Tanggalin' : 'Delete'}</span>
                           </button>
                         )}
+                      </div>
+
+                      {/* Dynamic Harvest Countdown & Readiness Badge */}
+                      <div className="fd-card-harvest-badge-row">
+                        <div className={`fd-harvest-status-pill ${cropHarvest.status} ${cropHarvest.isReady ? 'ready' : ''}`}>
+                          <span className="harvest-badge-icon">{cropHarvest.badgeIcon}</span>
+                          <span className="harvest-badge-text">{cropHarvest.badgeText}</span>
+                        </div>
                       </div>
 
                       <div className="fd-card-front-center">
@@ -1560,6 +1827,28 @@ function Dashboard({
                             🔄 {isFil ? 'Pabalik' : 'Flip Back'}
                           </span>
                         </div>
+                      </div>
+
+                      {/* Harvest Readiness & Growth Window */}
+                      <div className="fd-back-harvest-info-card" style={{
+                        margin: '6px 0 10px 0',
+                        padding: '8px 12px',
+                        borderRadius: '12px',
+                        background: cropHarvest.isReady ? '#ecfdf5' : '#f8fafc',
+                        border: `1.5px solid ${cropHarvest.isReady ? '#6ee7b7' : '#e2e8f0'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.78rem',
+                        fontWeight: 700
+                      }}>
+                        <span style={{ color: cropHarvest.isReady ? '#15803d' : '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{cropHarvest.badgeIcon}</span>
+                          <span>{cropHarvest.badgeText}</span>
+                        </span>
+                        <span style={{ color: '#64748b', fontSize: '0.7rem' }}>
+                          🧺 {cropHarvest.harvestWindow}
+                        </span>
                       </div>
 
                       {/* Full-Card Fun Fact Only */}

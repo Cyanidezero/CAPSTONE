@@ -1219,9 +1219,13 @@ export function saveDatasetCrops(crops) {
 export function clearDatasetCrops() {
   try {
     localStorage.removeItem(STORAGE_KEY_DATASET_CROPS);
+    localStorage.removeItem('climayield_crop_daily_tracking');
+    localStorage.removeItem('climayield_crop_day_offset');
+    localStorage.removeItem('climayield_crop_last_seen_date');
     // Remember that crops were cleared so backend auto-sync does not re-add them
     localStorage.setItem(STORAGE_KEY_CROPS_CLEARED, 'true');
     window.dispatchEvent(new CustomEvent('cropDatasetUpdated', { detail: [] }));
+    window.dispatchEvent(new CustomEvent('cropDailyTrackingUpdated', { detail: { cleared: true } }));
   } catch (err) {
     console.error('Failed to clear dataset crops:', err);
   }

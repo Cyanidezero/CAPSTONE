@@ -26,6 +26,7 @@ import Login from './Login';
 import PwaInstallModal from './PwaInstallModal';
 import { isFarmerOnlyMode } from '../utils/portalMode';
 import { API_URL } from '../utils/apiConfig';
+import { syncFarmerFrontendWithBackend } from '../utils/crossDeviceSync';
 import { DevDashboardLogo, DevDataManagementLogo, DevPipelineLogo, DevBrandLogo } from './DevIcons';
 
 ChartJS.register(
@@ -192,43 +193,15 @@ function App() {
     datasetShape: null
   });
 
-  // Fetch Live Backend System Status
+  // Fetch Live Backend System Status with Cross-Device Sync
   const fetchStatus = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/status`, { timeout: 4000 });
       setSystemStatus(res.data);
       setBackendOnline(true);
 
-      // Automated synchronization: If devside didn't put datasets or removed any dataset, immediately wipe farmer cache
-      const hasCropData = Boolean(
-        res.data?.cropDatasetLoaded || 
-        (res.data?.cropCount && res.data.cropCount > 0) || 
-        (res.data?.detectedCrops && res.data.detectedCrops.length > 0)
-      );
-      if (!hasCropData) {
-        if (localStorage.getItem('climayield_dataset_crops')) {
-          localStorage.removeItem('climayield_dataset_crops');
-          localStorage.removeItem('climayield_custom_crops');
-          localStorage.removeItem('climayield_crop_model_trained');
-          localStorage.setItem('climayield_dataset_crops_cleared', 'true');
-          window.dispatchEvent(new CustomEvent('cropDatasetUpdated', { detail: [] }));
-          window.dispatchEvent(new CustomEvent('cropModelTrainedUpdated', { detail: { trained: false } }));
-        }
-      }
-
-      const hasWeatherData = Boolean(
-        res.data?.weatherDatasetLoaded || 
-        (res.data?.weatherCount && res.data.weatherCount > 0)
-      );
-      if (!hasWeatherData) {
-        if (localStorage.getItem('climayield_lstm_trained') || localStorage.getItem('climayield_ai_forecasts')) {
-          localStorage.removeItem('climayield_lstm_trained');
-          localStorage.removeItem('climayield_ai_forecasts');
-          localStorage.removeItem('climayield_latest_training');
-          window.dispatchEvent(new CustomEvent('lstmTrainingUpdated', { detail: { trained: false } }));
-          window.dispatchEvent(new CustomEvent('aiTrainingCompleted', { detail: null }));
-        }
-      }
+      // Automated synchronization: Real-time sync between Developer PC actions and Farmer Phone views
+      syncFarmerFrontendWithBackend(res.data);
     } catch (err) {
       setBackendOnline(false);
     }
@@ -236,19 +209,26 @@ function App() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 8000);
-    const handleLstmUpdate = () => {
-      fetchStatus();
+    // High-responsiveness polling interval (3.5s) for instant cross-device updates
+    const interval = setInterval(fetchStatus, 3500);
+
+    const handleLstmUpdate = () => fetchStatus();
+    const handleCropModelUpdate = () => fetchStatus();
+    const handleVisibilityOrFocus = () => {
+      if (!document.hidden) fetchStatus();
     };
-    const handleCropModelUpdate = () => {
-      fetchStatus();
-    };
+
     window.addEventListener('lstmTrainingUpdated', handleLstmUpdate);
     window.addEventListener('cropModelTrainedUpdated', handleCropModelUpdate);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
     return () => {
       clearInterval(interval);
       window.removeEventListener('lstmTrainingUpdated', handleLstmUpdate);
       window.removeEventListener('cropModelTrainedUpdated', handleCropModelUpdate);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
     };
   }, [fetchStatus]);
 
@@ -360,7 +340,7 @@ function App() {
       hasWeatherDataset && (
         systemStatus?.trainingStatus?.lstm === 'Trained' || 
         systemStatus?.trainingStatus?.hybrid === 'Trained' ||
-        localStorage.getItem('climayield_lstm_trained') === 'true'
+        (systemStatus?.trainingStatus?.lstm !== 'Not Trained' && localStorage.getItem('climayield_lstm_trained') === 'true')
       );
 
     const isCropModelTrained =
@@ -476,6 +456,17 @@ function App() {
           </div>
           
           <div className="mobile-header-right">
+            {!isStandalone && (
+              <button
+                type="button"
+                className="mobile-install-pill"
+                onClick={handleInstallApp}
+                title={lang === 'fil' ? 'I-install sa Cellphone' : 'Install on Mobile Phone'}
+              >
+                <span>📲 {lang === 'fil' ? 'I-install' : 'Install'}</span>
+              </button>
+            )}
+
             {userRole === 'farmer' && (
               <button
                 type="button"
@@ -860,6 +851,7 @@ function App() {
         progress={downloadProgress}
         lang={lang}
         userRole={userRole}
+        hasNativePrompt={!!deferredPrompt}
         onConfirm={handleConfirmInstall}
         onCancel={handleCancelInstall}
       />

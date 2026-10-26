@@ -105,6 +105,29 @@ const generateAgriculturalAlerts = (current, daily) => {
     });
   }
 
+  // Drizzle rain check (WMO 51-57 or precipitation between 0.1mm - 3.5mm)
+  const wCode = current?.weather_code ?? current?.weatherCode ?? 0;
+  const curPrecip = Number(current?.precipitation ?? current?.rain ?? 0);
+  const isDrizzle = (wCode >= 51 && wCode <= 57) || (wCode === 61) || (curPrecip > 0 && curPrecip <= 3.5);
+
+  if (isDrizzle) {
+    alerts.unshift({
+      type: 'info',
+      title: '🌧️ Drizzle Rain Advisory / Babala sa Ambon',
+      message: 'Continuous drizzle rain detected in Quezon City. Persistent leaf wetness creates favorable conditions for fungal leaf spots (cercospora) and damping-off on delicate leafy greens (Pechay, Mustasa, Lettuce). Suspend foliar fertilizer spraying and maintain bed aeration.'
+    });
+  }
+
+  // Extreme Heat Warning (> 33°C)
+  const curTemp = current?.temperature_2m ?? current?.temp ?? 29;
+  if (curTemp >= 33) {
+    alerts.unshift({
+      type: 'warning',
+      title: '☀️ High Heat Stress Warning / Babala sa Sobrang Init',
+      message: `Extreme heat (${curTemp}°C) detected. Evapotranspiration is critically high. Irrigate deeply during early morning (5:00–7:00 AM) to protect delicate seedlings and prevent blossom drop in tomatoes and cucumbers.`
+    });
+  }
+
   if (alerts.length === 0) {
     alerts.push({
       type: 'info',

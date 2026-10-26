@@ -3,7 +3,25 @@ const { trainSARIMA } = require('../models/sarima');
 const { trainLSTM } = require('../models/lstm');
 const { trainHybrid } = require('../models/hybrid');
 
+const path = require('path');
+const fs = require('fs-extra');
 const { pool } = require('../db');
+
+const STATE_FILE = path.join(__dirname, '../data/model_state.json');
+
+function persistTrainingState() {
+    try {
+        fs.ensureDirSync(path.dirname(STATE_FILE));
+        fs.writeJsonSync(STATE_FILE, {
+            trainingStatus: global.trainingStatus,
+            lastTrainedResult: global.lastTrainedResult,
+            latestForecasts: global.latestForecasts
+        });
+        console.log('[Training] Synchronized and saved model training state to persistent storage.');
+    } catch (err) {
+        console.warn('Could not persist training state:', err.message);
+    }
+}
 
 const router = express.Router();
 
@@ -54,12 +72,19 @@ router.post('/train/sarima', async (req, res) => {
             global.trainingStatus.cropModelTrained = true;
         }
 
+        const sarimaAvg = result.forecast?.length > 0 ? Math.round((result.forecast.reduce((a, b) => a + b, 0) / result.forecast.length) * 100) / 100 : 5.9;
+        const sarimaBase = result.history?.length > 0 ? Math.round((result.history.reduce((a, b) => a + b, 0) / result.history.length) * 100) / 100 : sarimaAvg;
+        const sarimaDiffPct = sarimaBase > 0 ? Math.round(((sarimaAvg - sarimaBase) / sarimaBase) * 1000) / 10 : 0;
+
         if (!global.latestForecasts) global.latestForecasts = {};
         const forecastRecord = {
             target,
             modelType: 'SARIMA',
             forecast: result.forecast,
             history: result.history,
+            historicalBaseline: sarimaBase,
+            averageProjected: sarimaAvg,
+            percentageVsBaseline: sarimaDiffPct,
             validation: result.validation,
             metrics: result.metrics,
             bestConfig: result.bestConfig,
@@ -68,6 +93,7 @@ router.post('/train/sarima', async (req, res) => {
         };
         global.latestForecasts[target] = forecastRecord;
         global.lastTrainedResult = forecastRecord;
+        persistTrainingState();
 
         res.json({
             success: true,
@@ -75,10 +101,14 @@ router.post('/train/sarima', async (req, res) => {
             target,
             forecast: result.forecast,
             history: result.history,
+            historicalBaseline: sarimaBase,
+            averageProjected: sarimaAvg,
+            percentageVsBaseline: sarimaDiffPct,
             validation: result.validation,
             seasonalAnalysis: result.seasonalAnalysis,
             searchTable: result.searchTable,
             searchResults: result.searchTable,
+            candidates: result.searchTable,
             bestConfig: result.bestConfig,
             config2: result.config2,
             metrics: result.metrics,
@@ -105,11 +135,14 @@ router.post('/train/lstm', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Please upload a dataset in Data Management first before training.' });
         }
 
+        const parsedSeq = parseInt(sequenceLength, 10);
+        const validSeqLen = isNaN(parsedSeq) ? 30 : Math.max(1, Math.min(60, parsedSeq));
+
         const result = await trainLSTM(
             datasetToTrain,
             target,
             weatherCols,
-            parseInt(sequenceLength) || 30,
+            validSeqLen,
             parseInt(epochs) || 100
         );
 
@@ -125,12 +158,16 @@ router.post('/train/lstm', async (req, res) => {
             modelType: 'LSTM',
             forecast: result.predictions,
             history: result.history,
+            historicalBaseline: result.historicalBaseline,
+            averageProjected: result.averageProjected,
+            percentageVsBaseline: result.percentageVsBaseline,
             metrics: result.metrics,
             modelRegistryEntry: result.modelRegistryEntry,
             trainedAt: new Date().toISOString()
         };
         global.latestForecasts[target] = forecastRecord;
         global.lastTrainedResult = forecastRecord;
+        persistTrainingState();
 
         res.json({
             success: true,
@@ -138,6 +175,9 @@ router.post('/train/lstm', async (req, res) => {
             target,
             predictions: result.predictions,
             history: result.history,
+            historicalBaseline: result.historicalBaseline,
+            averageProjected: result.averageProjected,
+            percentageVsBaseline: result.percentageVsBaseline,
             metrics: result.metrics,
             modelRegistryEntry: result.modelRegistryEntry,
             forecastRecord
@@ -179,6 +219,9 @@ router.post('/train/hybrid', async (req, res) => {
             target,
             modelType: 'Hybrid SARIMA–LSTM',
             forecast: result.predictions,
+            historicalBaseline: result.historicalBaseline,
+            averageProjected: result.averageProjected,
+            percentageVsBaseline: result.percentageVsBaseline,
             metrics: result.metrics,
             sarimaResult: {
                 bestConfig: result.sarimaResult?.bestConfig,
@@ -193,12 +236,16 @@ router.post('/train/hybrid', async (req, res) => {
         };
         global.latestForecasts[target] = forecastRecord;
         global.lastTrainedResult = forecastRecord;
+        persistTrainingState();
 
         res.json({
             success: true,
             message: 'Hybrid SARIMA–LSTM architecture trained successfully!',
             target,
             predictions: result.predictions,
+            historicalBaseline: result.historicalBaseline,
+            averageProjected: result.averageProjected,
+            percentageVsBaseline: result.percentageVsBaseline,
             metrics: result.metrics,
             sarimaResult: result.sarimaResult,
             lstmResult: result.lstmResult,

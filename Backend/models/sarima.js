@@ -81,6 +81,29 @@ function detectSeasonality(records, targetCol = 'Rainfall') {
     };
 }
 
+const getColVal = (row, colName) => {
+    if (!row) return null;
+    if (row[colName] !== undefined && !isNaN(parseFloat(row[colName]))) {
+        return parseFloat(row[colName]);
+    }
+    const cleanCol = String(colName).toLowerCase().replace(/[\s_-]+/g, '');
+    for (const [k, v] of Object.entries(row)) {
+        const cleanK = String(k).toLowerCase().replace(/[\s_-]+/g, '');
+        if (cleanK === cleanCol && v !== undefined && !isNaN(parseFloat(v))) {
+            return parseFloat(v);
+        }
+    }
+    if (cleanCol.includes('yield') || cleanCol.includes('crop')) {
+        for (const [k, v] of Object.entries(row)) {
+            const cleanK = String(k).toLowerCase().replace(/[\s_-]+/g, '');
+            if ((cleanK.includes('yield') || cleanK === 'production') && v !== undefined && !isNaN(parseFloat(v))) {
+                return parseFloat(v);
+            }
+        }
+    }
+    return null;
+};
+
 function trainSARIMA(data, targetCol = 'Rainfall') {
     return new Promise((resolve, reject) => {
         try {
@@ -92,21 +115,20 @@ function trainSARIMA(data, targetCol = 'Rainfall') {
             const records = [];
             for (let idx = 0; idx < data.length; idx++) {
                 const row = data[idx];
-                let val = parseFloat(row[targetCol]);
+                let val = getColVal(row, targetCol);
 
-                if (isNaN(val)) {
-                    const base = parseFloat(row['Crop_Yield']) || parseFloat(row['Yield']) || 4.2;
+                if (val === null) {
+                    const base = getColVal(row, 'Crop_Yield') || getColVal(row, 'Yield') || 4.2;
                     if (targetCol === 'El_Nino_Yield') {
-                        const temp = parseFloat(row['Max_Temp']) || 32.5;
+                        const temp = getColVal(row, 'Max_Temp') || 32.5;
                         const heatPenalty = Math.max(0, (temp - 30) * 0.08);
                         val = Math.max(1.2, +(base * 0.72 - heatPenalty).toFixed(2));
                     } else if (targetCol === 'La_Nina_Yield') {
-                        const rain = parseFloat(row['Rainfall']) || 15;
+                        const rain = getColVal(row, 'Rainfall') || 15;
                         const rainPenalty = Math.min(1.2, rain * 0.02);
                         val = Math.max(1.5, +(base * 0.82 - rainPenalty).toFixed(2));
                     } else {
-                        val = parseFloat(row['Crop_Yield']) || parseFloat(row['Yield']);
-                        if (isNaN(val)) val = 0;
+                        val = base;
                     }
                 }
 

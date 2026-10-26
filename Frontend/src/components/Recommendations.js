@@ -36,7 +36,7 @@ function detectLatestTrainedModel() {
           targetUnit: record.targetUnit || 'tons/ha',
           metrics: record.metrics || { accuracyRate: '97.4%', mape: '2.6%', rmse: 0.15 },
           instability: record.statisticalDecomposition?.instabilityLevel || 'Low',
-          mean: record.statisticalDecomposition?.mean || 3.95,
+          mean: record.statisticalDecomposition?.mean || record.averageProjected || 5.92,
           timestamp: record.formattedTime || 'Recently Calibrated',
           forecast: Array.isArray(record.forecast) ? record.forecast : null,
           record: record
@@ -68,7 +68,7 @@ function detectLatestTrainedModel() {
         targetUnit: savedFc.targetUnit || 'tons/ha',
         metrics: savedFc.metrics || { accuracyRate: '97.4%', mape: '2.6%', rmse: 0.15 },
         instability: savedFc.statisticalDecomposition?.instabilityLevel || 'Low',
-        mean: savedFc.statisticalDecomposition?.mean || 3.95,
+        mean: savedFc.statisticalDecomposition?.mean || savedFc.averageProjected || 5.92,
         timestamp: savedFc.formattedTime || 'Recently Calibrated',
         forecast: Array.isArray(savedFc.forecast) ? savedFc.forecast : null,
         record: savedFc
@@ -88,7 +88,7 @@ function detectLatestTrainedModel() {
         targetUnit: 'tons/ha',
         metrics: { accuracyRate: '97.4%', mape: '2.6%', rmse: 0.15 },
         instability: 'Low',
-        mean: 3.95,
+        mean: 5.92,
         timestamp: 'Pipeline Active',
         forecast: null,
         record: null
@@ -110,7 +110,7 @@ function detectLatestTrainedModel() {
     targetUnit: 'tons/ha',
     metrics: { accuracyRate: '96.2%', mape: '3.8%', rmse: 0.19 },
     instability: 'Low',
-    mean: 3.95,
+    mean: 5.92,
     timestamp: 'Baseline Ready',
     forecast: null,
     record: null
@@ -127,7 +127,7 @@ function buildClientRecommendations(modelInfo, horizonDays, isFil) {
   // Clean predictions values
   let vals = Array.isArray(modelInfo.forecast) && modelInfo.forecast.length > 0 ? modelInfo.forecast : [];
   if (vals.length === 0) {
-    const base = target === 'Rainfall' ? 14.8 : target === 'Max_Temp' ? 32.8 : 3.95;
+    const base = target === 'Rainfall' ? 14.8 : target === 'Max_Temp' ? 32.8 : 5.92;
     const v = target === 'Rainfall' ? 5.5 : target === 'Max_Temp' ? 1.2 : 0.22;
     for (let i = 0; i < horizonDays; i++) {
       const angle = (2 * Math.PI * i) / 14;
@@ -345,7 +345,7 @@ function Recommendations({
           targetUnit: record.targetUnit || 'tons/ha',
           metrics: record.metrics || { accuracyRate: '97.4%', mape: '2.6%', rmse: 0.15 },
           instability: record.statisticalDecomposition?.instabilityLevel || 'Low',
-          mean: record.statisticalDecomposition?.mean || 3.95,
+          mean: record.statisticalDecomposition?.mean || record.averageProjected || 5.92,
           timestamp: record.formattedTime || 'Recently Calibrated',
           forecast: Array.isArray(record.forecast) ? record.forecast : null,
           record: record
@@ -401,7 +401,7 @@ function Recommendations({
         const nPreds = preds.length;
         const meanYield = nPreds > 0 
           ? (preds.reduce((a, b) => a + b, 0) / nPreds) 
-          : (autoModelInfo.mean || 3.95);
+          : (autoModelInfo.mean || 5.92);
         
         setRecommendations(recs);
         setPredictionSummary({
@@ -661,7 +661,7 @@ function Recommendations({
               <div className="rec-basis-stat">
                 <span className="lbl">{isFil ? 'Inaasahang Karaniwan' : 'Projected Mean'}</span>
                 <span className="val">
-                  {predictionSummary?.mean || autoModelInfo.mean || '3.95'} {autoModelInfo.targetUnit || 'tons/ha'}
+                  {predictionSummary?.mean || autoModelInfo.mean || '5.92'} {autoModelInfo.targetUnit || 'tons/ha'}
                 </span>
               </div>
               <div className="rec-basis-stat">

@@ -429,13 +429,19 @@ router.post('/datasets/clear', async (req, res) => {
             global.cropDataset = [];
             global.currentDataset = null;
             global.detectedCrops = [];
+            global.latestForecasts = {};
+            global.lastTrainedResult = null;
             global.trainingStatus = {
                 sarima: 'Not Trained',
                 lstm: 'Not Trained',
                 hybrid: 'Not Trained',
                 cropModelTrained: false
             };
-            return res.json({ success: true, message: 'All dataset repositories cleared.' });
+            try {
+                const stateFile = path.join(__dirname, '../data/model_state.json');
+                if (fs.existsSync(stateFile)) fs.removeSync(stateFile);
+            } catch (e) {}
+            return res.json({ success: true, message: 'All dataset repositories and model forecasts cleared.' });
         }
     } catch (err) {
         console.error('Clear dataset error:', err);

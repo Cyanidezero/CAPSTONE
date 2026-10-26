@@ -131,7 +131,7 @@ function ModelTraining({ onTrainingComplete }) {
             name="sequenceLength"
             value={params.sequenceLength}
             onChange={handleParamChange}
-            min="5"
+            min="1"
             max="60"
           />
         </div>

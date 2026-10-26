@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
+import { toast } from 'react-toastify';
 import { 
   getSavedDatasetCrops, 
   clearDatasetCrops, 
@@ -9,6 +10,15 @@ import {
   KNOWN_VEGETABLES,
   parseTotalDays
 } from '../utils/cropDatasetParser';
+import {
+  calculateCropDailyStatus,
+  getManualDayOffset,
+  advanceManualDay,
+  resetManualDay,
+  replantCrop,
+  formatCalendarDate,
+  getTodayDateString
+} from '../utils/cropDailyTracker';
 import './Prediction.css';
 
 // Short-cycle vegetable crop definitions tailored for Quezon City urban farming
@@ -847,8 +857,94 @@ function Predictions({
     return () => window.removeEventListener('cropDatasetUpdated', handleCropUpdate);
   }, [hasCrops]);
 
-  // Crops displayed come ONLY from the uploaded dataset
-  const displayCropsList = buildDisplayCrops(activeDatasetCrops, hasCrops);
+  // Daily Tracking State: automatically increments every calendar day at midnight
+  const [manualDayOffset, setManualDayOffset] = useState(() => getManualDayOffset());
+  const [currentDateString, setCurrentDateString] = useState(() => getTodayDateString());
+
+  useEffect(() => {
+    // Check every 15 seconds if real-world calendar day has flipped
+    const interval = setInterval(() => {
+      const todayStr = getTodayDateString();
+      if (todayStr !== currentDateString) {
+        setCurrentDateString(todayStr);
+      }
+    }, 15000);
+
+    const handleDailyUpdate = () => {
+      setManualDayOffset(getManualDayOffset());
+      setCurrentDateString(getTodayDateString());
+    };
+
+    window.addEventListener('cropDailyTrackingUpdated', handleDailyUpdate);
+    window.addEventListener('storage', handleDailyUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('cropDailyTrackingUpdated', handleDailyUpdate);
+      window.removeEventListener('storage', handleDailyUpdate);
+    };
+  }, [currentDateString]);
+
+  // Handlers for simulation & testing daily auto-advance
+  const handleAdvanceDay = () => {
+    const newOffset = advanceManualDay(1);
+    setManualDayOffset(newOffset);
+    toast.success(
+      isFil
+        ? '🌾 Inusad ng +1 araw ang lahat ng pananim! Awtomatikong nag-update ang yugto at natitirang araw bago anihin.'
+        : '🌾 Advanced farm timeline by +1 day! All crop stages and harvest countdowns updated.'
+    );
+  };
+
+  const handleRewindDay = () => {
+    if (manualDayOffset <= 0) return;
+    const newOffset = advanceManualDay(-1);
+    setManualDayOffset(newOffset);
+    toast.info(
+      isFil
+        ? '⏪ Ibinalik ng 1 araw ang timeline.'
+        : '⏪ Rewound timeline by 1 day.'
+    );
+  };
+
+  const handleResetToRealToday = () => {
+    resetManualDay();
+    setManualDayOffset(0);
+    toast.success(
+      isFil
+        ? '✓ Na-reset sa totoong petsa ngayon!'
+        : '✓ Reset to real-time current date!'
+    );
+  };
+
+  const handleReplant = (cropId, cropName, totalDays) => {
+    replantCrop(cropId, totalDays);
+    toast.success(
+      isFil
+        ? `🌱 Na-ani na ang ${cropName}! Nagsimula ng bagong ikot ng paglaki mula sa Araw 1.`
+        : `🌱 Harvested ${cropName}! Started fresh growth cycle from Day 1.`
+    );
+  };
+
+  const effectiveCurrentDate = new Date(Date.now() + manualDayOffset * 86400000);
+  const formattedCurrentDate = formatCalendarDate(effectiveCurrentDate, isFil);
+
+  // Crops displayed come ONLY from the uploaded dataset and automatically advance everyday
+  const rawDisplayCrops = buildDisplayCrops(activeDatasetCrops, hasCrops);
+  const displayCropsList = rawDisplayCrops.map(crop => {
+    const defaultAge = crop.plantAgeDays || crop.stagesConfig?.defaultDay || 1;
+    const dailyStatus = calculateCropDailyStatus(
+      crop, 
+      defaultAge, 
+      crop.stagesConfig?.totalDays, 
+      manualDayOffset
+    );
+    return {
+      ...crop,
+      dailyStatus,
+      plantAgeDays: dailyStatus.currentDay
+    };
+  });
 
   // If no crops have been uploaded yet in the dataset, all crops are removed first
   if (displayCropsList.length === 0) {
@@ -939,9 +1035,12 @@ function Predictions({
   const avgCycleDays = Math.round(cycleDays.reduce((a, b) => a + b, 0) / cycleDays.length);
   const minCycleDays = Math.min(...cycleDays);
   const maxCycleDays = Math.max(...cycleDays);
-  const earliestCrops = displayCropsList.filter(c => c.stagesConfig.totalDays === minCycleDays);
-  const earliestCropsLabel = earliestCrops.slice(0, 2).map(c => (isFil ? c.filipinoName : c.name)).join(' & ')
-    + (earliestCrops.length > 2 ? ` +${earliestCrops.length - 2}` : '');
+
+  const remainingDaysList = displayCropsList.map(c => Math.max(0, c.stagesConfig.totalDays - (c.plantAgeDays || 1)));
+  const minDaysToNextHarvest = Math.min(...remainingDaysList);
+  const nextHarvestCrops = displayCropsList.filter(c => Math.max(0, c.stagesConfig.totalDays - (c.plantAgeDays || 1)) === minDaysToNextHarvest);
+  const nextHarvestLabel = nextHarvestCrops.slice(0, 2).map(c => (isFil ? c.filipinoName : c.name)).join(' & ')
+    + (nextHarvestCrops.length > 2 ? ` +${nextHarvestCrops.length - 2}` : '');
 
   // Active crop for chart projection
   const activeCropForChart = effectiveSelectedId === 'all'
@@ -1078,7 +1177,85 @@ function Predictions({
         </div>
       </div>
 
-      {/* 2. Key Metrics Stats Bar (Farmer Friendly) */}
+      {/* 2. Automatic Daily Growth & Harvest Maturation Tracker */}
+      <div className="cp-daily-tracker-bar">
+        <div className="cp-daily-tracker-info">
+          <div className="cp-daily-tracker-icon">📅</div>
+          <div>
+            <div className="cp-daily-tracker-title-row">
+              <span className="cp-daily-tracker-title">
+                {isFil ? 'Awtomatikong Pagsubaybay ng Araw (Live Daily Growth Tracker)' : 'Automatic Daily Growth & Harvest Tracker'}
+              </span>
+              <span className="cp-daily-live-badge">
+                <span className="cp-daily-live-dot"></span>
+                <span>{isFil ? 'Awtomatikong umuusad araw-araw (+1 araw/araw)' : 'Auto-advances daily (+1 day/day)'}</span>
+              </span>
+            </div>
+            <div className="cp-daily-tracker-desc">
+              {isFil
+                ? 'Lahat ng gulay sa prediction dashboard ay awtomatikong lumalaki ng +1 araw sa hatinggabi (12:00 AM). Ang yugto ng paglaki at araw bago anihin ay patuloy na nagbabago.'
+                : 'All crops in this section automatically advance by +1 day every calendar day at midnight (00:00). Growth stages and harvest countdowns update in real-time.'}
+            </div>
+          </div>
+        </div>
+
+        <div className="cp-daily-tracker-controls">
+          <div className="cp-daily-date-chip">
+            <span className="cp-daily-date-label">
+              {isFil ? 'Kasalukuyang Petsa ng Bukid' : 'Current Farm Date'}
+            </span>
+            <span className="cp-daily-date-val">
+              {formattedCurrentDate}
+            </span>
+            {manualDayOffset !== 0 ? (
+              <span className="cp-daily-date-offset-tag">
+                {manualDayOffset > 0 ? `+${manualDayOffset} ` : `${manualDayOffset} `}
+                {isFil ? 'araw na pasulong' : 'days simulated'}
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: '700' }}>
+                {isFil ? 'Aktwal na Petsa Ngayon' : 'Real-Time Today'}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="cp-daily-btn cp-daily-btn-primary"
+            onClick={handleAdvanceDay}
+            title={isFil ? 'Subukan ang pag-usad ng 1 araw (+1 Araw)' : 'Simulate +1 day progression (+1 Day)'}
+          >
+            <span>⏩</span>
+            <span>{isFil ? '+1 Araw (Subukan)' : '+1 Day (Simulate)'}</span>
+          </button>
+
+          {manualDayOffset > 0 && (
+            <button
+              type="button"
+              className="cp-daily-btn"
+              onClick={handleRewindDay}
+              title={isFil ? 'Ibalik ng 1 araw (-1 Araw)' : 'Step back 1 day (-1 Day)'}
+            >
+              <span>⏪</span>
+              <span>-1 {isFil ? 'Araw' : 'Day'}</span>
+            </button>
+          )}
+
+          {manualDayOffset !== 0 && (
+            <button
+              type="button"
+              className="cp-daily-btn cp-daily-btn-reset"
+              onClick={handleResetToRealToday}
+              title={isFil ? 'I-reset sa totoong petsa ngayon' : 'Reset to real today'}
+            >
+              <span>🔄</span>
+              <span>{isFil ? 'Totoong Petsa' : 'Reset to Today'}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Key Metrics Stats Bar (Farmer Friendly) */}
       <div className="cp-stats-grid">
         <div className="cp-stat-card cp-stat-accuracy">
           <div className="cp-stat-icon" style={{ background: '#ecfdf5', color: '#059669' }}>⏱️</div>
@@ -1114,12 +1291,19 @@ function Predictions({
           <div className="cp-stat-icon">🧺</div>
           <div>
             <div className="cp-stat-label">
-              {isFil ? 'Pinakamabilis Anihin' : 'Earliest Harvest Window'}
+              {isFil ? 'Pinakamalapit na Araw ng Ani' : 'Earliest Harvest Window'}
             </div>
             <div className="cp-stat-val">
-              {minCycleDays} <span style={{ fontSize: '0.85rem' }}>{isFil ? 'Araw' : 'Days'}</span>
+              {minDaysToNextHarvest === 0
+                ? (isFil ? 'Handa na!' : 'Ready today!')
+                : `${minDaysToNextHarvest} `}
+              {minDaysToNextHarvest > 0 && <span style={{ fontSize: '0.85rem' }}>{isFil ? 'Araw' : (minDaysToNextHarvest === 1 ? 'Day' : 'Days')}</span>}
             </div>
-            <div className="cp-stat-sub">{earliestCropsLabel}</div>
+            <div className="cp-stat-sub">
+              {minDaysToNextHarvest === 0
+                ? `${nextHarvestLabel} (${isFil ? 'Handa nang pitasin' : 'Ready to pick'})`
+                : `${nextHarvestLabel} (${isFil ? 'susunod na aanihin' : 'next to harvest'})`}
+            </div>
           </div>
         </div>
 
@@ -1208,9 +1392,15 @@ function Predictions({
                     <div className="cp-crop-subtitle">
                       {crop.variety} • ⏱️ {config.totalDays} {isFil ? 'araw na ikot' : 'days cycle'}
                     </div>
-                    <div className="cp-crop-auto-tag">
-                      <span>⚡</span>
-                      <span>{isFil ? 'Awtomatiko mula sa Dataset' : 'Automatic from Dataset'}</span>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '5px' }}>
+                      <div className="cp-crop-auto-tag">
+                        <span>⚡</span>
+                        <span>{isFil ? 'Awtomatiko mula sa Dataset' : 'Automatic from Dataset'}</span>
+                      </div>
+                      <div className="cp-crop-daily-tag">
+                        <span>📅</span>
+                        <span>{isFil ? 'Araw-araw na ina-update (+1d)' : 'Updates daily (+1d)'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1227,12 +1417,19 @@ function Predictions({
                         {isFil ? 'Kasalukuyang Edad ng Pananim:' : 'Current Plant Age:'}
                       </div>
                       <div className="cp-day-view-sub">
-                        {isFil ? 'Batay sa in-upload na dataset' : 'Derived from active dataset'}
+                        {isFil
+                          ? `Araw-araw na umuusad (+1 araw) • Nagsimula: ${crop.dailyStatus?.startDate || 'Ngayon'}`
+                          : `Advances daily (+1 day) • Tracking since: ${crop.dailyStatus?.startDate || 'Today'}`}
                       </div>
                     </div>
                   </div>
                   <div className="cp-day-view-badge">
                     <strong>{currentDay}</strong> / {config.totalDays} {isFil ? 'araw' : 'days'}
+                    {crop.dailyStatus?.cycleNumber > 1 && (
+                      <span style={{ marginLeft: '4px', opacity: 0.85, fontSize: '0.7rem' }}>
+                        ({isFil ? `Ikot #${crop.dailyStatus.cycleNumber}` : `Cycle #${crop.dailyStatus.cycleNumber}`})
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -1338,8 +1535,25 @@ function Predictions({
                   <div className="cp-harvest-hero-sub">
                     {stageInfo.isReady
                       ? (isFil ? 'Nasa rurok ng tamis at lutong; pitasin sa umaga.' : 'Peak tenderness and flavor; pick in early morning.')
-                      : (isFil ? `Tantiyang petsa ng pag-ani: sa Araw ${config.totalDays}` : `Target harvest day: on Day ${config.totalDays}`)}
+                      : (isFil
+                          ? `Nakatakdang petsa ng ani: ${formatCalendarDate(crop.dailyStatus?.harvestDate, true)} (Araw ${config.totalDays})`
+                          : `Target harvest date: ${formatCalendarDate(crop.dailyStatus?.harvestDate, false)} (on Day ${config.totalDays})`)}
                   </div>
+                  {stageInfo.isReady && (
+                    <div>
+                      <button
+                        type="button"
+                        className="cp-harvest-replant-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReplant(crop.id, isFil ? crop.filipinoName : crop.name, config.totalDays);
+                        }}
+                      >
+                        <span>🌾</span>
+                        <span>{isFil ? 'Ani at Magtanim Muli (Bagong Ikot)' : 'Harvest & Replant (Start New Cycle)'}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

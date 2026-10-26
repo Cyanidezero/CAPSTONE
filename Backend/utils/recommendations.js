@@ -3,7 +3,7 @@ function generateRecommendations(predictions, data, modelType = 'hybrid') {
 
     const hasValidPredictions = Array.isArray(predictions) && predictions.length > 0;
     const nPreds = hasValidPredictions ? predictions.length : 0;
-    const meanPred = nPreds > 0 ? (predictions.reduce((a, b) => a + b, 0) / nPreds) : 3.95;
+    const meanPred = nPreds > 0 ? (predictions.reduce((a, b) => a + b, 0) / nPreds) : 5.92;
 
     // Instability calculation
     let cv = 0.05;

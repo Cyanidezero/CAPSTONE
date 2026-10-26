@@ -1,0 +1,550 @@
+/* ========================================================= */
+/* 📢 AGRICULTURAL & CLIMATE ALERT CENTER STYLING             */
+/* ========================================================= */
+.aac-container {
+  background: #ffffff;
+  border: 1.5px solid #dcfce7;
+  border-radius: 20px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(22, 101, 52, 0.06);
+  transition: all 0.25s ease;
+}
+
+.theme-dev .aac-container {
+  background: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.aac-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.theme-dev .aac-header {
+  border-bottom-color: #1e293b;
+}
+
+.aac-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aac-pulse-badge {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);
+  flex-shrink: 0;
+}
+
+.aac-pulse-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #ffffff;
+  animation: aacPulse 1.8s infinite;
+}
+
+@keyframes aacPulse {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
+
+.aac-header-icon {
+  font-size: 1.4rem;
+}
+
+.aac-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  letter-spacing: -0.01em;
+}
+
+.theme-dev .aac-title {
+  color: #f8fafc;
+}
+
+.aac-subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.theme-dev .aac-subtitle {
+  color: #94a3b8;
+}
+
+/* Filter Buttons */
+.aac-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aac-filter-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.aac-filter-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.aac-filter-btn.active {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.3);
+}
+
+.theme-dev .aac-filter-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.theme-dev .aac-filter-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.aac-counter-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.aac-counter-badge.ready {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.aac-counter-badge.drizzle {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.aac-counter-badge.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* Feed List */
+.aac-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aac-card {
+  border-radius: 16px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1.5px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.aac-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+/* Severity Color Themes */
+.aac-card.severity-success {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.aac-card.severity-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.aac-card.severity-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.aac-card.severity-info {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.aac-card.drizzle-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-color: #7dd3fc;
+}
+
+.aac-card.ready-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #4ade80;
+}
+
+.theme-dev .aac-card.severity-success {
+  background: rgba(22, 101, 52, 0.18);
+  border-color: #15803d;
+}
+
+.theme-dev .aac-card.severity-warning {
+  background: rgba(180, 83, 9, 0.18);
+  border-color: #d97706;
+}
+
+.theme-dev .aac-card.severity-danger {
+  background: rgba(185, 28, 28, 0.18);
+  border-color: #dc2626;
+}
+
+.theme-dev .aac-card.severity-info {
+  background: rgba(3, 105, 161, 0.18);
+  border-color: #0284c7;
+}
+
+.aac-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.aac-card-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.theme-dev .aac-card-icon-box {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.aac-card-icon {
+  font-size: 1.35rem;
+}
+
+.aac-card-content {
+  flex: 1;
+}
+
+.aac-card-topline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.aac-category-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.aac-category-pill.harvest {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.aac-category-pill.climate {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.aac-card-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.theme-dev .aac-card-title {
+  color: #f8fafc;
+}
+
+.aac-card-message {
+  font-size: 0.86rem;
+  color: #334155;
+  margin: 4px 0 8px 0;
+  line-height: 1.45;
+}
+
+.theme-dev .aac-card-message {
+  color: #cbd5e1;
+}
+
+/* Crop Chips in Harvest Alert */
+.aac-crop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.aac-crop-chip {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.theme-dev .aac-crop-chip {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: #334155;
+}
+
+.aac-crop-chip.ready {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+
+.aac-crop-chip.near {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.chip-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.theme-dev .chip-name {
+  color: #f8fafc;
+}
+
+.chip-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.aac-crop-chip.near .chip-badge {
+  color: #d97706;
+}
+
+/* Expanded Guide Box */
+.aac-expanded-details {
+  margin-top: 12px;
+  animation: aacFade 0.2s ease-out;
+}
+
+@keyframes aacFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.aac-guide-box {
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.aac-guide-box.success {
+  background: rgba(22, 163, 74, 0.1);
+  color: #14532d;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.aac-guide-box.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.aac-guide-box.info {
+  background: rgba(2, 132, 199, 0.1);
+  color: #075985;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+}
+
+.theme-dev .aac-guide-box.success {
+  background: rgba(22, 163, 74, 0.2);
+  color: #86efac;
+}
+
+.theme-dev .aac-guide-box.warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+}
+
+.theme-dev .aac-guide-box.info {
+  background: rgba(2, 132, 199, 0.2);
+  color: #7dd3fc;
+}
+
+.aac-guide-box ul {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+}
+
+.aac-guide-box li {
+  margin-bottom: 4px;
+}
+
+.aac-card-action-side {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.aac-expand-toggle {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.theme-dev .aac-expand-toggle {
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+/* ========================================================= */
+/* 📱 CARD HARVEST COUNTDOWN PILL STYLING                     */
+/* ========================================================= */
+.fd-card-harvest-badge-row {
+  display: flex;
+  align-items: center;
+  margin: 8px 0 4px 0;
+  width: 100%;
+}
+
+.fd-harvest-status-pill {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.fd-harvest-status-pill.ready {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+  animation: aacGlow 2s infinite alternate;
+}
+
+@keyframes aacGlow {
+  from { box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3); }
+  to { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.6); }
+}
+
+.fd-harvest-status-pill.near {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+}
+
+.fd-harvest-status-pill.growing {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.fd-harvest-status-pill.seedling {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.harvest-badge-icon {
+  font-size: 0.9rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .aac-container {
+    padding: 16px 14px;
+    margin-bottom: 18px;
+    border-radius: 16px;
+  }
+  .aac-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .aac-filters {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .aac-filter-btn {
+    white-space: nowrap;
+    padding: 5px 10px;
+  }
+  .aac-card-main {
+    gap: 10px;
+  }
+  .aac-card-icon-box {
+    width: 34px;
+    height: 34px;
+  }
+  .aac-card-icon {
+    font-size: 1.15rem;
+  }
+  .aac-card-title {
+    font-size: 0.9rem;
+  }
+  .aac-card-message {
+    font-size: 0.8rem;
+  }
+}
