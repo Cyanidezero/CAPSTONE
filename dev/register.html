@@ -500,14 +500,12 @@
       ageInput.placeholder = 'Enter your age';
       pillAge.textContent = '✓ Valid Age';
       farmGroup.style.display = 'none';
-      if (phoneGroup) phoneGroup.style.display = 'block';
+      if (phoneGroup) phoneGroup.style.display = 'none';
       if (phoneInput) {
-        phoneInput.required = true;
-        phoneInput.placeholder = '09171234567 or +639171234567';
+        phoneInput.required = false;
+        phoneInput.value = '';
       }
-      if (pillPhone) pillPhone.style.display = 'inline-block';
-      const phoneHint = document.getElementById('phoneHint');
-      if (phoneHint) phoneHint.textContent = '📱 For dev alerts, security verification & API updates';
+      if (pillPhone) pillPhone.style.display = 'none';
       emailLabel.textContent = 'Email Address *';
       emailInput.placeholder = 'alex@climayield.com';
       submitBtn.textContent = '💻 Create Dev Account';
@@ -569,7 +567,7 @@
         pillAge.classList.remove('valid');
       }
 
-      if (pillPhone && phoneInput) {
+      if (!isDev && pillPhone && phoneInput) {
         const cleanP = phoneInput.value.replace(/[\s\-()]/g, '');
         if (/^(09|\+639|639)\d{9}$/.test(cleanP) || (/^\d{10,12}$/.test(cleanP) && cleanP.length >= 10)) {
           pillPhone.classList.add('valid');
@@ -659,13 +657,16 @@
         return;
       }
 
-      const enteredPhone = phoneInput ? sanitizeText(phoneInput.value) : '';
-      const cleanPhone = enteredPhone.replace(/[\s\-()]/g, '');
-      if (!cleanPhone || (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Mobile Number.</strong> Please enter a valid mobile number (09171234567 or +639171234567).';
-        return;
+      let cleanPhone = '';
+      if (!isDev) {
+        const enteredPhone = phoneInput ? sanitizeText(phoneInput.value) : '';
+        cleanPhone = enteredPhone.replace(/[\s\-()]/g, '');
+        if (!cleanPhone || (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
+          resultBox.style.display = 'block';
+          resultBox.className = 'error';
+          resultBox.innerHTML = '<strong>⚠️ Invalid Mobile Number.</strong> Please enter a valid mobile number (09171234567 or +639171234567).';
+          return;
+        }
       }
 
       const enteredEmail = sanitizeText(emailInput.value).toLowerCase();
@@ -710,7 +711,7 @@
       const payload = {
         name: enteredName,
         age: rawAge,
-        phone: enteredPhone,
+        phone: !isDev ? cleanPhone : undefined,
         email: enteredEmail,
         password: enteredPassword,
         role: currentRole,
@@ -722,13 +723,13 @@
         id: Date.now(),
         name: enteredName,
         email: enteredEmail,
-        phone: enteredPhone,
+        phone: !isDev ? cleanPhone : null,
         role: currentRole,
         age: rawAge,
         profile: {
           farmName: !isDev ? farmLocVal : null,
           location: !isDev ? farmLocVal : null,
-          phone: enteredPhone
+          phone: !isDev ? cleanPhone : null
         }
       };
 

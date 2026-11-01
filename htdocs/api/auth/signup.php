@@ -51,12 +51,16 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 $targetRole = ($role === 'dev' || $role === 'developer') ? 'dev' : 'farmer';
 
-if (empty($phone)) {
-    sendError('Mobile phone number is required.');
-}
-$cleanPhone = preg_replace('/[\s\-\(\)]/', '', $phone);
-if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15)) {
-    sendError('Please enter a valid mobile phone number (09171234567 or +639171234567).');
+if ($targetRole === 'farmer') {
+    if (empty($phone)) {
+        sendError('Mobile phone number is required for farmer accounts.');
+    }
+    $cleanPhone = preg_replace('/[\s\-\(\)]/', '', $phone);
+    if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15)) {
+        sendError('Please enter a valid mobile phone number (09171234567 or +639171234567).');
+    }
+} else {
+    $cleanPhone = !empty($phone) ? preg_replace('/[\s\-\(\)]/', '', $phone) : '';
 }
 if ($targetRole === 'farmer' && ($rawAge < 18 || $rawAge > 70)) {
     sendError('Farmer age must be between 18 and 70 years old.');

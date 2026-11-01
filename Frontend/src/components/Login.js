@@ -92,9 +92,11 @@ function Login({ onLoginSuccess }) {
       toast.error('Invalid characters in name. Only letters, spaces, hyphens, and apostrophes are allowed.');
       return;
     }
-    if (!signupForm.phone || signupForm.phone.trim().length < 10) {
-      toast.error('Please enter a valid mobile phone number (09171234567 or +639171234567).');
-      return;
+    if (signupForm.role === 'farmer') {
+      if (!signupForm.phone || signupForm.phone.trim().length < 10) {
+        toast.error('Please enter a valid mobile phone number (09171234567 or +639171234567).');
+        return;
+      }
     }
     const parsedAge = parseInt(signupForm.age, 10);
     if (signupForm.role === 'farmer') {
@@ -423,19 +425,21 @@ function Login({ onLoginSuccess }) {
                 </div>
               </div>
 
-              <div className="login-input-group">
-                <label>Mobile Phone Number *</label>
-                <div className="login-input-wrapper">
-                  <span className="login-input-icon">📱</span>
-                  <input
-                    type="tel"
-                    value={signupForm.phone}
-                    onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
-                    placeholder="09171234567 or +639171234567"
-                    required
-                  />
+              {signupForm.role === 'farmer' && (
+                <div className="login-input-group">
+                  <label>Mobile Phone Number *</label>
+                  <div className="login-input-wrapper">
+                    <span className="login-input-icon">📱</span>
+                    <input
+                      type="tel"
+                      value={signupForm.phone}
+                      onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
+                      placeholder="09171234567 or +639171234567"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {signupForm.role === 'farmer' && (
                 <div className="login-input-group">
