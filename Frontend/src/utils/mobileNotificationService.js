@@ -72,9 +72,27 @@ export const showMobileNotification = async (title, options = {}) => {
 };
 
 /**
+ * Dispatch an SMS alert to backend SMS log / gateway
+ */
+export const dispatchSmsApi = async (phone, title, message) => {
+  if (!phone) return null;
+  try {
+    const res = await fetch('/api/alerts/send_sms.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, title, message })
+    });
+    return await res.json();
+  } catch (e) {
+    console.warn('SMS dispatch API error:', e);
+    return null;
+  }
+};
+
+/**
  * Dispatch automated background checks for harvest readiness, countdown, and weather warnings
  */
-export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = null, isFilipino = false, force = false) => {
+export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = null, isFilipino = false, force = false, targetPhone = '') => {
   if (!isNotificationSupported() || Notification.permission !== 'granted') {
     return;
   }
@@ -98,8 +116,8 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
         : `🎉 Ready to Harvest: ${readyNames.slice(0, 2).join(', ')}${readyNames.length > 2 ? ` (+${readyNames.length - 2} more)` : ''}!`;
       
       const body = isFilipino
-        ? `${readyNames.join(', ')} ay nasa tamang panahon na para anihin ngayong araw. Mag-ani sa umaga upang mapanatili ang sariwang kalidad.`
-        : `${readyNames.join(', ')} reached harvest maturity today. Harvest early morning to ensure maximum crispness and market value.`;
+        ? `${readyNames.join(', ')} ay nasa tamang panahon na para anihin ngayong araw.${targetPhone ? ` Abiso ipinadala sa ${targetPhone}.` : ''} Mag-ani sa umaga upang mapanatili ang sariwang kalidad.`
+        : `${readyNames.join(', ')} reached harvest maturity today.${targetPhone ? ` SMS alert sent to ${targetPhone}.` : ''} Harvest early morning to ensure maximum crispness and market value.`;
 
       const sent = await showMobileNotification(title, {
         body,
@@ -107,7 +125,10 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
         vibrate: [300, 100, 300, 100, 300]
       });
 
-      if (sent) localStorage.setItem(readyKey, Date.now().toString());
+      if (sent) {
+        localStorage.setItem(readyKey, Date.now().toString());
+        if (targetPhone) dispatchSmsApi(targetPhone, title, body);
+      }
     }
   }
 
@@ -129,8 +150,8 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
         : `⏳ Harvest Countdown (${countdownCrops.length} Crops Approaching)`;
 
       const body = isFilipino
-        ? `Malapit nang anihin: ${summaryItems.join(', ')}. Ihanda ang mga crates at espasyo bago ang anihan.`
-        : `Approaching harvest: ${summaryItems.join(', ')}. Prepare harvesting crates and wash stations.`;
+        ? `Malapit nang anihin: ${summaryItems.join(', ')}.${targetPhone ? ` Abiso ipinadala sa ${targetPhone}.` : ''} Ihanda ang mga crates bago ang anihan.`
+        : `Approaching harvest: ${summaryItems.join(', ')}.${targetPhone ? ` SMS alert sent to ${targetPhone}.` : ''} Prepare harvesting crates and wash stations.`;
 
       const sent = await showMobileNotification(title, {
         body,
@@ -138,7 +159,10 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
         vibrate: [200, 100, 200]
       });
 
-      if (sent) localStorage.setItem(cdKey, Date.now().toString());
+      if (sent) {
+        localStorage.setItem(cdKey, Date.now().toString());
+        if (targetPhone) dispatchSmsApi(targetPhone, title, body);
+      }
     }
   }
 
@@ -158,8 +182,8 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
           : '🌧️ Drizzle Rain Advisory';
 
         const body = isFilipino
-          ? `May ambon sa Quezon City (${precip > 0 ? `${precip}mm` : 'mababang ulan'}). Bantayan ang pamamasa ng dahon upang maiwasan ang amag (fungal disease). Iwasan muna ang pag-spray.`
-          : `Light drizzle detected in Quezon City (${precip > 0 ? `${precip}mm` : 'light'}). Prolonged leaf wetness promotes powdery mildew and fungal damping-off. Avoid foliar spraying.`;
+          ? `May ambon sa bukid (${precip > 0 ? `${precip}mm` : 'mababang ulan'}).${targetPhone ? ` Abiso ipinadala sa ${targetPhone}.` : ''} Bantayan ang pamamasa ng dahon upang maiwasan ang amag.`
+          : `Light drizzle detected in field (${precip > 0 ? `${precip}mm` : 'light'}).${targetPhone ? ` SMS sent to ${targetPhone}.` : ''} Prolonged leaf wetness promotes mildew.`;
 
         const sent = await showMobileNotification(title, {
           body,
@@ -167,7 +191,10 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
           vibrate: [250, 100, 250]
         });
 
-        if (sent) localStorage.setItem(drizzleKey, Date.now().toString());
+        if (sent) {
+          localStorage.setItem(drizzleKey, Date.now().toString());
+          if (targetPhone) dispatchSmsApi(targetPhone, title, body);
+        }
       }
     }
 
@@ -180,8 +207,8 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
           : `☀️ Heat Stress Warning (${temp.toFixed(1)}°C)`;
 
         const body = isFilipino
-          ? 'Mataas ang init sa pananim. Maglagay ng mulch o lilim, at magdilig ng maaga sa umaga o hapon upang hindi malanta ang mga gulay.'
-          : 'Elevated ambient temperature may cause wilting. Provide shade nets or mulching, and schedule irrigation during early morning or late afternoon.';
+          ? `Mataas ang init sa pananim (${temp.toFixed(1)}°C).${targetPhone ? ` Abiso ipinadala sa ${targetPhone}.` : ''} Maglagay ng mulch o lilim at magdilig sa umaga o hapon.`
+          : `Elevated ambient temperature (${temp.toFixed(1)}°C).${targetPhone ? ` SMS sent to ${targetPhone}.` : ''} Provide shade nets or mulching, schedule irrigation.`;
 
         const sent = await showMobileNotification(title, {
           body,
@@ -189,7 +216,10 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
           vibrate: [300, 100, 300]
         });
 
-        if (sent) localStorage.setItem(heatKey, Date.now().toString());
+        if (sent) {
+          localStorage.setItem(heatKey, Date.now().toString());
+          if (targetPhone) dispatchSmsApi(targetPhone, title, body);
+        }
       }
     }
 
@@ -202,8 +232,8 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
           : `⛈️ Heavy Rainfall Warning (${precip.toFixed(1)} mm)`;
 
         const body = isFilipino
-          ? 'Malakas ang ulan sa Quezon City. Suriin ang mga drainage trenches sa taniman upang maiwasan ang pagbaha at root rot.'
-          : 'Intense precipitation detected. Clear furrow drains and drainage canals immediately to avoid root rot and waterlogging.';
+          ? `Malakas ang ulan sa taniman.${targetPhone ? ` Abiso sa ${targetPhone}.` : ''} Suriin ang drainage trenches upang maiwasan ang pagbaha.`
+          : `Intense precipitation detected (${precip.toFixed(1)} mm).${targetPhone ? ` SMS sent to ${targetPhone}.` : ''} Clear furrow drains immediately.`;
 
         const sent = await showMobileNotification(title, {
           body,
@@ -211,7 +241,10 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
           vibrate: [400, 100, 400]
         });
 
-        if (sent) localStorage.setItem(heavyRainKey, Date.now().toString());
+        if (sent) {
+          localStorage.setItem(heavyRainKey, Date.now().toString());
+          if (targetPhone) dispatchSmsApi(targetPhone, title, body);
+        }
       }
     }
   }
@@ -220,19 +253,20 @@ export const dispatchHarvestAndClimateAlerts = async (crops = [], liveWeather = 
 /**
  * Send a quick test alert directly to the phone so user can verify it works
  */
-export const sendTestAlertToPhone = async (isFilipino = false) => {
+export const sendTestAlertToPhone = async (isFilipino = false, targetPhone = '') => {
   const perm = await requestNotificationPermission();
   if (perm !== 'granted') {
     return { success: false, reason: perm };
   }
 
+  const phoneDisplay = targetPhone ? ` (${targetPhone})` : '';
   const title = isFilipino
-    ? '🌾 ClimaYield-X: Aktibo ang Mobile Alerts!'
-    : '🌾 ClimaYield-X: Mobile Alerts Active!';
+    ? `🌾 ClimaYield-X: Alerto sa Cellphone${phoneDisplay}!`
+    : `🌾 ClimaYield-X: Mobile Phone Alert${phoneDisplay}!`;
 
   const body = isFilipino
-    ? 'Makatatanggap ka na ng agarang abiso sa iyong cellphone kapag handa nang anihin ang gulay o may babala sa panahon at ambon.'
-    : 'You will now receive phone notifications when vegetables are ready to harvest or when drizzle and adverse climate are detected.';
+    ? `Aktibo na ang phone alerts${targetPhone ? ` para sa numero ${targetPhone}` : ''}. Makatatanggap ka ng abiso sa pag-aani at babala sa panahon.`
+    : `Phone alerts activated${targetPhone ? ` for mobile number ${targetPhone}` : ''}. You will receive real-time notifications for harvest readiness and weather advisories.`;
 
   const success = await showMobileNotification(title, {
     body,
@@ -240,5 +274,9 @@ export const sendTestAlertToPhone = async (isFilipino = false) => {
     vibrate: [250, 100, 250, 100, 250]
   });
 
-  return { success, reason: success ? 'sent' : 'failed' };
+  if (targetPhone) {
+    await dispatchSmsApi(targetPhone, title, body);
+  }
+
+  return { success, reason: success ? 'sent' : 'failed', phone: targetPhone };
 };

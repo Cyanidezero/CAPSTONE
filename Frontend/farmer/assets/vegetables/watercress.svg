@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <filter id="watShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#watShadow)">
+    <path d="M110 195 Q90 120 70 70" stroke="#4ade80" stroke-width="3.5" fill="none"/>
+    <path d="M110 195 Q130 120 150 70" stroke="#4ade80" stroke-width="3.5" fill="none"/>
+    <circle cx="65" cy="70" r="16" fill="#15803d"/>
+    <circle cx="85" cy="95" r="14" fill="#16a34a"/>
+    <circle cx="155" cy="70" r="16" fill="#15803d"/>
+    <circle cx="135" cy="95" r="14" fill="#16a34a"/>
+    <circle cx="110" cy="55" r="18" fill="#15803d"/>
+  </g>
+</svg>

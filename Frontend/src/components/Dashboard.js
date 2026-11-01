@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-toastify';
 import { DevDashboardLogo, DevSarimaIcon, DevLstmIcon, DevHybridIcon, DevHeroBadge } from './DevIcons';
 import { AnimatedVegetableImage, VegetableImageModal } from './AnimatedVegetable';
@@ -714,31 +715,6 @@ const INSIGHTS_DATA = [
     ],
     tipFil: 'Hanggang 35% kabawasan sa pinsala ng insekto nang walang lason.',
     tipEn: 'Reduces pest damage by up to 35% without synthetic spray applications.'
-  },
-  {
-    id: 'market',
-    badgeClass: 'badge-market',
-    badgeIcon: '💰',
-    badgeFil: 'Presyo sa Palengke',
-    badgeEn: 'Market Opportunity',
-    titleFil: 'Magandang Presyo sa Bagsakan sa Metro Manila',
-    titleEn: 'Metro Manila Market Pricing Advantage',
-    descFil: 'Mataas ang bilihan ng sariwang gulay sa Balintawak at Mega Q-Mart tuwing Huwebes hanggang Sabado. Mag-ani bago mag-weekend para makakuha ng mas mataas na presyo.',
-    descEn: 'Fresh vegetable demand in nearby trading centers (Balintawak, Mega Q-Mart) peaks Thursday through Saturday. Scheduling harvests 24 hours ahead of weekend peaks yields up to 18% higher farmgate prices.',
-    detailsTitleFil: 'Gabay sa Pagbebenta at Bagsakan',
-    detailsTitleEn: 'Market Timing & Wholesale Channels',
-    highlightsFil: [
-      '🏬 Bagsakan Centers: Balintawak Market, Mega Q-Mart, Novaliches Market.',
-      '⏰ Pinakamainam na Oras: Huwebes 8:00 PM hanggang Sabado 4:00 AM.',
-      '💵 Dagdag-Kita: ₱10 – ₱15 bawat kilo kapag Grade A at sariwang-sariwa.'
-    ],
-    highlightsEn: [
-      '🏬 Wholesale Hubs: Balintawak Market, Mega Q-Mart, Novaliches Market.',
-      '⏰ Peak Window: Thursday 8:00 PM to Saturday 4:00 AM.',
-      '💵 Margin Premium: ₱10 – ₱15 per kg for crisp, Grade-A morning harvests.'
-    ],
-    tipFil: 'Direktang pagbenta sa bagsakan para maiwasan ang kaltas ng komisyoner.',
-    tipEn: 'Direct farm-to-hub delivery captures maximum grower farmgate margin.'
   }
 ];
 
@@ -752,7 +728,8 @@ function Dashboard({
   isCropModelTrained: isCropModelTrainedProp = false,
   setActiveTab, 
   onRefresh, 
-  lang = 'en' 
+  lang = 'en',
+  lastUpdated = null
 }) {
   const isFil = lang === 'fil';
   const [flippedCrops, setFlippedCrops] = useState({});
@@ -1099,7 +1076,9 @@ function Dashboard({
     }
     if (isDatasetCropsCleared()) return;
     if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
-      if (datasetCrops.length === 0 || systemStatus.detectedCrops.length > datasetCrops.length) {
+      const currentIds = datasetCrops.map(c => c.id || c.name).join(',');
+      const incomingIds = systemStatus.detectedCrops.map(c => c.id || c.name).join(',');
+      if (datasetCrops.length === 0 || currentIds !== incomingIds) {
         setDatasetCrops(systemStatus.detectedCrops);
         try {
           localStorage.setItem('climayield_dataset_crops', JSON.stringify(systemStatus.detectedCrops));
@@ -1124,34 +1103,155 @@ function Dashboard({
   }, [hasCrops, isCropModelTrained, datasetCrops.length, systemStatus]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCropId, setEditingCropId] = useState(null);
   const [newCropForm, setNewCropForm] = useState({
     filipinoName: 'Pechay',
     name: 'Pechay',
     icon: '🥬',
     daysToGrow: isFil ? '5–7 araw' : '5–7 days',
     stageStep: 1,
-    stageDesc: ''
+    stageDesc: '',
+    plotOrSeason: ''
   });
 
-  // All active vegetables: crops only appear when uploaded from Dev side + custom added
-  const allCrops = useMemo(() => [...datasetCrops, ...customCrops], [datasetCrops, customCrops]);
+  // Mobile Phone Alerts State & Modal
+  const [farmerPhone, setFarmerPhone] = useState(() => {
+    try {
+      const savedPhone = localStorage.getItem('climayield_farmer_phone');
+      if (savedPhone && savedPhone.trim()) return savedPhone.trim();
+      if (user?.phone && user.phone.trim()) return user.phone.trim();
+      if (user?.profile?.phone && user.profile.phone.trim()) return user.profile.phone.trim();
+    } catch {}
+    return '';
+  });
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneDraft, setPhoneDraft] = useState('');
+
+  const handleOpenPhoneModal = () => {
+    setPhoneDraft(farmerPhone);
+    setShowPhoneModal(true);
+  };
+
+  const handleSavePhone = (e) => {
+    e.preventDefault();
+    const cleanPhone = String(phoneDraft || '').replace(/[\s\-()]/g, '').trim();
+    if (!cleanPhone || (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
+      toast.warning(isFil ? 'Pakilagay ang wastong numero ng cellphone (09171234567 o +639171234567).' : 'Please enter a valid mobile number (09171234567 or +639171234567).');
+      return;
+    }
+    setFarmerPhone(cleanPhone);
+    try {
+      localStorage.setItem('climayield_farmer_phone', cleanPhone);
+      const rawUser = localStorage.getItem('climayield_user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        parsed.phone = cleanPhone;
+        if (parsed.profile) parsed.profile.phone = cleanPhone;
+        localStorage.setItem('climayield_user', JSON.stringify(parsed));
+      }
+    } catch {}
+    setShowPhoneModal(false);
+    toast.success(isFil ? `📱 Na-update na ang numero ng alerto: ${cleanPhone}` : `📱 Alert mobile phone number updated: ${cleanPhone}`);
+    // Trigger test alert to new number
+    sendTestAlertToPhone(isFil, cleanPhone);
+  };
+
+  // Farm Location State & Update Modal
+  const [farmLocation, setFarmLocation] = useState(() => {
+    try {
+      const savedLoc = localStorage.getItem('climayield_farm_location');
+      if (savedLoc && savedLoc.trim()) return savedLoc.trim();
+      if (user?.profile?.location && user.profile.location.trim()) return user.profile.location.trim();
+      if (user?.profile?.farmName && user.profile.farmName.trim()) return user.profile.farmName.trim();
+    } catch {}
+    return 'Quezon City, PH';
+  });
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationDraft, setLocationDraft] = useState('');
+
+  const QC_LOCATION_PRESETS = [
+    'Diliman, Quezon City',
+    'Novaliches, Quezon City',
+    'Bagong Silangan, Quezon City',
+    'Fairview, Quezon City',
+    'Commonwealth, Quezon City',
+    'Payatas Urban Farm, QC',
+    'Tandang Sora, Quezon City',
+    'UP Campus Farm, QC'
+  ];
+
+  const handleOpenLocationModal = () => {
+    setLocationDraft(farmLocation);
+    setShowLocationModal(true);
+  };
+
+  const handleSaveLocation = (e) => {
+    e.preventDefault();
+    const cleaned = String(locationDraft || '').replace(/[<>]/g, '').trim();
+    if (!cleaned || cleaned.length < 3) {
+      toast.warning(isFil ? 'Pakilagay ang wastong lokasyon ng bukid (3+ letra).' : 'Please enter a valid farm location (at least 3 characters).');
+      return;
+    }
+    if (cleaned.length > 100) {
+      toast.warning(isFil ? 'Masyadong mahaba ang pangalan ng lokasyon.' : 'Location name is too long (max 100 characters).');
+      return;
+    }
+    setFarmLocation(cleaned);
+    try {
+      localStorage.setItem('climayield_farm_location', cleaned);
+      const rawUser = localStorage.getItem('climayield_user');
+      if (rawUser) {
+        const parsedUser = JSON.parse(rawUser);
+        parsedUser.profile = {
+          ...(parsedUser.profile || {}),
+          location: cleaned,
+          farmName: cleaned
+        };
+        localStorage.setItem('climayield_user', JSON.stringify(parsedUser));
+      }
+    } catch {}
+    setShowLocationModal(false);
+    toast.success(isFil ? `📍 Na-update na ang lokasyon ng bukid sa "${cleaned}"!` : `📍 Farm location updated to "${cleaned}"!`);
+  };
+
+  // All active vegetables: custom added vegetables appear on top first, followed by dataset crops
+  const allCrops = useMemo(() => [...customCrops, ...datasetCrops], [customCrops, datasetCrops]);
 
   // Automated mobile push notification dispatch for harvest & weather alerts
   useEffect(() => {
     if (allCrops && allCrops.length > 0) {
-      dispatchHarvestAndClimateAlerts(allCrops, liveWeather, isFil, false);
+      dispatchHarvestAndClimateAlerts(allCrops, liveWeather, isFil, false, farmerPhone);
     }
-  }, [allCrops, liveWeather, isFil]);
+  }, [allCrops, liveWeather, isFil, farmerPhone]);
 
   const handleTriggerMobileAlerts = async () => {
-    const res = await sendTestAlertToPhone(isFil);
+    let targetPhone = farmerPhone;
+    if (!targetPhone) {
+      const entered = window.prompt(
+        isFil 
+          ? 'Pakilagay ang iyong Mobile Phone Number para sa SMS at phone alerts (hal. 09171234567):' 
+          : 'Please enter your Mobile Phone Number to receive SMS & phone alerts (e.g. 09171234567):',
+        '09'
+      );
+      if (!entered || entered.trim().length < 10) {
+        toast.info(isFil ? 'Kailangan ang numero ng cellphone upang makatanggap ng SMS alerts.' : 'A valid mobile phone number is required for SMS alerts.');
+        return;
+      }
+      targetPhone = entered.replace(/[\s\-()]/g, '').trim();
+      setFarmerPhone(targetPhone);
+      try {
+        localStorage.setItem('climayield_farmer_phone', targetPhone);
+      } catch {}
+    }
+
+    const res = await sendTestAlertToPhone(isFil, targetPhone);
     if (res.success) {
       toast.success(
         isFil 
-          ? '🔔 Aktibo na ang Mobile Alerts sa iyong cellphone! May darating na notification kapag may anihin o ambon.' 
-          : '🔔 Mobile Alerts activated! You will receive phone notifications for harvest readiness and weather advisories.'
+          ? `🔔 Aktibo na ang Mobile Alerts sa iyong cellphone (${targetPhone})! May darating na SMS at notification kapag may anihin o ambon.` 
+          : `🔔 Mobile & SMS Alerts sent via ${targetPhone}! You will receive phone notifications for harvest readiness and weather advisories.`
       );
-      dispatchHarvestAndClimateAlerts(allCrops, liveWeather, isFil, true);
+      dispatchHarvestAndClimateAlerts(allCrops, liveWeather, isFil, true, targetPhone);
     } else if (res.reason === 'denied') {
       toast.warn(
         isFil 
@@ -1161,8 +1261,8 @@ function Dashboard({
     } else if (res.reason === 'unsupported') {
       toast.info(
         isFil
-          ? 'Buksan ang app sa Google Chrome o Safari sa cellphone upang makatanggap ng phone alerts.'
-          : 'Open the app in Chrome or Safari on your mobile phone to receive push notifications.'
+          ? `SMS alert naipadala sa ${targetPhone}. Buksan ang app sa Google Chrome o Safari sa cellphone upang makatanggap ng push alerts.`
+          : `SMS alert dispatched to ${targetPhone}. Open the app in Chrome or Safari on your mobile phone to receive push notifications.`
       );
     }
   };
@@ -1308,22 +1408,153 @@ function Dashboard({
     }));
   };
 
+  const handleEditCrop = (crop) => {
+    const filName = getCropFilipinoName(crop);
+    const engName = getCropEnglishName(crop);
+    const stageNum = Number(crop.stageStep) || 1;
+    const daysVal = isFil
+      ? (crop.daysToGrowFil || crop.daysToGrowEn || getDaysForStage(filName, engName, stageNum, true))
+      : (crop.daysToGrowEn || crop.daysToGrowFil || getDaysForStage(filName, engName, stageNum, false));
+
+    setEditingCropId(crop.id);
+    setNewCropForm({
+      filipinoName: filName,
+      name: engName,
+      icon: crop.icon || '🥬',
+      daysToGrow: daysVal,
+      stageStep: stageNum,
+      stageDesc: isFil ? (crop.stageDescFil || '') : (crop.stageDescEn || ''),
+      plotOrSeason: crop.plotOrSeason || crop.plot || crop.season || ''
+    });
+    setShowAddModal(true);
+  };
+
   const handleAddCropSubmit = (e) => {
     e.preventDefault();
-    if (!newCropForm.filipinoName.trim() && !newCropForm.name.trim()) {
+    const cleanFil = String(newCropForm.filipinoName || '').replace(/[<>]/g, '').trim();
+    const cleanEng = String(newCropForm.name || '').replace(/[<>]/g, '').trim();
+    const cleanPlotOrSeason = String(newCropForm.plotOrSeason || '').replace(/[<>]/g, '').trim();
+
+    if (!cleanFil && !cleanEng) {
       toast.warning(isFil ? 'Pakiusap ilagay ang pangalan ng gulay.' : 'Please enter a vegetable name.');
+      return;
+    }
+
+    const primaryCheck = cleanEng || cleanFil;
+    if (primaryCheck.length < 2 || primaryCheck.length > 50 || /^\d+$/.test(primaryCheck)) {
+      toast.warning(
+        isFil
+          ? 'Pakilagay ang wastong pangalan ng gulay (2–50 letra, hindi numero lamang).'
+          : 'Please enter a valid vegetable name (2–50 characters, not numbers only).'
+      );
       return;
     }
 
     const stepObj = STAGE_STEPS.find(s => s.num === Number(newCropForm.stageStep)) || STAGE_STEPS[0];
     const pct = stepObj.num === 1 ? 20 : stepObj.num === 2 ? 40 : stepObj.num === 3 ? 60 : stepObj.num === 4 ? 80 : 100;
 
-    const filName = newCropForm.filipinoName.trim() || newCropForm.name.trim();
-    const engName = newCropForm.name.trim() || filName;
+    const filName = cleanFil || cleanEng;
+    const engName = cleanEng || filName;
 
-    const rawDays = String(newCropForm.daysToGrow || getDaysForStage(filName, engName, stepObj.num, isFil)).replace(/(days|araw)/gi, '').trim();
+    // Check for duplicate crop entries
+    // Allow duplicate entries only when they represent different planting seasons or plots
+    const duplicate = allCrops.find(c => {
+      if (editingCropId && c.id === editingCropId) return false;
+      const cFil = getCropFilipinoName(c).toLowerCase().trim();
+      const cEng = getCropEnglishName(c).toLowerCase().trim();
+      const targetFil = filName.toLowerCase().trim();
+      const targetEng = engName.toLowerCase().trim();
+
+      const isSameName = (cFil === targetFil || cEng === targetEng || cFil === targetEng || cEng === targetFil);
+      if (!isSameName) return false;
+
+      const existingPlot = String(c.plotOrSeason || c.plot || c.season || '').toLowerCase().trim();
+      const newPlot = cleanPlotOrSeason.toLowerCase().trim();
+
+      // If both have no plot/season OR both have the identical plot/season, it is a duplicate!
+      return (!existingPlot && !newPlot) || (existingPlot === newPlot);
+    });
+
+    if (duplicate) {
+      toast.warning(
+        isFil
+          ? `⚠️ Ang "${filName}" ay nakalista na sa iyong dashboard! Kung nais magdagdag ng isa pang tanim na parehong gulay, mangyaring maglagay ng ibang Plot o Planting Season.`
+          : `⚠️ "${engName}" already exists in your dashboard! Duplicate entries are only allowed if they represent different planting seasons or plots.`
+      );
+      return;
+    }
+
+    const rawDays = String(newCropForm.daysToGrow || getDaysForStage(filName, engName, stepObj.num, isFil))
+      .replace(/(days|araw)/gi, '')
+      .replace(/[<>]/g, '')
+      .trim();
+
+    if (!rawDays || !/\d/.test(rawDays)) {
+      toast.warning(isFil ? 'Pakilagay ang wastong bilang ng araw ng paglaki (hal. 5–7 days).' : 'Please enter valid days to grow (e.g. 5–7 days).');
+      return;
+    }
+
     const daysEn = `${rawDays} days`;
     const daysFil = `${rawDays} araw`;
+
+    if (editingCropId) {
+      // Update existing vegetable in customCrops or datasetCrops
+      const isInCustom = customCrops.some(c => c.id === editingCropId);
+      if (isInCustom) {
+        const updatedCustom = customCrops.map(c =>
+          c.id === editingCropId
+            ? {
+                ...c,
+                name: engName,
+                filipinoName: filName,
+                icon: newCropForm.icon || c.icon || '🥬',
+                daysToGrowEn: daysEn,
+                daysToGrowFil: daysFil,
+                stageStep: stepObj.num,
+                stageEn: stepObj.titleEn,
+                stageFil: stepObj.titleFil,
+                progressPercent: pct,
+                stageDescEn: newCropForm.stageDesc || stepObj.titleEn,
+                stageDescFil: newCropForm.stageDesc || stepObj.titleFil,
+                plotOrSeason: cleanPlotOrSeason
+              }
+            : c
+        );
+        setCustomCrops(updatedCustom);
+        try {
+          localStorage.setItem('climayield_custom_crops', JSON.stringify(updatedCustom));
+        } catch {}
+      } else {
+        const updatedDataset = datasetCrops.map(c =>
+          c.id === editingCropId
+            ? {
+                ...c,
+                name: engName,
+                filipinoName: filName,
+                icon: newCropForm.icon || c.icon || '🥬',
+                daysToGrowEn: daysEn,
+                daysToGrowFil: daysFil,
+                stageStep: stepObj.num,
+                stageEn: stepObj.titleEn,
+                stageFil: stepObj.titleFil,
+                progressPercent: pct,
+                stageDescEn: newCropForm.stageDesc || stepObj.titleEn,
+                stageDescFil: newCropForm.stageDesc || stepObj.titleFil,
+                plotOrSeason: cleanPlotOrSeason
+              }
+            : c
+        );
+        setDatasetCrops(updatedDataset);
+        try {
+          localStorage.setItem('climayield_dataset_crops', JSON.stringify(updatedDataset));
+        } catch {}
+      }
+
+      toast.success(isFil ? `✅ Na-update na ang ${filName}!` : `✅ ${engName} updated successfully!`);
+      setEditingCropId(null);
+      setShowAddModal(false);
+      return;
+    }
 
     const cropObj = {
       id: `custom_${Date.now()}`,
@@ -1338,7 +1569,8 @@ function Dashboard({
       stageFil: stepObj.titleFil,
       progressPercent: pct,
       stageDescEn: newCropForm.stageDesc || stepObj.titleEn,
-      stageDescFil: newCropForm.stageDesc || stepObj.titleFil
+      stageDescFil: newCropForm.stageDesc || stepObj.titleFil,
+      plotOrSeason: cleanPlotOrSeason
     };
 
     const updated = [cropObj, ...customCrops];
@@ -1348,6 +1580,7 @@ function Dashboard({
     } catch {}
 
     toast.success(isFil ? `🌱 Naidagdag na ang ${cropObj.filipinoName} sa listahan!` : `🌱 ${cropObj.name} added successfully!`);
+    setEditingCropId(null);
     setShowAddModal(false);
     setNewCropForm({
       filipinoName: 'Pechay',
@@ -1355,35 +1588,56 @@ function Dashboard({
       icon: '🥬',
       daysToGrow: isFil ? '5–7 araw' : '5–7 days',
       stageStep: 1,
-      stageDesc: ''
+      stageDesc: '',
+      plotOrSeason: ''
     });
   };
 
   const handleDeleteCrop = (cropId) => {
-    const cropToDelete = allCrops.find(c => c.id === cropId) || customCrops.find(c => c.id === cropId);
+    const cropToDelete = allCrops.find(c => c.id === cropId) || customCrops.find(c => c.id === cropId) || datasetCrops.find(c => c.id === cropId);
     const cropName = isFil 
       ? cropToDelete?.filipinoName || cropToDelete?.name 
       : cropToDelete?.name || cropToDelete?.filipinoName;
     const confirmMsg = isFil
-      ? `Sigurado ka bang nais mong tanggalin ang "${cropName || 'gulay na ito'}"?`
-      : `Are you sure you want to delete "${cropName || 'this vegetable'}"?`;
+      ? `Sigurado ka bang nais mong tanggalin ang "${cropName || 'gulay na ito'}" sa dashboard?`
+      : `Are you sure you want to delete "${cropName || 'this vegetable'}" from the dashboard?`;
 
     if (window.confirm(confirmMsg)) {
-      const updated = customCrops.filter(c => c.id !== cropId);
-      setCustomCrops(updated);
+      // Immediately remove from dashboard state
+      const updatedCustom = customCrops.filter(c => c.id !== cropId && c.name !== cropId);
+      const updatedDataset = datasetCrops.filter(c => c.id !== cropId && c.name !== cropId);
+
+      setCustomCrops(updatedCustom);
+      setDatasetCrops(updatedDataset);
+
       try {
-        localStorage.setItem('climayield_custom_crops', JSON.stringify(updated));
+        localStorage.setItem('climayield_custom_crops', JSON.stringify(updatedCustom));
+      } catch {}
+      try {
+        localStorage.setItem('climayield_dataset_crops', JSON.stringify(updatedDataset));
       } catch {}
 
-      if (datasetCrops.some(c => c.id === cropId)) {
-        const updatedDataset = datasetCrops.filter(c => c.id !== cropId);
-        setDatasetCrops(updatedDataset);
-        try {
-          localStorage.setItem('climayield_dataset_crops', JSON.stringify(updatedDataset));
-        } catch {}
-      }
+      try {
+        const deletedIds = JSON.parse(localStorage.getItem('climayield_deleted_crop_ids') || '[]');
+        if (cropToDelete?.id && !deletedIds.includes(cropToDelete.id)) deletedIds.push(cropToDelete.id);
+        if (cropToDelete?.name && !deletedIds.includes(cropToDelete.name)) deletedIds.push(cropToDelete.name);
+        if (cropId && !deletedIds.includes(cropId)) deletedIds.push(cropId);
+        localStorage.setItem('climayield_deleted_crop_ids', JSON.stringify(deletedIds));
+      } catch {}
 
-      toast.info(isFil ? `🗑️ Natanggal na ang ${cropName || 'gulay'}.` : `🗑️ ${cropName || 'Vegetable'} deleted.`);
+      // Clean flipped cards state
+      setFlippedCrops(prev => {
+        const copy = { ...prev };
+        delete copy[cropId];
+        return copy;
+      });
+
+      // Display success notification afterward
+      toast.success(
+        isFil 
+          ? `✅ Matagumpay na natanggal ang ${cropName || 'gulay'} sa dashboard!` 
+          : `✅ ${cropName || 'Vegetable'} has been successfully removed from the dashboard!`
+      );
     }
   };
 
@@ -1410,14 +1664,27 @@ function Dashboard({
             </h2>
             <p>
               {isFil
-                ? 'Pagtataya ng Ani sa Quezon City • Alerto at Gabay para sa Magsasaka'
-                : 'Quezon City Short-Cycle Crop Forecasting • Yield Instability Monitoring & Decision Support'}
+                ? `Pagtataya ng Ani sa ${farmLocation} • Alerto at Gabay para sa Magsasaka`
+                : `${farmLocation} Short-Cycle Crop Forecasting • Yield Monitoring & Decision Support`}
             </p>
           </div>
           <div className="fd-hero-badge-group">
-            <div className="fd-hero-badge">
-              <div className="title">{isFil ? 'Lokasyon ng Bukid' : 'Farm Location'}</div>
-              <div className="val">📍 Quezon City, PH</div>
+            <div
+              className="fd-hero-badge"
+              onClick={handleOpenLocationModal}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenLocationModal(); }}
+              style={{ cursor: 'pointer' }}
+              title={isFil ? 'I-click upang i-update ang lokasyon ng bukid' : 'Click to update farm location'}
+            >
+              <div className="title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <span>{isFil ? 'Lokasyon ng Bukid' : 'Farm Location'}</span>
+                <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.22)', padding: '2px 7px', borderRadius: '999px', fontWeight: 700 }}>
+                  ✏️ {isFil ? 'I-update' : 'Update'}
+                </span>
+              </div>
+              <div className="val">📍 {farmLocation}</div>
             </div>
             <button
               type="button"
@@ -1426,7 +1693,29 @@ function Dashboard({
               title={isFil ? 'Paganahin o i-test ang alerto sa cellphone' : 'Enable or test mobile phone notifications'}
             >
               <span className="fd-mobile-bell-icon">🔔</span>
-              <span>{isFil ? 'Mobile Phone Alerts' : 'Mobile Phone Alerts'}</span>
+              <span>{farmerPhone ? `Mobile Alerts (${farmerPhone})` : (isFil ? 'Mobile Phone Alerts' : 'Mobile Phone Alerts')}</span>
+            </button>
+            <button
+              type="button"
+              className="fd-phone-edit-pill"
+              onClick={handleOpenPhoneModal}
+              title={isFil ? 'I-update ang numero ng cellphone para sa alerto' : 'Update mobile alert phone number'}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.35)',
+                color: '#ffffff',
+                borderRadius: '999px',
+                padding: '6px 12px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <span>📱</span>
+              <span>{farmerPhone ? (isFil ? 'Palitan ang No.' : 'Change Phone') : (isFil ? 'Ilagay ang No.' : 'Set Phone')}</span>
             </button>
           </div>
         </div>
@@ -1542,7 +1831,18 @@ function Dashboard({
                 <button 
                   type="button"
                   className="fd-add-crop-btn"
-                  onClick={() => setShowAddModal(true)}
+                  onClick={() => {
+                    setEditingCropId(null);
+                    setNewCropForm({
+                      filipinoName: 'Pechay',
+                      name: 'Pechay',
+                      icon: '🥬',
+                      daysToGrow: isFil ? '5–7 araw' : '5–7 days',
+                      stageStep: 1,
+                      stageDesc: ''
+                    });
+                    setShowAddModal(true);
+                  }}
                   title={isFil ? 'Magdagdag ng bagong gulay sa listahan' : 'Add a new vegetable to list'}
                 >
                   <span className="btn-icon">➕</span>
@@ -1737,9 +2037,26 @@ function Dashboard({
                             <div className="fd-crop-shortcycle-badge">
                               ⚡ {isFil ? 'Mabilis Anihin (Short-Cycle)' : 'Short-Cycle Vegetable'}
                             </div>
+                            {crop.plotOrSeason && (
+                              <div className="fd-crop-plot-badge" style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '2px 8px', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                🏷️ {crop.plotOrSeason}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        {crop.isCustom && (
+                        <div className="fd-card-top-actions">
+                          <button
+                            type="button"
+                            className="fd-crop-edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditCrop(crop);
+                            }}
+                            title={isFil ? `I-update ang ${primaryName}` : `Update ${primaryName}`}
+                          >
+                            <span>✏️</span>
+                            <span>{isFil ? 'Update' : 'Update'}</span>
+                          </button>
                           <button
                             type="button"
                             className="fd-crop-delete-btn"
@@ -1750,9 +2067,9 @@ function Dashboard({
                             title={isFil ? `Tanggalin ang ${primaryName}` : `Delete ${primaryName}`}
                           >
                             <span className="btn-icon">🗑️</span>
-                            <span className="btn-label">{isFil ? 'Tanggalin' : 'Delete'}</span>
+                            <span className="btn-label">{isFil ? 'Delete' : 'Delete'}</span>
                           </button>
-                        )}
+                        </div>
                       </div>
 
                       {/* Dynamic Harvest Countdown & Readiness Badge */}
@@ -1809,20 +2126,18 @@ function Dashboard({
                           </div>
                         </div>
                         <div className="fd-back-header-actions">
-                          {crop.isCustom && (
-                            <button
-                              type="button"
-                              className="fd-crop-delete-btn back"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCrop(crop.id);
-                              }}
-                              title={isFil ? `Tanggalin ang ${crop.filipinoName || crop.name}` : `Delete ${crop.name || crop.filipinoName}`}
-                            >
-                              <span>🗑️</span>
-                              <span>{isFil ? 'Tanggalin' : 'Delete'}</span>
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            className="fd-crop-delete-btn back"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCrop(crop.id);
+                            }}
+                            title={isFil ? `Tanggalin ang ${crop.filipinoName || crop.name}` : `Delete ${crop.name || crop.filipinoName}`}
+                          >
+                            <span>🗑️</span>
+                            <span>{isFil ? 'Tanggalin' : 'Delete'}</span>
+                          </button>
                           <span className="fd-back-flip-badge">
                             🔄 {isFil ? 'Pabalik' : 'Flip Back'}
                           </span>
@@ -1831,22 +2146,24 @@ function Dashboard({
 
                       {/* Harvest Readiness & Growth Window */}
                       <div className="fd-back-harvest-info-card" style={{
-                        margin: '6px 0 10px 0',
-                        padding: '8px 12px',
-                        borderRadius: '12px',
+                        margin: '4px 0',
+                        padding: '6px 10px',
+                        borderRadius: '10px',
                         background: cropHarvest.isReady ? '#ecfdf5' : '#f8fafc',
                         border: `1.5px solid ${cropHarvest.isReady ? '#6ee7b7' : '#e2e8f0'}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        fontSize: '0.78rem',
-                        fontWeight: 700
+                        gap: '6px',
+                        fontSize: '0.73rem',
+                        fontWeight: 700,
+                        flexShrink: 0
                       }}>
-                        <span style={{ color: cropHarvest.isReady ? '#15803d' : '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ color: cropHarvest.isReady ? '#15803d' : '#334155', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           <span>{cropHarvest.badgeIcon}</span>
                           <span>{cropHarvest.badgeText}</span>
                         </span>
-                        <span style={{ color: '#64748b', fontSize: '0.7rem' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.68rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                           🧺 {cropHarvest.harvestWindow}
                         </span>
                       </div>
@@ -2118,22 +2435,26 @@ function Dashboard({
       </>
     )}
 
-        {/* ADD VEGETABLE MODAL */}
-        {showAddModal && (
-          <div className="fd-modal-overlay" onClick={() => setShowAddModal(false)}>
+        {/* ADD / UPDATE VEGETABLE MODAL - Rendered via Portal on document.body so it always appears at the top of the viewport */}
+        {showAddModal && typeof document !== 'undefined' && createPortal(
+          <div className="fd-modal-overlay" onClick={() => { setShowAddModal(false); setEditingCropId(null); }}>
             <div className="fd-modal-dialog" onClick={(e) => e.stopPropagation()}>
               <div className="fd-modal-header">
                 <div className="fd-modal-title">
-                  <span className="icon">🌱</span>
+                  <span className="icon">{editingCropId ? '✏️' : '🌱'}</span>
                   <div>
-                    <h3>{isFil ? 'Magdagdag ng Bagong Gulay (Short-Cycle)' : 'Add New Vegetable (Short-Cycle)'}</h3>
+                    <h3>
+                      {editingCropId
+                        ? (isFil ? 'I-update ang Gulay (Short-Cycle)' : 'Update Vegetable (Short-Cycle)')
+                        : (isFil ? 'Magdagdag ng Bagong Gulay (Short-Cycle)' : 'Add New Vegetable (Short-Cycle)')}
+                    </h3>
                     <p>{isFil ? 'Araw ng paglaki at kasalukuyang yugto ng pananim' : 'Days to grow & current plant development stage'}</p>
                   </div>
                 </div>
                 <button 
                   type="button" 
                   className="fd-modal-close-btn"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setEditingCropId(null); }}
                   title={isFil ? 'Isara' : 'Close'}
                 >
                   ✕
@@ -2142,39 +2463,29 @@ function Dashboard({
 
               <form onSubmit={handleAddCropSubmit} className="fd-modal-form">
                 <div className="fd-modal-body">
-                  {/* Manually Added Vegetables Management & Delete List */}
-                  {customCrops.length > 0 && (
+                  {/* All Vegetables Management & Delete List */}
+                  {allCrops.length > 0 && (
                     <div className="fd-modal-custom-manager">
                       <div className="fd-modal-custom-manager-head">
                         <div className="title">
                           <span className="badge-icon">📋</span>
                           <span className="badge-text">
                             {isFil
-                              ? `Mga Mano-manong Naidagdag na Gulay (${customCrops.length})`
-                              : `Manually Added Vegetables (${customCrops.length})`}
+                              ? `Pamahalaan ang mga Gulay sa Bukid (${allCrops.length})`
+                              : `Manage Dashboard Vegetables (${allCrops.length})`}
                           </span>
                         </div>
                         <button
                           type="button"
                           className="fd-modal-clear-all-custom-btn"
-                          onClick={() => {
-                            const confirmMsg = isFil
-                              ? 'Sigurado ka bang nais mong alisin ang lahat ng mano-manong naidagdag na gulay?'
-                              : 'Are you sure you want to delete all manually added vegetables?';
-                            if (window.confirm(confirmMsg)) {
-                              setCustomCrops([]);
-                              try {
-                                localStorage.removeItem('climayield_custom_crops');
-                              } catch {}
-                              toast.info(isFil ? '🗑️ Naalis na ang lahat ng mano-manong gulay.' : '🗑️ All manual vegetables removed.');
-                            }
-                          }}
+                          onClick={handleClearAllVegetables}
+                          title={isFil ? 'Alisin ang lahat ng gulay sa dashboard' : 'Delete all vegetables from the dashboard'}
                         >
                           🗑️ {isFil ? 'Alisin Lahat' : 'Delete All'}
                         </button>
                       </div>
                       <div className="fd-modal-custom-crop-list">
-                        {customCrops.map((c) => (
+                        {allCrops.map((c) => (
                           <div key={c.id} className="fd-modal-custom-crop-row">
                             <div className="crop-meta">
                               <span className="crop-emoji">{c.icon}</span>
@@ -2187,15 +2498,34 @@ function Dashboard({
                                 </span>
                               </div>
                             </div>
-                            <button
-                              type="button"
-                              className="fd-modal-delete-item-btn"
-                              onClick={() => handleDeleteCrop(c.id)}
-                              title={isFil ? `Tanggalin ang ${c.filipinoName || c.name}` : `Delete ${c.name || c.filipinoName}`}
-                            >
-                              <span>🗑️</span>
-                              <span>{isFil ? 'Tanggalin' : 'Delete'}</span>
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleEditCrop(c)}
+                                style={{
+                                  background: '#ecfdf5',
+                                  color: '#15803d',
+                                  border: '1px solid #86efac',
+                                  borderRadius: '8px',
+                                  padding: '5px 10px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title={isFil ? `I-update ang ${c.filipinoName || c.name}` : `Update ${c.name || c.filipinoName}`}
+                              >
+                                ✏️ {isFil ? 'I-update' : 'Update'}
+                              </button>
+                              <button
+                                type="button"
+                                className="fd-modal-delete-item-btn"
+                                onClick={() => handleDeleteCrop(c.id)}
+                                title={isFil ? `Tanggalin ang ${c.filipinoName || c.name}` : `Delete ${c.name || c.filipinoName}`}
+                              >
+                                <span>🗑️</span>
+                                <span>{isFil ? 'Tanggalin' : 'Delete'}</span>
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -2438,6 +2768,27 @@ function Dashboard({
                       })}
                     </div>
                   </div>
+
+                  {/* Plot / Planting Season Field (Allows multiple batches of the same crop) */}
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>🏷️</span>
+                      <span>{isFil ? 'Plot / Panahon ng Pagtatanim (Opsyonal):' : 'Plot / Planting Season (Optional):'}</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="fd-form-input"
+                      placeholder={isFil ? 'Hal. Plot A, Hilagang Bukid, Wet Season 2026' : 'e.g. Plot A, North Field, Wet Season 2026'}
+                      value={newCropForm.plotOrSeason || ''}
+                      onChange={(e) => setNewCropForm({ ...newCropForm, plotOrSeason: e.target.value })}
+                      maxLength={60}
+                    />
+                    <div className="fd-input-subtext">
+                      {isFil
+                        ? '💡 Maaaring magdagdag muli ng parehong gulay kung may magkaibang Plot o Planting Season.'
+                        : '💡 Duplicate vegetable entries are permitted when they specify different plots or planting seasons.'}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="fd-modal-footer">
@@ -2445,13 +2796,15 @@ function Dashboard({
                     type="button"
                     className="fd-modal-btn reset"
                     onClick={() => {
+                      setEditingCropId(null);
                       setNewCropForm({
                         filipinoName: '',
                         name: '',
                         icon: '🥬',
                         daysToGrow: '',
                         stageStep: 1,
-                        stageDesc: ''
+                        stageDesc: '',
+                        plotOrSeason: ''
                       });
                       toast.info(isFil ? 'Nalinis na ang form.' : 'Form cleared.');
                     }}
@@ -2463,7 +2816,7 @@ function Dashboard({
                   <button
                     type="button"
                     className="fd-modal-btn cancel"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => { setShowAddModal(false); setEditingCropId(null); }}
                   >
                     {isFil ? 'Kanselahin' : 'Cancel'}
                   </button>
@@ -2472,12 +2825,169 @@ function Dashboard({
                     className="fd-modal-btn submit"
                   >
                     <span>💾</span>
-                    <span>{isFil ? 'I-save ang Gulay' : 'Save Vegetable'}</span>
+                    <span>
+                      {editingCropId
+                        ? (isFil ? 'I-update ang Gulay' : 'Update Vegetable')
+                        : (isFil ? 'I-save ang Gulay' : 'Save Vegetable')}
+                    </span>
                   </button>
                 </div>
               </form>
             </div>
-          </div>
+          </div>,
+          document.body
+        )}
+
+        {/* UPDATE FARM LOCATION MODAL */}
+        {showLocationModal && typeof document !== 'undefined' && createPortal(
+          <div className="fd-modal-overlay" onClick={() => setShowLocationModal(false)}>
+            <div className="fd-modal-dialog" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+              <div className="fd-modal-header">
+                <div className="fd-modal-title">
+                  <span className="icon">📍</span>
+                  <div>
+                    <h3>{isFil ? 'I-update ang Lokasyon ng Bukid' : 'Update Farm Location'}</h3>
+                    <p>{isFil ? 'Pumili ng barangay sa Quezon City o maglagay ng lokasyon' : 'Select a Quezon City district or enter your farm location'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="fd-modal-close-btn"
+                  onClick={() => setShowLocationModal(false)}
+                  title={isFil ? 'Isara' : 'Close'}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveLocation} className="fd-modal-form">
+                <div className="fd-modal-body">
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>⚡</span>
+                      <span>{isFil ? 'Mabilis na Pagpili (Quezon City):' : 'Quick Select (Quezon City):'}</span>
+                    </label>
+                    <div className="fd-preset-chips">
+                      {QC_LOCATION_PRESETS.map((loc) => (
+                        <button
+                          key={loc}
+                          type="button"
+                          className={`fd-preset-chip ${locationDraft === loc ? 'selected' : ''}`}
+                          onClick={() => setLocationDraft(loc)}
+                        >
+                          <span>📍</span>
+                          <strong>{loc}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>🏡</span>
+                      <span>{isFil ? 'Pangalan ng Bukid / Eksaktong Lokasyon: *' : 'Farm Name / Exact Location: *'}</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      minLength={3}
+                      maxLength={100}
+                      className="fd-form-input"
+                      placeholder={isFil ? 'Hal. Green Valley Farm, Diliman, Quezon City' : 'e.g. Green Valley Farm, Diliman, Quezon City'}
+                      value={locationDraft}
+                      onChange={(e) => setLocationDraft(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="fd-modal-footer">
+                  <button
+                    type="button"
+                    className="fd-modal-btn cancel"
+                    onClick={() => setShowLocationModal(false)}
+                  >
+                    {isFil ? 'Kanselahin' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    className="fd-modal-btn submit"
+                  >
+                    <span>💾</span>
+                    <span>{isFil ? 'I-save ang Lokasyon' : 'Save Location'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* UPDATE MOBILE ALERT PHONE NUMBER MODAL */}
+        {showPhoneModal && typeof document !== 'undefined' && createPortal(
+          <div className="fd-modal-overlay" onClick={() => setShowPhoneModal(false)}>
+            <div className="fd-modal-dialog" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+              <div className="fd-modal-header">
+                <div className="fd-modal-title">
+                  <span className="icon">📱</span>
+                  <div>
+                    <h3>{isFil ? 'Numero para sa Mobile Alerts' : 'Mobile Alert Phone Number'}</h3>
+                    <p>{isFil ? 'Dito ipapadala ang SMS at alerto sa pag-aani at panahon' : 'Where harvest advisories and climate alerts are sent'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="fd-modal-close-btn"
+                  onClick={() => setShowPhoneModal(false)}
+                  title={isFil ? 'Isara' : 'Close'}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSavePhone} className="fd-modal-form">
+                <div className="fd-modal-body">
+                  <div className="fd-form-group">
+                    <label className="fd-form-label">
+                      <span>📱</span>
+                      <span>{isFil ? 'Mobile Phone Number: *' : 'Mobile Phone Number: *'}</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={20}
+                      className="fd-form-input"
+                      placeholder="09171234567 or +639171234567"
+                      value={phoneDraft}
+                      onChange={(e) => setPhoneDraft(e.target.value)}
+                    />
+                    <div className="fd-input-subtext">
+                      {isFil
+                        ? '💡 Makatatanggap ka ng alerto kapag handa nang anihin ang gulay o may babala sa ambon at ulan.'
+                        : '💡 You will receive alerts when vegetables are ready to harvest or when adverse weather occurs.'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fd-modal-footer">
+                  <button
+                    type="button"
+                    className="fd-modal-btn cancel"
+                    onClick={() => setShowPhoneModal(false)}
+                  >
+                    {isFil ? 'Kanselahin' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    className="fd-modal-btn submit"
+                  >
+                    <span>💾</span>
+                    <span>{isFil ? 'I-save at I-test' : 'Save & Test Alert'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
         )}
 
 

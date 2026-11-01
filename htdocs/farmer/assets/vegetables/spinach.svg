@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="spinGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="60%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#052e16"/>
+    </radialGradient>
+    <filter id="spinShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#052e16" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#spinShadow)">
+    <path d="M110 195 L110 80" stroke="#bbf7d0" stroke-width="4" fill="none"/>
+    <ellipse cx="75" cy="120" rx="35" ry="25" transform="rotate(-25 75 120)" fill="url(#spinGrad)"/>
+    <ellipse cx="145" cy="120" rx="35" ry="25" transform="rotate(25 145 120)" fill="url(#spinGrad)"/>
+    <ellipse cx="110" cy="80" rx="38" ry="30" fill="url(#spinGrad)"/>
+  </g>
+</svg>

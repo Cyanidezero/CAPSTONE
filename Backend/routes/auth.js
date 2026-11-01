@@ -148,10 +148,33 @@ router.post('/signup', async (req, res) => {
             });
         }
 
+        if (String(password).length < 4) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be 4 characters or longer.'
+            });
+        }
+
+        if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain letters and at least one number (e.g. farm123), not numbers only.'
+            });
+        }
+
         const normalizedEmail = email.trim().toLowerCase();
         const trimmedName = name.trim();
-        const parsedAge = Math.max(18, Math.min(99, parseInt(age, 10) || 25));
-        const targetRole = role === 'dev' ? 'dev' : 'farmer';
+        const targetRole = (role === 'dev' || role === 'developer') ? 'dev' : 'farmer';
+        const rawAge = parseInt(age, 10) || 25;
+        if (targetRole === 'farmer' && (rawAge < 18 || rawAge > 70)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Farmer age must be between 18 and 70 years old.'
+            });
+        }
+        const parsedAge = targetRole === 'farmer'
+            ? Math.max(18, Math.min(70, rawAge))
+            : Math.max(18, Math.min(99, rawAge));
         let locationOrOrg = '';
         if (targetRole === 'farmer') {
             if (farmName && farmLocation) {

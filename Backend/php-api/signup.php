@@ -25,6 +25,7 @@ if (!is_array($data)) {
 $role         = $data['role'] ?? 'farmer';
 $name         = trim($data['name'] ?? '');
 $age          = isset($data['age']) ? intval($data['age']) : 25;
+$phone        = trim($data['phone'] ?? $data['mobile'] ?? '');
 $email        = trim($data['email'] ?? '');
 $password     = $data['password'] ?? '';
 $farmLocation = trim($data['farm_location'] ?? $data['farmName'] ?? $data['organization'] ?? '');
@@ -34,6 +35,9 @@ if (!in_array($role, ['farmer', 'developer', 'dev'], true)) {
 }
 if ($name === '' || $email === '' || $password === '') {
     respond(400, ['success' => false, 'message' => 'Please fill in all required fields (name, email, password).']);
+}
+if ($role === 'farmer' && $phone === '') {
+    respond(400, ['success' => false, 'message' => 'Mobile phone number is required for farmer registration.']);
 }
 if ($age < 18 || $age > 99) {
     $age = 25; // fallback default
@@ -59,15 +63,31 @@ $hashed = password_hash($password, PASSWORD_DEFAULT);
 
 try {
     if ($isFarmer) {
-        $stmt = $pdo->prepare(
-            "INSERT INTO farmers (name, age, farm_location, email, password) VALUES (?, ?, ?, ?, ?)"
-        );
-        $stmt->execute([$name, $age, $farmLocation ?: "{$name}'s Farm", strtolower($email), $hashed]);
+        try { $pdo->exec("ALTER TABLE `farmers` ADD COLUMN `phone` varchar(30) NOT NULL DEFAULT ''"); } catch (Exception $e) {}
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO farmers (name, age, phone, farm_location, email, password) VALUES (?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$name, $age, $phone, $farmLocation ?: "{$name}'s Farm", strtolower($email), $hashed]);
+        } catch (PDOException $e) {
+            $stmt = $pdo->prepare(
+                "INSERT INTO farmers (name, age, farm_location, email, password) VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$name, $age, $farmLocation ?: "{$name}'s Farm", strtolower($email), $hashed]);
+        }
     } else {
-        $stmt = $pdo->prepare(
-            "INSERT INTO developers (name, age, organization, email, password) VALUES (?, ?, ?, ?, ?)"
-        );
-        $stmt->execute([$name, $age, $farmLocation ?: "{$name}'s Lab", strtolower($email), $hashed]);
+        try { $pdo->exec("ALTER TABLE `developers` ADD COLUMN `phone` varchar(30) NOT NULL DEFAULT ''"); } catch (Exception $e) {}
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO developers (name, age, phone, organization, email, password) VALUES (?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$name, $age, $phone, $farmLocation ?: "{$name}'s Lab", strtolower($email), $hashed]);
+        } catch (PDOException $e) {
+            $stmt = $pdo->prepare(
+                "INSERT INTO developers (name, age, organization, email, password) VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$name, $age, $farmLocation ?: "{$name}'s Lab", strtolower($email), $hashed]);
+        }
     }
     $newId = $pdo->lastInsertId();
 } catch (PDOException $e) {

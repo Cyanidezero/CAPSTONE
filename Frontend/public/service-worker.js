@@ -1,13 +1,13 @@
 // ClimaYield-X Progressive Web App Service Worker
-const CACHE_NAME = 'climayield-x-v1';
+const CACHE_NAME = 'climayield-x-v2';
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png',
-  '/favicon.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png',
+  './favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -24,6 +24,12 @@ self.addEventListener('install', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,13 +40,17 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => self.clients.claim()).then(() => {
+      return self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: 'NEW_VERSION_AVAILABLE' }));
+      });
+    })
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Let API requests bypass the service worker cache
-  if (event.request.url.includes('/api/')) {
+  // Let API requests and version checks bypass the service worker cache entirely
+  if (event.request.url.includes('/api/') || event.request.url.includes('version.json')) {
     return;
   }
 

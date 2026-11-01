@@ -206,6 +206,7 @@
 .rec-auto-model-sub {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 0.78rem;
   color: #276738;
@@ -235,6 +236,12 @@
   font-weight: 600;
 }
 
+.rec-generate-btn-wrap {
+  display: flex;
+  align-items: flex-end;
+  max-width: 100%;
+}
+
 .btn-rec-generate {
   background: linear-gradient(135deg, #14532d 0%, #166534 50%, #22c55e 100%);
   color: #ffffff;
@@ -251,6 +258,8 @@
   justify-content: center;
   gap: 10px;
   min-height: 48px;
+  max-width: 100%;
+  box-sizing: border-box;
   white-space: nowrap;
 }
 
@@ -669,4 +678,105 @@
   font-size: 0.85rem;
   font-weight: 700;
   border: 1px solid #a7f3d0;
+}
+
+/* ========================================================= */
+/* 📱 Mobile Responsive Adjustments                          */
+/* ========================================================= */
+@media (max-width: 768px) {
+  .rec-container {
+    gap: 16px;
+  }
+
+  .rec-hero-card {
+    padding: 18px 16px;
+    border-radius: 18px;
+    gap: 12px;
+  }
+
+  .rec-hero-text h2 {
+    font-size: 1.25rem;
+    gap: 8px;
+  }
+
+  .rec-hero-text p {
+    font-size: 0.85rem;
+  }
+
+  .rec-hero-badge {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+  .rec-hero-badge .val {
+    font-size: 0.95rem;
+    margin-top: 0;
+  }
+
+  .rec-controls-card {
+    padding: 16px;
+    border-radius: 16px;
+    gap: 14px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rec-control-group,
+  .auto-model-group {
+    min-width: 0;
+    width: 100%;
+    flex: none;
+  }
+
+  .rec-auto-model-name {
+    font-size: 0.88rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .rec-generate-btn-wrap {
+    width: 100%;
+  }
+
+  .btn-rec-generate {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    border-radius: 14px;
+  }
+
+  .rec-results-card,
+  .rec-calendar-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .rec-prediction-basis-banner {
+    padding: 14px;
+  }
+
+  .rec-basis-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .recommendation-card {
+    padding: 14px 16px;
+  }
+
+  .rec-empty-card {
+    padding: 28px 16px;
+    border-radius: 16px;
+  }
+
+  .rec-empty-text {
+    font-size: 0.95rem;
+  }
 }

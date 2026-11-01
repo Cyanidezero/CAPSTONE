@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="celStalk" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#dcfce7"/>
+      <stop offset="35%" stop-color="#86efac"/>
+      <stop offset="80%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="celShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#15803d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#celShadow)">
+    <!-- Base butt -->
+    <path d="M92 195 C92 202 128 202 128 195 Z" fill="#bbf7d0"/>
+
+    <!-- Ribbed Stalks clustered together -->
+    <path d="M85 195 Q82 120 75 60 C80 58 92 65 94 85 Q98 135 98 195 Z" fill="url(#celStalk)"/>
+    <path d="M135 195 Q138 120 145 60 C140 58 128 65 126 85 Q122 135 122 195 Z" fill="url(#celStalk)"/>
+    <path d="M96 195 Q102 110 108 55 C112 55 118 60 118 80 Q116 135 114 195 Z" fill="url(#celStalk)"/>
+
+    <!-- Longitudinal celery ribs -->
+    <g stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.6">
+      <path d="M90 190 Q88 130 82 80"/>
+      <path d="M106 190 Q108 125 110 75"/>
+      <path d="M128 190 Q130 130 138 80"/>
+    </g>
+
+    <!-- Leafy Crowns at the top -->
+    <g fill="#16a34a">
+      <circle cx="72" cy="52" r="14"/><circle cx="82" cy="42" r="12"/>
+      <circle cx="110" cy="40" r="15"/><circle cx="120" cy="32" r="13"/>
+      <circle cx="148" cy="52" r="14"/><circle cx="138" cy="42" r="12"/>
+    </g>
+  </g>
+</svg>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = (typeof window !== 'undefined' && window.API_BASE_URL) || process.env.REACT_APP_API_URL || 'https://YOUR-API.infinityfreeapp.com/api';
 
 function Dashboard({ systemStatus = {}, setActiveTab, onRefresh }) {
   const [previewData, setPreviewData] = useState(null);

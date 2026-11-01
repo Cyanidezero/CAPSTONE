@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { login, signup } from '../services/api';
-import { isFarmerOnlyMode } from '../utils/portalMode';
+import { isFarmerOnlyMode, isDevOnlyMode } from '../utils/portalMode';
 import './Login.css';
 
 function Login({ onLoginSuccess }) {
   const isFarmerOnly = isFarmerOnlyMode();
-  const [isDev, setIsDev] = useState(false);
-  const [email, setEmail] = useState('farmer@agri.coop');
-  const [password, setPassword] = useState('password123');
+  const isDevOnly = isDevOnlyMode();
+  const [isDev, setIsDev] = useState(isDevOnly);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,22 +19,19 @@ function Login({ onLoginSuccess }) {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupForm, setSignupForm] = useState({
     name: '',
-    age: 28,
+    age: '',
+    phone: '',
     email: '',
     password: '',
-    role: 'farmer',
+    confirmPassword: '',
+    role: isDevOnly ? 'dev' : 'farmer',
     farmName: '',
     organization: ''
   });
 
   const toggleMode = (targetIsDev) => {
-    if (isFarmerOnly) return; // Prevent switching to dev when in dedicated farmer mode
+    if (isFarmerOnly || isDevOnly) return; // Prevent switching when in dedicated portal mode
     setIsDev(targetIsDev);
-    if (targetIsDev) {
-      if (email === 'farmer@agri.coop') setEmail('dev@agri.coop');
-    } else {
-      if (email === 'dev@agri.coop') setEmail('farmer@agri.coop');
-    }
   };
 
 
@@ -43,9 +41,13 @@ function Login({ onLoginSuccess }) {
       toast.warn('Please enter both email and password.');
       return;
     }
+    if (password.length < 4) {
+      toast.warn('Password must be 4 characters or longer.');
+      return;
+    }
 
     setLoading(true);
-    const role = isFarmerOnly ? 'farmer' : (isDev ? 'dev' : 'farmer');
+    const role = isFarmerOnly ? 'farmer' : (isDevOnly || isDev ? 'dev' : 'farmer');
 
     try {
       // Call backend API
@@ -56,30 +58,15 @@ function Login({ onLoginSuccess }) {
           onLoginSuccess(res.user);
         }
       } else {
-        toast.error(res.error || 'Authentication failed.');
+        toast.error(res.error || 'Invalid username or password. Please try again.');
       }
     } catch (err) {
-      console.warn('Backend login fallback:', err);
-      // Fallback demo authentication if backend is unreachable
-      const cleanEmail = email.trim().toLowerCase();
-      if (cleanEmail === 'farmer@agri.coop' || !isDev) {
-        const fallbackUser = {
-          name: cleanEmail === 'farmer@agri.coop' ? 'John Miller' : cleanEmail.split('@')[0],
-          email: cleanEmail,
-          role: 'farmer',
-          profile: { farmName: 'Green Valley Organic Farms' }
-        };
-        toast.success(`Welcome, ${fallbackUser.name}! (Farmer Mode)`);
-        if (onLoginSuccess) onLoginSuccess(fallbackUser);
+      console.warn('Login error:', err);
+      const errMsg = err.response?.data?.error || err.message;
+      if (!err.response || err.response?.status === 401 || (errMsg && errMsg.toLowerCase().includes('invalid'))) {
+        toast.error('Invalid username or password. Please try again.');
       } else {
-        const fallbackUser = {
-          name: cleanEmail === 'dev@agri.coop' ? 'Alex Chen' : cleanEmail.split('@')[0],
-          email: cleanEmail,
-          role: 'dev',
-          profile: { organization: 'AgriTech AI Labs' }
-        };
-        toast.success(`Welcome, ${fallbackUser.name}! (Dev & Research Mode)`);
-        if (onLoginSuccess) onLoginSuccess(fallbackUser);
+        toast.error(errMsg || 'Invalid username or password. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -88,8 +75,51 @@ function Login({ onLoginSuccess }) {
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    if (!signupForm.name || !signupForm.email || !signupForm.password) {
+    const trimmedName = String(signupForm.name || '').trim();
+    if (!trimmedName || !signupForm.email || !signupForm.password) {
       toast.warn('Please fill in all required fields.');
+      return;
+    }
+    if (trimmedName.length < 2) {
+      toast.warn('Please enter your full name (at least 2 characters).');
+      return;
+    }
+    if (/[0-9]/.test(trimmedName)) {
+      toast.error('Numbers are not allowed in the name field. Only letters, spaces, hyphens, and apostrophes are accepted.');
+      return;
+    }
+    if (!/^[a-zA-ZÀ-ÿ\s.'-]+$/.test(trimmedName)) {
+      toast.error('Invalid characters in name. Only letters, spaces, hyphens, and apostrophes are allowed.');
+      return;
+    }
+    if (!signupForm.phone || signupForm.phone.trim().length < 10) {
+      toast.error('Please enter a valid mobile phone number (09171234567 or +639171234567).');
+      return;
+    }
+    const parsedAge = parseInt(signupForm.age, 10);
+    if (signupForm.role === 'farmer') {
+      if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > 70) {
+        toast.error('Farmer age must be between 18 and 70 years old.');
+        return;
+      }
+    } else {
+      if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > 99) {
+        toast.error('Developer age must be between 18 and 99 years old.');
+        return;
+      }
+    }
+    if (signupForm.password.length < 4) {
+      toast.error('Password must be 4 characters or longer.');
+      return;
+    }
+    const hasLetters = /[a-zA-Z]/.test(signupForm.password);
+    const hasNumbers = /[0-9]/.test(signupForm.password);
+    if (!hasLetters || !hasNumbers) {
+      toast.error('Password must contain letters and at least one number (farm123), not numbers only like 1234.');
+      return;
+    }
+    if (signupForm.password !== signupForm.confirmPassword) {
+      toast.error('Passwords do not match. Please re-enter your password.');
       return;
     }
 
@@ -158,14 +188,14 @@ function Login({ onLoginSuccess }) {
                 {isPeeking ? 'Restore' : 'View BG'}
               </button>
               <span className="account-badge">
-                {isFarmerOnly ? 'Farmer Portal' : (isDev ? 'Dev Portal' : 'Farmer Portal')}
+                {isFarmerOnly ? 'Farmer Portal' : (isDevOnly || isDev ? 'Dev Portal' : 'Farmer Portal')}
               </span>
             </div>
           </div>
         </div>
 
         {/* Farmer vs Dev Side Interactive Switch (Only in dual-mode) */}
-        {!isFarmerOnly && (
+        {!isFarmerOnly && !isDevOnly && (
           <div className="switch-wrapper">
             <span 
               className={`switch-label ${!isDev ? 'active-farm' : ''}`}
@@ -288,16 +318,13 @@ function Login({ onLoginSuccess }) {
             {/* Signup Trigger */}
             <div className="auth-switch-prompt">
               Don't have an account yet?{' '}
-              <button 
-                type="button" 
+              <a 
+                href={isDev ? '/register/dev' : '/register'}
                 className="auth-switch-btn"
-                onClick={() => {
-                  setSignupForm(prev => ({ ...prev, role: isDev ? 'dev' : 'farmer' }));
-                  setShowSignupModal(true);
-                }}
+                style={{ textDecoration: 'none', display: 'inline-block' }}
               >
                 Create {isDev ? 'Dev Profile' : 'Farm Profile'}
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -320,35 +347,43 @@ function Login({ onLoginSuccess }) {
 
             <form onSubmit={handleSignupSubmit}>
               <div className="login-input-group">
-                <label>Full Name</label>
+                <label>Full Name *</label>
                 <div className="login-input-wrapper">
                   <input
                     type="text"
                     value={signupForm.name}
-                    onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
-                    placeholder={signupForm.role === 'dev' ? 'Alex Chen' : 'John Miller'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/[0-9]/.test(val)) {
+                        toast.warn('Numbers are not allowed in the name field. Only letters, spaces, hyphens, and apostrophes are accepted.');
+                        setSignupForm({ ...signupForm, name: val.replace(/[0-9]/g, '') });
+                      } else {
+                        setSignupForm({ ...signupForm, name: val });
+                      }
+                    }}
+                    placeholder={signupForm.role === 'dev' ? 'Alex Chen' : 'Juan Dela Cruz'}
                     required
                   />
                 </div>
               </div>
 
               <div className="login-input-group">
-                <label>Age</label>
+                <label>Age *</label>
                 <div className="login-input-wrapper">
                   <input
                     type="number"
                     min="18"
-                    max="99"
+                    max={signupForm.role === 'farmer' ? '70' : '99'}
                     value={signupForm.age}
                     onChange={(e) => setSignupForm({ ...signupForm, age: e.target.value })}
-                    placeholder="e.g. 30"
+                    placeholder="Enter your age"
                     required
                   />
                 </div>
               </div>
 
               <div className="login-input-group">
-                <label>Email Address</label>
+                <label>Email Address *</label>
                 <div className="login-input-wrapper">
                   <input
                     type="email"
@@ -361,13 +396,42 @@ function Login({ onLoginSuccess }) {
               </div>
 
               <div className="login-input-group">
-                <label>Password</label>
+                <label>Password *</label>
                 <div className="login-input-wrapper">
                   <input
                     type="password"
+                    minLength={4}
                     value={signupForm.password}
                     onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-                    placeholder="Create a secure password"
+                    placeholder="farm123 or dev2026"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="login-input-group">
+                <label>Confirm Password</label>
+                <div className="login-input-wrapper">
+                  <input
+                    type="password"
+                    minLength={4}
+                    value={signupForm.confirmPassword}
+                    onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
+                    placeholder="Re-enter your password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="login-input-group">
+                <label>Mobile Phone Number *</label>
+                <div className="login-input-wrapper">
+                  <span className="login-input-icon">📱</span>
+                  <input
+                    type="tel"
+                    value={signupForm.phone}
+                    onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
+                    placeholder="09171234567 or +639171234567"
                     required
                   />
                 </div>
@@ -382,7 +446,7 @@ function Login({ onLoginSuccess }) {
                       type="text"
                       value={signupForm.farmName}
                       onChange={(e) => setSignupForm({ ...signupForm, farmName: e.target.value })}
-                      placeholder="e.g. Green Valley Organic Farm"
+                      placeholder="Green Valley Organic Farm"
                     />
                   </div>
                 </div>

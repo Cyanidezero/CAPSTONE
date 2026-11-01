@@ -1,5 +1,6 @@
 // ClimaYield-X AI Model Forecast Storage & Synchronization Engine
 // Coordinates empirical training forecasts from Developer Pipeline to Weather Monitor & Prediction modules
+import { getApiUrl } from './apiConfig';
 
 export const TARGET_METADATA = {
   Crop_Yield: {
@@ -316,7 +317,7 @@ export function saveAiForecastRecord({
     forecast: forecastValues,
     dailyProjections,
     history: Array.isArray(history) ? history : [],
-    modelReady: modelReady || 'Champion Hybrid Ready',
+    modelReady: modelReady || 'Hybrid Ready',
     contextEn: meta.contextEn,
     contextFil: meta.contextFil,
     agronomicAdvisory: {
@@ -345,6 +346,20 @@ export function saveAiForecastRecord({
     
     // Broadcast event across components
     window.dispatchEvent(new CustomEvent('aiTrainingCompleted', { detail: forecastRecord }));
+
+    // Also persist exact forecastRecord to the live backend MySQL database so Farmer Portal receives it immediately
+    const apiBase = getApiUrl();
+    if (apiBase && typeof fetch !== 'undefined') {
+      fetch(`${apiBase}/training/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target,
+          modelType,
+          forecastRecord
+        })
+      }).catch(() => {});
+    }
   } catch (err) {
     console.warn('Could not save AI forecast to localStorage:', err);
   }

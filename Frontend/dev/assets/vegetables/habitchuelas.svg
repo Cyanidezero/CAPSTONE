@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <filter id="habShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#15803d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#habShadow)" stroke-linecap="round" fill="none">
+    <path d="M170 50 Q125 105 55 175" stroke="#4ade80" stroke-width="8"/>
+    <path d="M178 58 Q135 112 65 182" stroke="#22c55e" stroke-width="7.5"/>
+    <path d="M162 45 Q115 100 48 168" stroke="#16a34a" stroke-width="7"/>
+  </g>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="beetBulb" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="35%" stop-color="#be123c"/>
+      <stop offset="75%" stop-color="#881337"/>
+      <stop offset="100%" stop-color="#4c0519"/>
+    </radialGradient>
+    <linearGradient id="beetStem" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#9f1239"/>
+      <stop offset="60%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="beetShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#4c0519" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#beetShadow)">
+    <!-- Leafy Greens on top -->
+    <g fill="#15803d" stroke="#be123c" stroke-width="2">
+      <!-- Left leaf -->
+      <path d="M80 65 C60 40 65 15 85 10 C95 25 95 45 88 65 Z"/>
+      <!-- Center tall leaf -->
+      <path d="M110 55 C95 25 110 5 125 8 C135 25 125 45 115 55 Z"/>
+      <!-- Right leaf -->
+      <path d="M140 65 C160 40 155 15 135 10 C125 25 125 45 132 65 Z"/>
+    </g>
+
+    <!-- Stems -->
+    <path d="M85 65 Q95 85 102 95" fill="none" stroke="url(#beetStem)" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M115 55 Q112 75 110 95" fill="none" stroke="url(#beetStem)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M135 65 Q125 85 118 95" fill="none" stroke="url(#beetStem)" stroke-width="4.5" stroke-linecap="round"/>
+
+    <!-- Taproot (bottom tail) -->
+    <path d="M110 170 Q112 195 120 208 Q122 210 118 212" fill="none" stroke="#881337" stroke-width="3.5" stroke-linecap="round"/>
+
+    <!-- Beetroot Main Globe Body -->
+    <ellipse cx="110" cy="132" rx="55" ry="46" fill="url(#beetBulb)"/>
+
+    <!-- Subtle horizontal ring ridges -->
+    <g stroke="#fda4af" stroke-linecap="round" fill="none" opacity="0.4">
+      <path d="M85 120 Q110 126 135 120" stroke-width="2"/>
+      <path d="M78 135 Q110 142 142 135" stroke-width="2"/>
+      <path d="M88 150 Q110 156 132 150" stroke-width="1.8"/>
+    </g>
+
+    <!-- Highlight Reflection -->
+    <ellipse cx="88" cy="115" rx="14" ry="7" transform="rotate(-25 88 115)" fill="#ffffff" opacity="0.4"/>
+  </g>
+</svg>

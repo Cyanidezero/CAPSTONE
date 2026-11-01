@@ -1,0 +1,43 @@
+# ClimaYield-X - Apache .htaccess for InfinityFree
+# Handles CORS preflight headers and REST API rewrites
+
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Return 200 on OPTIONS preflight
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+
+    # Route /api/auth/* requests to /api/auth/*.php
+    RewriteRule ^api/auth/login/?$ /api/auth/login.php [L,QSA]
+    RewriteRule ^api/auth/signup/?$ /api/auth/signup.php [L,QSA]
+    RewriteRule ^api/auth/demo-accounts/?$ /api/auth/demo-accounts.php [L,QSA]
+    RewriteRule ^api/auth/logout/?$ /api/auth/logout.php [L,QSA]
+
+    # Route core /api/* endpoints
+    RewriteRule ^api/health/?$ /api/health.php [L,QSA]
+    RewriteRule ^api/status/?$ /api/status.php [L,QSA]
+    RewriteRule ^api/forecasts/?$ /api/forecasts.php [L,QSA]
+    RewriteRule ^api/alerts/?$ /api/alerts.php [L,QSA]
+    RewriteRule ^api/announcements/?$ /api/announcements.php [L,QSA]
+    RewriteRule ^api/crops/?$ /api/crops.php [L,QSA]
+    RewriteRule ^api/preview/?$ /api/preview.php [L,QSA]
+    RewriteRule ^api/predict/?$ /api/predict.php [L,QSA]
+    RewriteRule ^api/reset/?$ /api/reset.php [L,QSA]
+    RewriteRule ^api/weather/?$ /api/weather.php [L,QSA]
+
+    # Fallback to /api/index.php for any other /api routes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^api/(.*)$ /api/index.php?route=$1 [L,QSA]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>

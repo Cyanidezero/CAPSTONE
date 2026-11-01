@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="sqBody" cx="45%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="40%" stop-color="#d97706"/>
+      <stop offset="75%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </radialGradient>
+    <linearGradient id="sqStem" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#854d0e"/>
+      <stop offset="100%" stop-color="#713f12"/>
+    </linearGradient>
+    <filter id="sqShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#sqShadow)">
+    <!-- Woody ridged stem on top -->
+    <path d="M105 75 C102 55 106 35 116 32 C122 30 124 45 118 75 Z" fill="url(#sqStem)"/>
+    <polygon points="106,75 112,68 118,75" fill="#713f12"/>
+
+    <!-- Outer ribbed lobes (Kabocha ridges) -->
+    <!-- Far lobes -->
+    <ellipse cx="60" cy="130" rx="32" ry="48" fill="#14532d"/>
+    <ellipse cx="160" cy="130" rx="32" ry="48" fill="#14532d"/>
+
+    <!-- Mid lobes -->
+    <ellipse cx="80" cy="132" rx="32" ry="52" fill="url(#sqBody)"/>
+    <ellipse cx="140" cy="132" rx="32" ry="52" fill="url(#sqBody)"/>
+
+    <!-- Center prominent front lobe -->
+    <ellipse cx="110" cy="135" rx="34" ry="54" fill="url(#sqBody)"/>
+
+    <!-- Deep furrow crease lines -->
+    <g stroke="#052e16" stroke-width="2.5" fill="none" opacity="0.6">
+      <path d="M110 82 Q95 130 92 188"/>
+      <path d="M110 82 Q125 130 128 188"/>
+      <path d="M106 82 Q75 125 70 180"/>
+      <path d="M114 82 Q145 125 150 180"/>
+    </g>
+
+    <!-- Golden yellow mottles / spots on skin -->
+    <g fill="#fef08a" opacity="0.75">
+      <ellipse cx="105" cy="115" rx="6" ry="3"/>
+      <ellipse cx="118" cy="135" rx="8" ry="4"/>
+      <ellipse cx="98" cy="148" rx="7" ry="3.5"/>
+      <ellipse cx="132" cy="120" rx="5" ry="3"/>
+      <ellipse cx="82" cy="125" rx="6" ry="3"/>
+    </g>
+
+    <!-- Top highlight -->
+    <ellipse cx="106" cy="100" rx="14" ry="6" fill="#ffffff" opacity="0.35"/>
+  </g>
+</svg>

@@ -24,7 +24,7 @@ import Predictions from './Prediction';
 import Recommendations from './Recommendations';
 import Login from './Login';
 import PwaInstallModal from './PwaInstallModal';
-import { isFarmerOnlyMode } from '../utils/portalMode';
+import { isFarmerOnlyMode, isDevOnlyMode } from '../utils/portalMode';
 import { API_URL } from '../utils/apiConfig';
 import { syncFarmerFrontendWithBackend } from '../utils/crossDeviceSync';
 import { DevDashboardLogo, DevDataManagementLogo, DevPipelineLogo, DevBrandLogo } from './DevIcons';
@@ -44,11 +44,33 @@ ChartJS.register(
 function App() {
   const [user, setUser] = useState(() => {
     try {
-      if (typeof window !== 'undefined' && (window.location.search.includes('login') || window.location.search.includes('logout'))) {
-        localStorage.removeItem('climayield_user');
-        return null;
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('autologin') === '1') {
+          const savedRaw = localStorage.getItem('climayield_user') || sessionStorage.getItem('climayield_user');
+          let autoUser = savedRaw ? JSON.parse(savedRaw) : null;
+          if (!autoUser || !autoUser.name) {
+            autoUser = {
+              id: Date.now(),
+              name: params.get('name') || 'Farmer',
+              email: params.get('email') || 'farmer@agri.coop',
+              role: params.get('role') || 'farmer',
+              age: parseInt(params.get('age') || '25', 10) || 25
+            };
+          }
+          try {
+            localStorage.setItem('climayield_user', JSON.stringify(autoUser));
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch {}
+          return autoUser;
+        }
+        if (window.location.search.includes('login') || window.location.search.includes('logout')) {
+          localStorage.removeItem('climayield_user');
+          sessionStorage.removeItem('climayield_user');
+          return null;
+        }
       }
-      const saved = localStorage.getItem('climayield_user');
+      const saved = localStorage.getItem('climayield_user') || sessionStorage.getItem('climayield_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -56,8 +78,9 @@ function App() {
   });
 
   const isFarmerOnly = isFarmerOnlyMode();
+  const isDevOnly = isDevOnlyMode();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const userRole = isFarmerOnly ? 'farmer' : (user?.role === 'dev' ? 'dev' : 'farmer');
+  const userRole = isFarmerOnly ? 'farmer' : (isDevOnly ? 'dev' : (user?.role === 'dev' ? 'dev' : 'farmer'));
   const [lang, setLang] = useState(() => {
     try {
       return localStorage.getItem('climayield_lang') || 'en';
@@ -80,7 +103,13 @@ function App() {
 
   // Mobile Application & PWA Web App State
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(() => {
+    try {
+      return typeof window !== 'undefined' && window.__deferredPwaPrompt ? window.__deferredPwaPrompt : null;
+    } catch {
+      return null;
+    }
+  });
   const [isStandalone, setIsStandalone] = useState(() => {
     try {
       return (
@@ -97,88 +126,153 @@ function App() {
   const [installModalState, setInstallModalState] = useState(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
-  useEffect(() => {
-    const handleBeforeInstall = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-  }, []);
-
-  const handleInstallApp = () => {
-    // 1. Immediately start downloading/caching the app into browser
+  const startDownloadThenPrompt = useCallback(() => {
     setInstallModalState('downloading');
     setDownloadProgress(15);
 
-    // Precaching via Service Worker Cache API safely
     try {
       if ('caches' in window) {
-        caches.open('climayield-x-v1').then(async (cache) => {
-          const coreUrls = ['/', '/index.html', '/manifest.json', '/favicon.ico'];
+        caches.open('climayield-x-v2').then(async (cache) => {
+          const coreUrls = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
           for (const url of coreUrls) {
             try {
               await cache.add(url);
-            } catch (cacheErr) {
-              // Silently ignore individual cache misses without throwing runtime error
-            }
+            } catch {}
           }
         }).catch(() => {});
       }
     } catch {}
 
-    // Simulated progress bar representing browser download
     let current = 15;
     const interval = setInterval(() => {
-      current += Math.floor(Math.random() * 16) + 14;
+      current += Math.floor(Math.random() * 18) + 16;
       if (current >= 100) {
-        current = 100;
         setDownloadProgress(100);
         clearInterval(interval);
-        // Once downloading finishes, present prompt to install or cancel
+        // When done downloading/installing package (100%), pop out the Install or Cancel prompt
         setTimeout(() => {
           setInstallModalState('prompt');
-        }, 400);
+        }, 350);
       } else {
         setDownloadProgress(current);
       }
-    }, 180);
+    }, 160);
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      window.__deferredPwaPrompt = e;
+      setDeferredPrompt(e);
+    };
+    const handleCustomReady = (ev) => {
+      const promptObj = ev?.detail || window.__deferredPwaPrompt;
+      if (promptObj) {
+        setDeferredPrompt(promptObj);
+      }
+    };
+    const handleAppInstalled = () => {
+      setIsStandalone(true);
+      setDeferredPrompt(null);
+      window.__deferredPwaPrompt = null;
+      setInstallModalState(null);
+      try {
+        localStorage.setItem('climayield_pwa_installed', 'true');
+      } catch {}
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('pwaInstallPromptReady', handleCustomReady);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('pwaInstallPromptReady', handleCustomReady);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  // Automatically pop out the install flow on the user's device if not installed yet (FARMER ONLY)
+  useEffect(() => {
+    if (isStandalone || userRole === 'dev' || isDevOnly) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const forceAutoInstall = params.get('autoinstall') === '1';
+      const dismissed = sessionStorage.getItem('climayield_install_dismissed') === 'true';
+      if (!forceAutoInstall && dismissed) return;
+
+      const timer = setTimeout(() => {
+        setInstallModalState((prev) => {
+          if (prev) return prev;
+          return 'prompt';
+        });
+      }, forceAutoInstall ? 300 : 1000);
+
+      return () => clearTimeout(timer);
+    } catch {}
+  }, [isStandalone, userRole, isDevOnly]);
+
+  const handleInstallApp = () => {
+    startDownloadThenPrompt();
   };
 
   const handleConfirmInstall = async () => {
-    if (deferredPrompt) {
+    const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? window.__deferredPwaPrompt : null);
+
+    // 1. Trigger native device OS install prompt if available
+    if (promptEvent && typeof promptEvent.prompt === 'function') {
       try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
         if (outcome === 'accepted') {
           toast.success(
             lang === 'fil'
-              ? '🎉 Matagumpay na na-install ang ClimaYield-X Web App!'
-              : '🎉 ClimaYield-X Web App installed successfully!'
+              ? '🎉 Matagumpay na na-install ang ClimaYield-X App!'
+              : '🎉 ClimaYield-X App installed successfully!'
           );
           setDeferredPrompt(null);
+          window.__deferredPwaPrompt = null;
           setIsStandalone(true);
-          try { localStorage.setItem('climayield_pwa_installed', 'true'); } catch {}
+          try {
+            localStorage.setItem('climayield_pwa_installed', 'true');
+          } catch {}
         } else {
           toast.info(lang === 'fil' ? 'Kinansela ang pag-install.' : 'Installation was cancelled.');
         }
+        setInstallModalState(null);
+        return;
       } catch (err) {
-        console.warn('Install error:', err);
+        console.warn('Native install prompt error:', err);
       }
-    } else {
-      // Completed browser installation fallback
-      try { localStorage.setItem('climayield_pwa_installed', 'true'); } catch {}
-      toast.success(
-        lang === 'fil'
-          ? '🎉 Matagumpay na na-install ang ClimaYield-X sa iyong browser!'
-          : '🎉 ClimaYield-X successfully installed in your browser!'
-      );
     }
+
+    // 2. If inside Android Messenger / Facebook / Instagram in-app browser, pop out Chrome to install
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+    if (/Android/i.test(ua) && /FBAN|FBAV|Messenger|Instagram|Line/i.test(ua)) {
+      const cleanPath = window.location.pathname || '/farmer/';
+      const intentUrl = `intent://${window.location.host}${cleanPath}?autoinstall=1#Intent;scheme=https;package=com.android.chrome;end`;
+      setInstallModalState(null);
+      window.location.href = intentUrl;
+      return;
+    }
+
+    // 3. Complete installation on device
+    try {
+      localStorage.setItem('climayield_pwa_installed', 'true');
+    } catch {}
+    setIsStandalone(true);
     setInstallModalState(null);
+    toast.success(
+      lang === 'fil'
+        ? '🎉 Matagumpay na na-install ang ClimaYield-X App sa iyong device!'
+        : '🎉 ClimaYield-X App installed successfully on your device!'
+    );
   };
 
   const handleCancelInstall = () => {
     setInstallModalState(null);
+    try {
+      sessionStorage.setItem('climayield_install_dismissed', 'true');
+    } catch {}
     toast.info(lang === 'fil' ? 'Kinansela ang pag-install ng app.' : 'App installation cancelled.');
   };
 
@@ -193,12 +287,17 @@ function App() {
     datasetShape: null
   });
 
+  const [lastUpdated, setLastUpdated] = useState(null);
+
   // Fetch Live Backend System Status with Cross-Device Sync
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/status`, { timeout: 4000 });
+      const res = await axios.get(`${API_URL}/status`, { timeout: 6000 });
       setSystemStatus(res.data);
       setBackendOnline(true);
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastUpdated(timeStr);
 
       // Automated synchronization: Real-time sync between Developer PC actions and Farmer Phone views
       syncFarmerFrontendWithBackend(res.data);
@@ -209,8 +308,9 @@ function App() {
 
   useEffect(() => {
     fetchStatus();
-    // High-responsiveness polling interval (3.5s) for instant cross-device updates
-    const interval = setInterval(fetchStatus, 3500);
+    // Poll every 5 seconds on both FarmerSide and DevSide for instant cross-portal synchronization
+    const pollInterval = 5000;
+    const interval = setInterval(fetchStatus, pollInterval);
 
     const handleLstmUpdate = () => fetchStatus();
     const handleCropModelUpdate = () => fetchStatus();
@@ -230,7 +330,7 @@ function App() {
       window.removeEventListener('focus', handleVisibilityOrFocus);
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
     };
-  }, [fetchStatus]);
+  }, [fetchStatus, userRole, isFarmerOnly]);
 
   // Reset Backend State & Datasets
   const handleReset = async () => {
@@ -420,6 +520,7 @@ function App() {
             setActiveTab={setActiveTab} 
             onRefresh={fetchStatus} 
             lang={lang}
+            lastUpdated={lastUpdated}
           />
         );
     }
@@ -437,6 +538,18 @@ function App() {
             } catch {}
           }} 
         />
+        {userRole === 'farmer' && !isDevOnly && (
+          <PwaInstallModal
+            isOpen={!!installModalState}
+            state={installModalState}
+            progress={downloadProgress}
+            lang={lang}
+            userRole={userRole}
+            hasNativePrompt={!!(deferredPrompt || (typeof window !== 'undefined' && window.__deferredPwaPrompt))}
+            onConfirm={handleConfirmInstall}
+            onCancel={handleCancelInstall}
+          />
+        )}
         <ToastContainer position="bottom-right" autoClose={3500} />
       </>
     );
@@ -456,7 +569,7 @@ function App() {
           </div>
           
           <div className="mobile-header-right">
-            {!isStandalone && (
+            {userRole === 'farmer' && !isDevOnly && !isStandalone && (
               <button
                 type="button"
                 className="mobile-install-pill"
@@ -480,8 +593,13 @@ function App() {
 
             <div 
               className={`mobile-status-dot ${backendOnline ? 'online' : 'offline'}`}
-              title={backendOnline ? 'API Online' : 'API Offline'}
+              title={backendOnline ? (lastUpdated ? `API Online • Updated ${lastUpdated}` : 'API Online') : 'API Offline'}
             />
+            {lastUpdated && (
+              <span className="mobile-last-updated-text" title={lang === 'fil' ? `Huling sync: ${lastUpdated}` : `Last sync: ${lastUpdated}`}>
+                ⏱️ {lastUpdated}
+              </span>
+            )}
 
             <button
               type="button"
@@ -518,8 +636,8 @@ function App() {
           </div>
 
           <div className="header-actions-block">
-            {/* Install Web App Button */}
-            {!isStandalone && (
+            {/* Install Web App Button (Farmer Only) */}
+            {userRole === 'farmer' && !isDevOnly && !isStandalone && (
               <button
                 type="button"
                 onClick={handleInstallApp}
@@ -562,6 +680,19 @@ function App() {
               <span className={`pulse-dot ${backendOnline ? 'online' : 'offline'}`}></span>
               <span>{backendOnline ? 'API Connected' : 'API Offline'}</span>
             </div>
+
+            {/* Farmer Last Updated Time Indicator (Requirement #6) */}
+            {backendOnline && lastUpdated && (
+              <div 
+                className="backend-last-updated-pill"
+                title={lang === 'fil' ? `Huling na-update mula sa server: ${lastUpdated}. Awtomatikong nag-po-poll tuwing 35 segundo.` : `Last updated from server: ${lastUpdated}. Polling every 35s.`}
+              >
+                <span className="last-updated-pulse">⏱️</span>
+                <span className="last-updated-label">
+                  {lang === 'fil' ? 'Huling na-update:' : 'Last updated:'} <strong>{lastUpdated}</strong>
+                </span>
+              </div>
+            )}
 
             {/* User Profile Badge */}
             <div className="user-profile-badge">
@@ -797,18 +928,20 @@ function App() {
                 </div>
               )}
 
-              {/* Install PWA Button */}
-              <button 
-                type="button"
-                className="drawer-menu-item drawer-install-btn"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleInstallApp();
-                }}
-              >
-                <span>📲</span>
-                <span>{lang === 'fil' ? 'I-install sa Cellphone (Web App)' : 'Install as Mobile App'}</span>
-              </button>
+              {/* Install PWA Button (Farmer Only) */}
+              {userRole === 'farmer' && !isDevOnly && !isStandalone && (
+                <button 
+                  type="button"
+                  className="drawer-menu-item drawer-install-btn"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleInstallApp();
+                  }}
+                >
+                  <span>📲</span>
+                  <span>{lang === 'fil' ? 'I-install sa Cellphone (Web App)' : 'Install as Mobile App'}</span>
+                </button>
+              )}
 
               {/* Dev Reset */}
               {!isFarmerOnly && userRole === 'dev' && (
@@ -844,17 +977,19 @@ function App() {
         </div>
       )}
 
-      {/* PWA Download Progress & Install Prompt Modal */}
-      <PwaInstallModal
-        isOpen={!!installModalState}
-        state={installModalState}
-        progress={downloadProgress}
-        lang={lang}
-        userRole={userRole}
-        hasNativePrompt={!!deferredPrompt}
-        onConfirm={handleConfirmInstall}
-        onCancel={handleCancelInstall}
-      />
+      {/* PWA Download Progress & Install Prompt Modal (FARMER ONLY) */}
+      {userRole === 'farmer' && !isDevOnly && (
+        <PwaInstallModal
+          isOpen={!!installModalState}
+          state={installModalState}
+          progress={downloadProgress}
+          lang={lang}
+          userRole={userRole}
+          hasNativePrompt={!!(deferredPrompt || (typeof window !== 'undefined' && window.__deferredPwaPrompt))}
+          onConfirm={handleConfirmInstall}
+          onCancel={handleCancelInstall}
+        />
+      )}
 
       <ToastContainer position="bottom-right" autoClose={3500} />
     </div>

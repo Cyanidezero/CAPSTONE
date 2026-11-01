@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Line } from 'react-chartjs-2';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = (typeof window !== 'undefined' && window.API_BASE_URL) || process.env.REACT_APP_API_URL || 'https://YOUR-API.infinityfreeapp.com/api';
 
 function ModelTraining({ onTrainingComplete }) {
   const [training, setTraining] = useState({

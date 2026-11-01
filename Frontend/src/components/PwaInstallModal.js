@@ -3,9 +3,8 @@ import './PwaInstallModal.css';
 
 /**
  * PwaInstallModal Component
- * Handles mobile and desktop PWA installation:
- * 1. Immediate browser downloading & asset caching with progress bar (0% -> 100%)
- * 2. Install confirmation prompt with native one-click install or visual mobile instructions
+ * 1. Downloads/prepares the app package (0% -> 100%)
+ * 2. When done (100%), automatically pops out the prompt asking the user to "Install" or "Cancel"
  */
 const PwaInstallModal = ({
   isOpen,
@@ -34,7 +33,7 @@ const PwaInstallModal = ({
               <span className="pwa-download-icon">📥</span>
             </div>
             <h3 className="pwa-download-title">
-              {lang === 'fil' ? 'I-dinadownload sa Browser...' : 'Downloading to Device...'}
+              {lang === 'fil' ? 'I-dinadownload ang App...' : 'Downloading App Package...'}
             </h3>
             <p className="pwa-download-desc">
               {progress < 45
@@ -55,7 +54,7 @@ const PwaInstallModal = ({
               <span>
                 {progress === 100 
                   ? (lang === 'fil' ? 'Tapos na!' : 'Complete!') 
-                  : (lang === 'fil' ? 'Naglo-load...' : 'Loading...')}
+                  : (lang === 'fil' ? 'Naglo-load...' : 'Downloading...')}
               </span>
             </div>
           </div>
@@ -74,47 +73,33 @@ const PwaInstallModal = ({
             </div>
 
             <h3 className="pwa-prompt-title">
-              {lang === 'fil' ? 'I-install ang ClimaYield-X sa Cellphone' : 'Install ClimaYield-X on Mobile Phone'}
+              {lang === 'fil' ? 'I-install ang ClimaYield-X App?' : 'Install ClimaYield-X App?'}
             </h3>
 
             <p className="pwa-prompt-desc">
               {lang === 'fil'
-                ? 'I-save ang ClimaYield-X diretso sa iyong cellphone bilang isang standalone app para mabilis mabuksan sa Home Screen kahit mahina ang internet.'
-                : 'Install ClimaYield-X directly onto your mobile phone as a standalone app with instant Home Screen access and offline readiness.'}
+                ? 'Tapos na ang pag-download. Gusto mo bang i-install ang ClimaYield-X diretso sa iyong device?'
+                : 'Download complete. Do you want to install the ClimaYield-X app onto your device?'}
             </p>
 
-            {/* Mobile-Specific Installation Guidance */}
             <div className="pwa-features-list">
-              {hasNativePrompt ? (
-                <>
-                  <div className="pwa-feature-item">
-                    <span className="pwa-feat-check">✓</span>
-                    <span>{lang === 'fil' ? '1-Click Install sa Home Screen ng cellphone' : '1-Click Install to Phone Home Screen'}</span>
-                  </div>
-                  <div className="pwa-feature-item">
-                    <span className="pwa-feat-check">✓</span>
-                    <span>{lang === 'fil' ? 'Bumubukas nang mabilis na walang browser address bar' : 'Opens standalone like a native mobile app'}</span>
-                  </div>
-                  <div className="pwa-feature-item">
-                    <span className="pwa-feat-check">✓</span>
-                    <span>{lang === 'fil' ? '100% Libre at magaan sa cellphone' : '100% Free, secure, and lightweight'}</span>
-                  </div>
-                </>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.82rem' }}>
-                  <div style={{ fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>📲</span>
-                    <span>{lang === 'fil' ? 'Mga Hakbang sa Pag-install sa Cellphone:' : 'Quick Steps to Install on Phone:'}</span>
-                  </div>
-                  {isIOS ? (
-                    <div style={{ lineHeight: '1.45', color: '#334155' }}>
-                      <strong>iPhone (Safari):</strong> {lang === 'fil' ? 'Pindutin ang Share button (⎋ sa ibaba ng Safari), i-scroll at piliin ang "Add to Home Screen" (➕).' : 'Tap the Share icon (⎋ at bottom of Safari), scroll down and tap "Add to Home Screen" (➕).'}
-                    </div>
-                  ) : (
-                    <div style={{ lineHeight: '1.45', color: '#334155' }}>
-                      <strong>Android (Chrome):</strong> {lang === 'fil' ? 'Pindutin ang 3 dots (⋮) sa taas sa kanan ng Chrome, at pindutin ang "Install app" o "Add to Home screen" (📲).' : 'Tap the 3 dots (⋮) menu in Chrome, then tap "Install app" or "Add to Home screen" (📲).'}
-                    </div>
-                  )}
+              <div className="pwa-feature-item">
+                <span className="pwa-feat-check">✓</span>
+                <span>{lang === 'fil' ? '1-Click Install sa Home Screen ng iyong device' : '1-Click Install to your device Home Screen'}</span>
+              </div>
+              <div className="pwa-feature-item">
+                <span className="pwa-feat-check">✓</span>
+                <span>{lang === 'fil' ? 'Bumubukas nang mabilis na parang native app' : 'Opens standalone like a native mobile app'}</span>
+              </div>
+              <div className="pwa-feature-item">
+                <span className="pwa-feat-check">✓</span>
+                <span>{lang === 'fil' ? '100% Libre, ligtas, at magaan sa device' : '100% Free, secure, and lightweight'}</span>
+              </div>
+              {!hasNativePrompt && isIOS && (
+                <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#334155', lineHeight: '1.4' }}>
+                  <strong>iPhone/iPad:</strong> {lang === 'fil'
+                    ? 'Pindutin ang Share (⎋) sa Safari at piliin ang "Add to Home Screen" (➕).'
+                    : 'Tap Share (⎋) in Safari and select "Add to Home Screen" (➕).'}
                 </div>
               )}
             </div>
@@ -125,7 +110,7 @@ const PwaInstallModal = ({
                 className="pwa-btn-cancel"
                 onClick={onCancel}
               >
-                {lang === 'fil' ? 'Isara' : 'Close'}
+                Cancel
               </button>
               <button
                 type="button"
@@ -133,7 +118,7 @@ const PwaInstallModal = ({
                 onClick={onConfirm}
               >
                 <span>📲</span>
-                <span>{hasNativePrompt ? (lang === 'fil' ? 'I-install Na' : 'Install Now') : (lang === 'fil' ? 'Naiintindihan Ko' : 'Got It')}</span>
+                <span>Install</span>
               </button>
             </div>
           </div>

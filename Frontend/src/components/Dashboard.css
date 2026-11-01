@@ -322,8 +322,8 @@
 
 .fd-crops-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+  gap: 16px;
   margin-bottom: 36px;
 }
 
@@ -332,7 +332,7 @@
   perspective: 1000px;
   perspective-origin: 50% 50%;
   background-color: transparent;
-  height: 345px;
+  height: 370px;
   cursor: pointer;
   user-select: none;
   position: relative;
@@ -376,9 +376,12 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 18px 20px;
+  padding: 14px 14px 12px;
   transform: rotateY(0deg);
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
 }
 
 .fd-flip-card-front::before {
@@ -400,18 +403,62 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 10px;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .fd-card-identity {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 6px;
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .fd-card-icon-bubble {
-  font-size: 2rem;
+  font-size: 1.55rem;
+  line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.fd-card-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.fd-crop-edit-btn {
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  color: #15803d;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.08);
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.fd-crop-edit-btn:hover {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #166534;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.25);
 }
 
 .fd-card-front-center {
@@ -538,38 +585,40 @@
 
 .fd-crop-delete-btn {
   background: #fee2e2;
-  border: 1.5px solid #fca5a5;
+  border: 1px solid #fca5a5;
   color: #b91c1c;
-  border-radius: 14px;
+  border-radius: 999px;
   padding: 3px 8px;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   cursor: pointer;
   line-height: 1.2;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .fd-crop-delete-btn:hover {
   background: #dc2626;
   color: #ffffff;
   border-color: #b91c1c;
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.28);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.25);
 }
 
 .fd-crop-delete-btn .btn-icon {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .fd-crop-delete-btn.back {
   padding: 2px 7px;
-  font-size: 0.68rem;
-  border-radius: 10px;
+  font-size: 0.66rem;
+  border-radius: 999px;
 }
 
 .fd-back-header-actions {
@@ -849,14 +898,15 @@
 /* Full-Card Fun Fact Body on Back */
 .fd-back-funfact-card {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background: linear-gradient(150deg, #f0fdf4 0%, #ecfdf5 45%, #dcfce7 100%);
   border: 1.5px solid #86efac;
   border-radius: 14px;
-  padding: 16px 14px 12px;
-  margin: 10px 0 8px;
+  padding: 10px 12px;
+  margin: 4px 0;
   box-shadow: 0 4px 14px rgba(22, 101, 52, 0.08);
   position: relative;
   overflow: hidden;
@@ -878,7 +928,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .fd-funfact-pill {
@@ -887,18 +938,18 @@
   gap: 5px;
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: #ffffff;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 20px;
   box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
 }
 
 .fd-funfact-sparkle {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1;
 }
 
 .fd-funfact-pill-text {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -906,28 +957,23 @@
 
 .fd-funfact-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   position: relative;
-  padding: 4px 2px;
+  padding: 2px 0;
 }
 
 .fd-funfact-quote-glyph {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.4rem;
-  line-height: 1;
-  color: #86efac;
-  opacity: 0.9;
-  margin-bottom: -10px;
-  user-select: none;
+  display: none;
 }
 
 .fd-funfact-main-text {
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #14532d;
-  line-height: 1.52;
+  line-height: 1.38;
   margin: 0;
   text-align: left;
 }
@@ -937,9 +983,10 @@
   align-items: center;
   justify-content: space-between;
   border-top: 1px dashed #bbf7d0;
-  padding-top: 8px;
-  margin-top: 6px;
-  font-size: 0.72rem;
+  padding-top: 6px;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  flex-shrink: 0;
 }
 
 .fd-funfact-veg-name {
@@ -1888,11 +1935,12 @@
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 9999;
+  z-index: 99999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
+  padding: 20px 16px;
+  overflow-y: auto;
   animation: fdModalFadeIn 0.22s ease-out;
 }
 
@@ -2590,6 +2638,146 @@
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+/* ========================================================= */
+/* 📱 MOBILE VIEWPORT RESPONSIVE OVERRIDES (<= 768px)        */
+/* ========================================================= */
+@media (max-width: 768px) {
+  .fd-container,
+  .dev-dashboard {
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .fd-hero-card,
+  .dev-hero-card {
+    padding: 18px 16px;
+    border-radius: 18px;
+    gap: 12px;
+  }
+
+  .fd-hero-text h2,
+  .dev-hero-text h2 {
+    font-size: 1.3rem;
+    gap: 8px;
+  }
+
+  .fd-hero-text p,
+  .dev-hero-text p {
+    font-size: 0.85rem;
+  }
+
+  .fd-hero-badge-group,
+  .dev-hero-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .fd-hero-badge,
+  .fd-mobile-alerts-trigger,
+  .dev-hero-btn {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 14px;
+  }
+
+  .fd-summary-grid,
+  .fd-crops-grid,
+  .fd-sliding-grid,
+  .dev-models-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .fd-summary-card {
+    padding: 16px;
+    gap: 14px;
+    border-radius: 16px;
+  }
+
+  .fd-summary-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.7rem;
+  }
+
+  .fd-summary-value {
+    font-size: 1.35rem;
+  }
+
+  .fd-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .fd-section-title {
+    font-size: 1.12rem;
+  }
+
+  .fd-section-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fd-add-crop-btn,
+  .fd-toggle-all-btn,
+  .fd-clear-crops-btn,
+  .fd-section-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+  }
+
+  .fd-flip-card {
+    height: 360px;
+  }
+
+  .fd-modal-overlay {
+    padding: 10px 8px;
+  }
+
+  .fd-modal-dialog {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+  }
+
+  .fd-modal-header {
+    padding: 14px 16px;
+  }
+
+  .fd-modal-body {
+    padding: 14px 16px;
+  }
+
+  .fd-form-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .fd-modal-footer {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fd-modal-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 0.82rem;
+  }
 }
 
 

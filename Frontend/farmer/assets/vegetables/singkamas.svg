@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="singGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="45%" stop-color="#fde68a"/>
+      <stop offset="85%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </radialGradient>
+    <filter id="singShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#92400e" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#singShadow)">
+    <!-- Crown sprout -->
+    <path d="M110 70 Q105 45 95 35" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M110 70 Q118 45 125 35" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Taproot bottom -->
+    <path d="M110 180 Q112 198 116 208" fill="none" stroke="#92400e" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Bulbous turnip root -->
+    <ellipse cx="110" cy="130" rx="60" ry="50" fill="url(#singGrad)"/>
+    <ellipse cx="90" cy="115" rx="15" ry="8" transform="rotate(-20 90 115)" fill="#ffffff" opacity="0.45"/>
+  </g>
+</svg>

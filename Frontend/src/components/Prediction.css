@@ -1603,4 +1603,120 @@
   margin-top: 5px;
 }
 
+/* ========================================================= */
+/* 📱 MOBILE VIEWPORT RESPONSIVE OVERRIDES (<= 768px)        */
+/* ========================================================= */
+@media (max-width: 768px) {
+  .cp-container {
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .cp-header-card,
+  .theme-farmer .cp-header-card {
+    padding: 18px 16px;
+    border-radius: 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .cp-header-left h2,
+  .theme-farmer .cp-header-left h2 {
+    font-size: 1.35rem;
+    gap: 8px;
+  }
+
+  .cp-header-left p {
+    font-size: 0.85rem;
+  }
+
+  .cp-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .cp-model-status-chip,
+  .cp-calc-guide-btn,
+  .cp-header-badge {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .cp-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .cp-stat-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .cp-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .cp-card,
+  .theme-farmer .cp-card {
+    padding: 16px 14px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cp-crop-icon-box {
+    width: 44px;
+    height: 44px;
+    font-size: 1.8rem;
+  }
+
+  .cp-crop-title {
+    font-size: 1.05rem;
+  }
+
+  .cp-harvest-hero-box {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .cp-harvest-hero-value .num {
+    font-size: 1.65rem;
+  }
+
+  .cp-chart-card,
+  .theme-farmer .cp-chart-card {
+    padding: 16px 12px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cp-modal-overlay {
+    padding: 10px 8px;
+  }
+
+  .cp-modal-content {
+    border-radius: 16px;
+    max-height: 92vh;
+  }
+
+  .cp-modal-header,
+  .cp-modal-body,
+  .cp-modal-footer {
+    padding: 14px 16px;
+  }
+}
+
 

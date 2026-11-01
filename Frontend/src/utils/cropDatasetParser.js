@@ -1148,12 +1148,10 @@ export const STORAGE_KEY_DATASET_CROPS = 'climayield_dataset_crops';
 
 // One-time reset: remove all previously stored vegetables so the dashboards start empty
 // until the developer uploads a new crop dataset.
-const ONE_TIME_CROP_RESET_KEY = 'climayield_crops_reset_v1';
+const ONE_TIME_CROP_RESET_KEY = 'climayield_crops_reset_v2';
 try {
   if (typeof window !== 'undefined' && !localStorage.getItem(ONE_TIME_CROP_RESET_KEY)) {
-    localStorage.removeItem(STORAGE_KEY_DATASET_CROPS);
-    localStorage.removeItem('climayield_custom_crops');
-    localStorage.setItem('climayield_dataset_crops_cleared', 'true');
+    localStorage.removeItem('climayield_dataset_crops_cleared');
     localStorage.setItem(ONE_TIME_CROP_RESET_KEY, 'done');
   }
 } catch {}
@@ -1211,6 +1209,17 @@ export function saveDatasetCrops(crops) {
     // A fresh dataset upload re-enables crop syncing
     localStorage.removeItem(STORAGE_KEY_CROPS_CLEARED);
     window.dispatchEvent(new CustomEvent('cropDatasetUpdated', { detail: crops || [] }));
+
+    // Sync detected crops to backend MySQL so Farmer Portal receives them even from client-parsed files
+    if (typeof window !== 'undefined' && typeof fetch !== 'undefined' && Array.isArray(crops) && crops.length > 0) {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const apiBase = isLocal ? 'http://localhost:5000/api' : `${window.location.origin}/api`;
+      fetch(`${apiBase}/crops`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crops })
+      }).catch(() => {});
+    }
   } catch (err) {
     console.error('Failed to save dataset crops:', err);
   }

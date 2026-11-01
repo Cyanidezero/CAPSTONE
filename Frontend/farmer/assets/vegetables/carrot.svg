@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="carrotRoot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdba74"/>
+      <stop offset="25%" stop-color="#fb923c"/>
+      <stop offset="60%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <linearGradient id="carrotTop" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="60%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#86efac"/>
+    </linearGradient>
+    <filter id="cShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#7c2d12" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#cShadow)">
+    <!-- Lush Green Feathery Tops -->
+    <g stroke="url(#carrotTop)" stroke-linecap="round" fill="none">
+      <!-- Center Stem & leaves -->
+      <path d="M150 70 Q165 40 175 18" stroke-width="3.5"/>
+      <path d="M165 40 Q180 32 195 28" stroke-width="2.2"/>
+      <path d="M168 35 Q185 20 188 10" stroke-width="2"/>
+      <path d="M160 50 Q180 50 190 44" stroke-width="2.2"/>
+
+      <!-- Left Stems & leaves -->
+      <path d="M145 68 Q140 38 135 15" stroke-width="3.2"/>
+      <path d="M140 42 Q122 32 110 28" stroke-width="2"/>
+      <path d="M138 35 Q120 18 115 10" stroke-width="2"/>
+      <path d="M142 50 Q125 55 116 52" stroke-width="2"/>
+
+      <!-- Right branch -->
+      <path d="M152 72 Q180 55 198 40" stroke-width="3"/>
+      <path d="M175 58 Q192 65 204 60" stroke-width="2"/>
+    </g>
+
+    <!-- Carrot Shoulder & Tapered Root (Diagonal 45deg) -->
+    <path d="M130 65 C142 55 162 70 156 82 C148 102 115 145 78 180 C68 190 58 198 52 196 C48 194 54 184 62 172 C90 132 120 85 130 65 Z"
+          fill="url(#carrotRoot)"/>
+
+    <!-- Carrot Crown cap -->
+    <ellipse cx="143" cy="72" rx="14" ry="7" transform="rotate(-40 143 72)" fill="#9a3412"/>
+    <ellipse cx="143" cy="72" rx="8" ry="4" transform="rotate(-40 143 72)" fill="#166534"/>
+
+    <!-- Authentic Horizontal Root Creases & Ridges -->
+    <g stroke="#9a3412" stroke-width="2" stroke-linecap="round" opacity="0.6">
+      <path d="M136 82 Q144 86 148 90"/>
+      <path d="M124 96 Q133 100 138 104"/>
+      <path d="M112 110 Q120 114 125 117"/>
+      <path d="M99 125 Q106 128 111 131"/>
+      <path d="M87 140 Q94 143 98 145"/>
+      <path d="M76 155 Q82 157 86 159"/>
+      <path d="M66 169 Q71 171 74 172"/>
+    </g>
+
+    <!-- Glossy Highlight Curve -->
+    <path d="M135 77 Q115 110 75 165" fill="none" stroke="#fed7aa" stroke-width="3" stroke-linecap="round" opacity="0.65"/>
+  </g>
+</svg>

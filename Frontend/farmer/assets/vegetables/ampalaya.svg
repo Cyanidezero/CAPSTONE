@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="ampBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="35%" stop-color="#16a34a"/>
+      <stop offset="70%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <linearGradient id="ampRidge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+    <filter id="ampGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#ampGlow)">
+    <!-- Vine & Tendril -->
+    <path d="M185 45 C175 40 160 50 150 65" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round"/>
+    <path d="M185 45 Q205 35 195 20 Q180 15 185 35" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M170 52 Q185 65 190 80 Q195 95 180 90" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Stem cap -->
+    <path d="M152 62 C158 56 164 68 156 74 Z" fill="#14532d"/>
+
+    <!-- Ampalaya Main Body (Tapered, Curved) -->
+    <path d="M155 68 C135 75 105 100 75 125 C50 148 30 170 25 182 C22 188 28 190 35 185 C55 170 95 145 130 115 C160 88 170 75 155 68 Z" 
+          fill="url(#ampBody)"/>
+
+    <!-- Longitudinal Bumpy Ridges (Authentic Ampalaya warts & ribs) -->
+    <g fill="#86efac" opacity="0.85">
+      <ellipse cx="145" cy="78" rx="5" ry="3" transform="rotate(-40 145 78)"/>
+      <ellipse cx="132" cy="88" rx="6" ry="3.5" transform="rotate(-40 132 88)"/>
+      <ellipse cx="118" cy="99" rx="7" ry="4" transform="rotate(-38 118 99)"/>
+      <ellipse cx="102" cy="112" rx="7.5" ry="4" transform="rotate(-38 102 112)"/>
+      <ellipse cx="86" cy="126" rx="7.5" ry="4" transform="rotate(-36 86 126)"/>
+      <ellipse cx="70" cy="141" rx="7" ry="3.8" transform="rotate(-35 70 141)"/>
+      <ellipse cx="54" cy="156" rx="6" ry="3.2" transform="rotate(-32 54 156)"/>
+      <ellipse cx="38" cy="171" rx="4.5" ry="2.5" transform="rotate(-30 38 171)"/>
+
+      <!-- Second Row of ridges -->
+      <ellipse cx="138" cy="73" rx="4" ry="2.5" transform="rotate(-40 138 73)"/>
+      <ellipse cx="123" cy="83" rx="5.5" ry="3" transform="rotate(-40 123 83)"/>
+      <ellipse cx="107" cy="95" rx="6" ry="3.5" transform="rotate(-38 107 95)"/>
+      <ellipse cx="91" cy="108" rx="6.5" ry="3.5" transform="rotate(-38 91 108)"/>
+      <ellipse cx="76" cy="122" rx="6" ry="3.2" transform="rotate(-36 76 122)"/>
+      <ellipse cx="61" cy="137" rx="5.5" ry="3" transform="rotate(-34 61 137)"/>
+      <ellipse cx="46" cy="152" rx="4.5" ry="2.5" transform="rotate(-32 46 152)"/>
+
+      <!-- Lower side warts -->
+      <ellipse cx="122" cy="108" rx="5" ry="3" transform="rotate(-38 122 108)" fill="#14532d"/>
+      <ellipse cx="104" cy="125" rx="5.5" ry="3.2" transform="rotate(-38 104 125)" fill="#14532d"/>
+      <ellipse cx="85" cy="142" rx="5" ry="3" transform="rotate(-36 85 142)" fill="#14532d"/>
+      <ellipse cx="67" cy="158" rx="4" ry="2.5" transform="rotate(-34 67 158)" fill="#14532d"/>
+    </g>
+
+    <!-- Highlight sheen -->
+    <path d="M140 76 C120 92 88 120 60 148" fill="none" stroke="#bbf7d0" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

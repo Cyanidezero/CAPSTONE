@@ -1982,6 +1982,102 @@
   box-shadow: 0 2px 8px rgba(6, 95, 70, 0.08);
 }
 
+/* ========================================================= */
+/* 📱 MOBILE VIEWPORT RESPONSIVE OVERRIDES (<= 768px)        */
+/* ========================================================= */
+@media (max-width: 768px) {
+  .gw-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .gw-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .gw-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .gw-hero-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .gw-hero-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .gw-hero-left {
+    gap: 14px;
+    width: 100%;
+  }
+
+  .gw-hero-icon-wrapper {
+    font-size: 3.4rem;
+  }
+
+  .gw-hero-temp {
+    font-size: 3.2rem;
+  }
+
+  .gw-hero-right {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .gw-hourly-section,
+  .gw-7day-section,
+  .gw-agro-card {
+    padding: 16px 14px;
+    border-radius: 16px;
+  }
+
+  .gw-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .gw-tab-btn {
+    flex: 1;
+    text-align: center;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .gw-details-grid,
+  .gw-mae-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .gw-detail-card {
+    padding: 14px 16px;
+  }
+
+  .gw-dc-val-main {
+    font-size: 1.45rem;
+  }
+
+  .gw-ze-header {
+    padding: 10px 12px;
+  }
+
+  .gw-ze-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
 
 
 

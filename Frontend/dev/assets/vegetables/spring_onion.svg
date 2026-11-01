@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="scallionGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#dcfce7"/>
+      <stop offset="55%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="soShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#15803d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#soShadow)">
+    <!-- Root beard at bottom -->
+    <g stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" fill="none">
+      <path d="M102 198 Q98 212 92 216"/>
+      <path d="M108 198 Q108 214 110 218"/>
+      <path d="M114 198 Q118 212 122 216"/>
+    </g>
+
+    <!-- Stalk 1 (Center) -->
+    <path d="M104 195 Q106 110 108 25" fill="none" stroke="url(#scallionGrad)" stroke-width="7" stroke-linecap="round"/>
+    <!-- Stalk 2 (Left branch) -->
+    <path d="M104 150 Q92 90 75 35" fill="none" stroke="url(#scallionGrad)" stroke-width="6" stroke-linecap="round"/>
+    <!-- Stalk 3 (Right branch) -->
+    <path d="M108 140 Q125 85 145 30" fill="none" stroke="url(#scallionGrad)" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Pearly white bulb base -->
+    <ellipse cx="108" cy="188" rx="14" ry="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+</svg>

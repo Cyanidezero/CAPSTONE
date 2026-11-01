@@ -1,0 +1,36 @@
+# ClimaYield-X - /api/ Directory htaccess
+Options -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /api/
+
+    # Handle OPTIONS preflight
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+
+    # Map /api/auth/* to /api/auth/*.php
+    RewriteRule ^auth/login/?$ auth/login.php [L,QSA]
+    RewriteRule ^auth/signup/?$ auth/signup.php [L,QSA]
+    RewriteRule ^auth/demo-accounts/?$ auth/demo-accounts.php [L,QSA]
+    RewriteRule ^auth/logout/?$ auth/logout.php [L,QSA]
+
+    # Map /api/{endpoint} to /api/{endpoint}.php if {endpoint}.php exists
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.*)$ $1.php [L,QSA]
+
+    # Specific common routes fallback
+    RewriteRule ^health/?$ health.php [L,QSA]
+    RewriteRule ^status/?$ status.php [L,QSA]
+    RewriteRule ^forecasts/?$ forecasts.php [L,QSA]
+    RewriteRule ^alerts/?$ alerts.php [L,QSA]
+    RewriteRule ^announcements/?$ announcements.php [L,QSA]
+    RewriteRule ^crops/?$ crops.php [L,QSA]
+    RewriteRule ^preview/?$ preview.php [L,QSA]
+    RewriteRule ^predict/?$ predict.php [L,QSA]
+    RewriteRule ^reset/?$ reset.php [L,QSA]
+    RewriteRule ^weather/?$ weather.php [L,QSA]
+    RewriteRule ^upload/?$ upload.php [L,QSA]
+</IfModule>

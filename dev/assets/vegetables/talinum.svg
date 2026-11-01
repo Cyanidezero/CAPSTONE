@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <filter id="talShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#15803d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#talShadow)">
+    <path d="M110 195 L110 65" stroke="#22c55e" stroke-width="4.5" fill="none"/>
+    <ellipse cx="80" cy="135" rx="28" ry="18" transform="rotate(-25 80 135)" fill="#16a34a"/>
+    <ellipse cx="140" cy="135" rx="28" ry="18" transform="rotate(25 140 135)" fill="#16a34a"/>
+    <ellipse cx="110" cy="85" rx="28" ry="18" fill="#22c55e"/>
+    <circle cx="110" cy="45" r="5" fill="#f43f5e"/>
+  </g>
+</svg>

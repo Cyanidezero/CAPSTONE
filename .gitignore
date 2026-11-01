@@ -25,7 +25,14 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 Backend/.env
+config.local.php
+*/config.local.php
+htdocs/config.local.php
+Backend/htdocs/config.local.php
 
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Archives
+*.zip

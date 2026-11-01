@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="aspSpear" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="30%" stop-color="#4ade80"/>
+      <stop offset="80%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#6b21a8"/>
+    </linearGradient>
+    <filter id="aspShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#aspShadow)">
+    <!-- Spear 1 (Left slant) -->
+    <g transform="rotate(-8 85 120)">
+      <path d="M78 45 C78 30 84 18 85 15 C86 18 92 30 92 45 L91 195 L79 195 Z" fill="url(#aspSpear)"/>
+      <!-- Scaly triangles on tip -->
+      <polygon points="85,15 82,26 88,26" fill="#9333ea"/>
+      <polygon points="81,28 77,36 85,36" fill="#7e22ce"/>
+      <polygon points="89,28 85,36 93,36" fill="#7e22ce"/>
+      <polygon points="80,40 76,48 84,48" fill="#15803d"/>
+      <polygon points="90,40 86,48 94,48" fill="#15803d"/>
+      <!-- Mid scales -->
+      <polygon points="78,75 83,85 87,75" fill="#16a34a"/>
+      <polygon points="82,110 87,120 91,110" fill="#16a34a"/>
+    </g>
+
+    <!-- Spear 2 (Right slant) -->
+    <g transform="rotate(8 135 120)">
+      <path d="M128 45 C128 30 134 18 135 15 C136 18 142 30 142 45 L141 195 L129 195 Z" fill="url(#aspSpear)"/>
+      <polygon points="135,15 132,26 138,26" fill="#9333ea"/>
+      <polygon points="131,28 127,36 135,36" fill="#7e22ce"/>
+      <polygon points="139,28 135,36 143,36" fill="#7e22ce"/>
+      <polygon points="130,40 126,48 134,48" fill="#15803d"/>
+      <polygon points="140,40 136,48 144,48" fill="#15803d"/>
+      <polygon points="128,75 133,85 137,75" fill="#16a34a"/>
+      <polygon points="132,110 137,120 141,110" fill="#16a34a"/>
+    </g>
+
+    <!-- Spear 3 (Center tall hero) -->
+    <g>
+      <path d="M103 40 C103 25 109 10 110 8 C111 10 117 25 117 40 L116 198 L104 198 Z" fill="url(#aspSpear)"/>
+      <polygon points="110,8 107,18 113,18" fill="#a855f7"/>
+      <polygon points="106,20 102,28 110,28" fill="#9333ea"/>
+      <polygon points="114,20 110,28 118,28" fill="#9333ea"/>
+      <polygon points="105,32 101,40 109,40" fill="#7e22ce"/>
+      <polygon points="115,32 111,40 119,40" fill="#7e22ce"/>
+      <polygon points="104,65 109,75 114,65" fill="#16a34a"/>
+      <polygon points="106,105 111,115 116,105" fill="#16a34a"/>
+    </g>
+
+    <!-- Rustic Raffia Ribbon / Twine Tie around bundle -->
+    <rect x="70" y="130" width="80" height="12" rx="3" fill="#ca8a04"/>
+    <rect x="68" y="132" width="84" height="8" rx="2" fill="#eab308"/>
+    <!-- Twine knot & trailing ends -->
+    <circle cx="110" cy="136" r="6" fill="#a16207"/>
+    <path d="M110 138 Q118 152 112 165" fill="none" stroke="#eab308" stroke-width="3" stroke-linecap="round"/>
+    <path d="M108 138 Q98 150 102 162" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>

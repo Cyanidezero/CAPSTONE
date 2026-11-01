@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="pnatBody" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#dcfce7"/>
+      <stop offset="85%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <filter id="pnatShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#pnatShadow)">
+    <!-- White stalks fanning out -->
+    <path d="M75 190 Q85 130 55 85 C65 65 95 75 92 115 Q95 160 90 190 Z" fill="url(#pnatBody)"/>
+    <path d="M145 190 Q135 130 165 85 C155 65 125 75 128 115 Q125 160 130 190 Z" fill="url(#pnatBody)"/>
+    <path d="M100 195 Q105 120 110 60 C120 50 135 60 120 100 Q118 160 120 195 Z" fill="url(#pnatBody)"/>
+  </g>
+</svg>

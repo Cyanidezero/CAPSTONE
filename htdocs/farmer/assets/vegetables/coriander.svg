@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <filter id="corShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#corShadow)">
+    <g stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <path d="M110 195 Q90 125 65 65"/>
+      <path d="M110 195 Q110 115 110 50"/>
+      <path d="M110 195 Q130 125 155 65"/>
+    </g>
+    <g fill="#16a34a">
+      <!-- Fan serrated lobes -->
+      <path d="M65 65 C50 50 55 35 65 42 C72 32 80 40 75 52 Z"/>
+      <path d="M110 50 C95 35 100 20 110 28 C118 18 125 25 120 38 Z"/>
+      <path d="M155 65 C140 50 145 35 155 42 C162 32 170 40 165 52 Z"/>
+    </g>
+  </g>
+</svg>

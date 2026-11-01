@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="habaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="35%" stop-color="#4ade80"/>
+      <stop offset="75%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="habaShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#habaShadow)">
+    <!-- Stem -->
+    <path d="M182 45 Q168 52 158 65" fill="none" stroke="#15803d" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Calyx cup -->
+    <path d="M152 60 C162 60 165 72 152 75 Z" fill="#166534"/>
+
+    <!-- Siling Haba Body (Graceful curve, slender pointed tip) -->
+    <path d="M155 68 C135 85 105 120 75 155 C52 182 32 195 24 195 C20 195 26 186 38 170 C72 128 115 88 155 68 Z" fill="url(#habaGrad)"/>
+
+    <!-- Smooth glossy highlight streak -->
+    <path d="M142 78 Q100 120 50 168" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

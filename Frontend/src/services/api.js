@@ -1,9 +1,17 @@
 import axios from 'axios';
-import { API_URL } from '../utils/apiConfig';
+import { API_URL, getApiUrl } from '../utils/apiConfig';
 
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
+});
+
+api.interceptors.request.use((config) => {
+  const currentBase = getApiUrl();
+  if (currentBase) {
+    config.baseURL = currentBase;
+  }
+  return config;
 });
 
 export const checkHealth = async () => {

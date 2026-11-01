@@ -1,16 +1,20 @@
+import { API_BASE_URL } from '../config';
+
 export const getApiUrl = () => {
-  if (typeof window !== 'undefined' && window.location) {
-    // When served over HTTPS, use relative '/api' so requests proxy through webpack without Mixed Content errors
-    if (window.location.protocol === 'https:') {
-      return '/api';
-    }
-    const host = window.location.hostname;
-    if (host && host !== 'localhost' && host !== '127.0.0.1') {
-      return `http://${host}:5000/api`;
-    }
+  // 1. If running locally on localhost/127.0.0.1, use the local Node.js backend
+  if (typeof window !== 'undefined' && window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5000/api';
   }
-  if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
-  return 'http://localhost:5000/api';
+  // 2. If running on InfinityFree, use same-origin /api so both HTTP and HTTPS work cleanly
+  if (typeof window !== 'undefined' && window.location && window.location.origin && (window.location.origin.includes('infinityfree.me') || window.location.origin.includes('infinityfreeapp.com'))) {
+    return `${window.location.origin}/api`;
+  }
+  // 3. Runtime config set by /config.js in window
+  if (typeof window !== 'undefined' && window.API_BASE_URL) {
+    return window.API_BASE_URL;
+  }
+  // 4. Fallback
+  return 'https://climayieldx.infinityfree.me/api';
 };
 
 export const API_URL = getApiUrl();

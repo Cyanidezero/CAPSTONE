@@ -365,6 +365,52 @@
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 
+.backend-last-updated-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  transition: all var(--transition-fast);
+}
+
+.theme-farmer .backend-last-updated-pill {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1.5px solid rgba(52, 211, 153, 0.45);
+  color: #ecfdf5;
+}
+
+.theme-dev .backend-last-updated-pill {
+  background: rgba(14, 165, 233, 0.14);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  color: #bae6fd;
+  font-family: var(--font-mono);
+}
+
+.last-updated-pulse {
+  font-size: 0.9rem;
+  animation: spinSlow 12s linear infinite;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mobile-last-updated-text {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  padding: 2px 7px;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
 /* ========================================================= */
 /* USER PROFILE BADGE & ACTIONS                              */
 /* ========================================================= */
@@ -1567,8 +1613,8 @@ table tbody tr:hover {
 /* Crop Prediction Cards */
 .fd-crops-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+  gap: 16px;
   margin-bottom: 36px;
 }
 
@@ -2839,23 +2885,27 @@ table tbody tr:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 48px;
+    min-height: 48px;
+    gap: 8px;
   }
 
   .mobile-header-left {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 0;
   }
 
   .mobile-brand-icon {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 10px;
+    flex-shrink: 0;
   }
 
   .theme-farmer .mobile-brand-icon {
@@ -2871,13 +2921,15 @@ table tbody tr:hover {
   .mobile-brand-text {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .mobile-brand-title {
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 0.96rem;
     letter-spacing: -0.02em;
     line-height: 1.15;
+    white-space: nowrap;
   }
 
   .theme-farmer .mobile-brand-title {
@@ -2889,11 +2941,12 @@ table tbody tr:hover {
   }
 
   .mobile-role-pill {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-top: 1px;
+    white-space: nowrap;
   }
 
   .theme-farmer .mobile-role-pill {
@@ -2908,7 +2961,12 @@ table tbody tr:hover {
   .mobile-header-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .mobile-last-updated-text {
+    display: none !important;
   }
 
   .mobile-install-pill {
@@ -2917,15 +2975,17 @@ table tbody tr:hover {
     color: #ffffff;
     font-size: 0.72rem;
     font-weight: 700;
-    padding: 6px 11px;
+    padding: 5px 10px;
     border-radius: 16px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
-    min-height: 34px;
+    min-height: 32px !important;
+    height: 32px;
     display: flex;
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+    flex-shrink: 0;
     transition: transform 0.15s ease;
   }
 
@@ -2945,19 +3005,23 @@ table tbody tr:hover {
     color: #14532d;
     font-size: 0.72rem;
     font-weight: 700;
-    padding: 6px 10px;
+    padding: 5px 9px;
     border-radius: 16px;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-    min-height: 34px;
+    min-height: 32px !important;
+    height: 32px;
     display: flex;
     align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .mobile-status-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .mobile-status-dot.online {
@@ -2971,15 +3035,18 @@ table tbody tr:hover {
   }
 
   .mobile-menu-trigger {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px !important;
+    padding: 0;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     cursor: pointer;
     border: none;
+    flex-shrink: 0;
     transition: transform 0.15s ease;
     -webkit-tap-highlight-color: transparent;
   }
@@ -3335,20 +3402,43 @@ table tbody tr:hover {
   }
 
   /* 📱 Mobile Component Layout Ergonomics */
+  .App {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
   /* Dashboard adjustments */
+  .fd-container {
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .fd-hero-card {
-    padding: 20px 18px !important;
-    border-radius: 20px !important;
+    padding: 18px 16px !important;
+    border-radius: 18px !important;
     flex-direction: column !important;
     align-items: flex-start !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .fd-hero-text h2 {
-    font-size: 1.4rem !important;
+    font-size: 1.3rem !important;
   }
 
   .fd-hero-text p {
-    font-size: 0.88rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .fd-hero-badge-group {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
   }
 
   .fd-hero-badge {
@@ -3357,6 +3447,20 @@ table tbody tr:hover {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
+    padding: 10px 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .fd-hero-badge .val {
+    font-size: 0.98rem !important;
+    margin-top: 0 !important;
+  }
+
+  .fd-mobile-alerts-trigger {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 14px !important;
+    box-sizing: border-box !important;
   }
 
   .fd-summary-grid {
@@ -3364,19 +3468,31 @@ table tbody tr:hover {
     gap: 12px !important;
   }
 
-  .fd-flip-grid {
+  .fd-summary-card,
+  .theme-farmer .fd-summary-card {
+    padding: 16px !important;
+    gap: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .fd-crops-grid,
+  .fd-flip-grid,
+  .fd-sliding-grid,
+  .dev-models-grid {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 14px !important;
   }
 
   /* Weather Monitor Mobile Adjustments */
   .gw-header-bar {
     flex-direction: column !important;
     align-items: flex-start !important;
-    padding: 16px !important;
+    padding: 14px !important;
   }
 
-  .gw-cards-grid {
+  .gw-cards-grid,
+  .gw-details-grid,
+  .gw-mae-grid {
     grid-template-columns: 1fr !important;
   }
 
@@ -3388,7 +3504,7 @@ table tbody tr:hover {
 
   /* Predictions Mobile Adjustments */
   .cp-stats-grid {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr !important;
     gap: 10px !important;
   }
 
@@ -3396,8 +3512,10 @@ table tbody tr:hover {
     padding: 14px 12px !important;
   }
 
+  .cp-grid,
   .cp-charts-grid {
     grid-template-columns: 1fr !important;
+    gap: 14px !important;
   }
 
   /* Model Training Mobile Adjustments */
@@ -3408,7 +3526,7 @@ table tbody tr:hover {
 
   /* Data Management Mobile Adjustments */
   .dm-hero-banner {
-    padding: 20px 18px !important;
+    padding: 18px 16px !important;
     flex-direction: column !important;
     align-items: flex-start !important;
   }
@@ -3417,13 +3535,9 @@ table tbody tr:hover {
     grid-template-columns: 1fr !important;
   }
 
-  /* Universal Touch Targets & Typography for Mobile */
-  button, input, select, textarea {
-    min-height: 44px;
-  }
-
+  /* Prevent unwanted iOS auto-zoom on input focus without forcing tiny buttons to 44px */
   input, select, textarea {
-    font-size: 16px !important; /* Prevents unwanted iOS auto-zoom on input focus */
+    font-size: 16px !important;
   }
 
   /* Universal Data Tables: Smooth Horizontal Touch-Scroll */

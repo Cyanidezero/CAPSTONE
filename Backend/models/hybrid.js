@@ -34,7 +34,7 @@ function trainHybrid(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 
 
             // 1. Train SARIMA on target data to model linear trend and seasonality (with grid search)
             const sarimaResult = await trainSARIMA(data, targetCol);
-            
+
             // 2. Calculate target residuals (Actual - SARIMA baseline fitted)
             const actualValues = data.map(row => {
                 const direct = getColVal(row, targetCol);
@@ -55,7 +55,7 @@ function trainHybrid(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 
             });
             const sarimaHistory = sarimaResult.history;
             const minLength = Math.min(actualValues.length, sarimaHistory.length);
-            
+
             const residuals = [];
             for (let i = 0; i < minLength; i++) {
                 residuals.push(actualValues[i] - sarimaHistory[i]);
@@ -91,7 +91,7 @@ function trainHybrid(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 
             const sarimaPredictions = sarimaResult.history.slice(0, minLength);
             const lstmPredictions = lstmResult.predictions;
             const combinedLength = Math.min(sarimaPredictions.length, lstmPredictions.length);
-            
+
             const combinedPredictions = [];
             let hybSse = 0;
             let hybAbsErr = 0;
@@ -206,20 +206,20 @@ function trainHybrid(data, targetCol = 'Crop_Yield', weatherCols = ['Rainfall', 
 function predictHybrid(model, data, steps = 30) {
     if (!model) return [];
     const { sarima, lstm } = model;
-    
+
     // 1. Get SARIMA baseline forecast (trend + seasonal + AR/MA persistence)
     const sarimaForecast = forecastSARIMA(sarima, steps);
-    
+
     // 2. Get LSTM weather-driven residual adjustments (non-linear compensations)
     const lstmResiduals = predictLSTM(lstm, data, steps);
-    
+
     // 3. Combine base trend + non-linear weather residual: Y(t) = Y_SARIMA(t) + ε_LSTM(t)
     const hybridPredictions = sarimaForecast.map((val, idx) => {
         const residualOffset = (lstmResiduals && lstmResiduals[idx] !== undefined) ? lstmResiduals[idx] : 0;
         const combined = Math.max(0, val + residualOffset);
         return Math.round(combined * 100) / 100;
     });
-    
+
     return hybridPredictions;
 }
 

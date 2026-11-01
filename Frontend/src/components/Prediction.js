@@ -13,8 +13,6 @@ import {
 import {
   calculateCropDailyStatus,
   getManualDayOffset,
-  advanceManualDay,
-  resetManualDay,
   replantCrop,
   formatCalendarDate,
   getTodayDateString
@@ -587,24 +585,6 @@ const CROP_STAGES_CONFIG = {
   }
 };
 
-const QUALITY_FILIPINO = {
-  'Grade A Premium': 'Magandang Klase (Grade A)',
-  'Grade A Firm': 'Sariwa at Matigas (Grade A)',
-  'Crisp Market Grade': 'Malutong at Pambenta',
-  'Grade A Thick-Walled': 'Makapal ang Laman (Grade A)',
-  'Tender Premium Grade': 'Sariwa at Malambot',
-  'Grade A Straight Fruit': 'Tuwid at Maganda (Grade A)'
-};
-
-const DRIVER_FILIPINO = {
-  tomato: 'Maganda ang sikat ng araw at ulan para tumigas ang bunga at hindi pumutok.',
-  eggplant: 'Maganda ang lamig sa gabi (24°C) para hindi malaglag ang bulaklak at maging maganda ang bunga.',
-  pechay: 'Mataas ang moisture sa hangin kaya mabilis lumaki ang dahon; ingatan ang kanal para hindi mabulok.',
-  bellpepper: 'Tamang init sa araw ang pumipigil sa pagkalagas ng bulaklak at nagpapaganda sa kulay ng sili.',
-  mustard: 'Ang hamog sa umaga ay nagpapadali sa paglaki at paglutong ng mga dahon.',
-  cucumber: 'Ang katamtamang basa sa lupa dahil sa ambon ay tumutulong sa tuloy-tuloy na paghaba ng pipino.'
-};
-
 // Maps dataset crop ids (from cropDatasetParser) to the detailed built-in crop profiles above
 const DATASET_TO_PRESET_ID = {
   tomato: 'tomato',
@@ -885,38 +865,6 @@ function Predictions({
     };
   }, [currentDateString]);
 
-  // Handlers for simulation & testing daily auto-advance
-  const handleAdvanceDay = () => {
-    const newOffset = advanceManualDay(1);
-    setManualDayOffset(newOffset);
-    toast.success(
-      isFil
-        ? '🌾 Inusad ng +1 araw ang lahat ng pananim! Awtomatikong nag-update ang yugto at natitirang araw bago anihin.'
-        : '🌾 Advanced farm timeline by +1 day! All crop stages and harvest countdowns updated.'
-    );
-  };
-
-  const handleRewindDay = () => {
-    if (manualDayOffset <= 0) return;
-    const newOffset = advanceManualDay(-1);
-    setManualDayOffset(newOffset);
-    toast.info(
-      isFil
-        ? '⏪ Ibinalik ng 1 araw ang timeline.'
-        : '⏪ Rewound timeline by 1 day.'
-    );
-  };
-
-  const handleResetToRealToday = () => {
-    resetManualDay();
-    setManualDayOffset(0);
-    toast.success(
-      isFil
-        ? '✓ Na-reset sa totoong petsa ngayon!'
-        : '✓ Reset to real-time current date!'
-    );
-  };
-
   const handleReplant = (cropId, cropName, totalDays) => {
     replantCrop(cropId, totalDays);
     toast.success(
@@ -925,9 +873,6 @@ function Predictions({
         : `🌱 Harvested ${cropName}! Started fresh growth cycle from Day 1.`
     );
   };
-
-  const effectiveCurrentDate = new Date(Date.now() + manualDayOffset * 86400000);
-  const formattedCurrentDate = formatCalendarDate(effectiveCurrentDate, isFil);
 
   // Crops displayed come ONLY from the uploaded dataset and automatically advance everyday
   const rawDisplayCrops = buildDisplayCrops(activeDatasetCrops, hasCrops);
@@ -1177,84 +1122,6 @@ function Predictions({
         </div>
       </div>
 
-      {/* 2. Automatic Daily Growth & Harvest Maturation Tracker */}
-      <div className="cp-daily-tracker-bar">
-        <div className="cp-daily-tracker-info">
-          <div className="cp-daily-tracker-icon">📅</div>
-          <div>
-            <div className="cp-daily-tracker-title-row">
-              <span className="cp-daily-tracker-title">
-                {isFil ? 'Awtomatikong Pagsubaybay ng Araw (Live Daily Growth Tracker)' : 'Automatic Daily Growth & Harvest Tracker'}
-              </span>
-              <span className="cp-daily-live-badge">
-                <span className="cp-daily-live-dot"></span>
-                <span>{isFil ? 'Awtomatikong umuusad araw-araw (+1 araw/araw)' : 'Auto-advances daily (+1 day/day)'}</span>
-              </span>
-            </div>
-            <div className="cp-daily-tracker-desc">
-              {isFil
-                ? 'Lahat ng gulay sa prediction dashboard ay awtomatikong lumalaki ng +1 araw sa hatinggabi (12:00 AM). Ang yugto ng paglaki at araw bago anihin ay patuloy na nagbabago.'
-                : 'All crops in this section automatically advance by +1 day every calendar day at midnight (00:00). Growth stages and harvest countdowns update in real-time.'}
-            </div>
-          </div>
-        </div>
-
-        <div className="cp-daily-tracker-controls">
-          <div className="cp-daily-date-chip">
-            <span className="cp-daily-date-label">
-              {isFil ? 'Kasalukuyang Petsa ng Bukid' : 'Current Farm Date'}
-            </span>
-            <span className="cp-daily-date-val">
-              {formattedCurrentDate}
-            </span>
-            {manualDayOffset !== 0 ? (
-              <span className="cp-daily-date-offset-tag">
-                {manualDayOffset > 0 ? `+${manualDayOffset} ` : `${manualDayOffset} `}
-                {isFil ? 'araw na pasulong' : 'days simulated'}
-              </span>
-            ) : (
-              <span style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: '700' }}>
-                {isFil ? 'Aktwal na Petsa Ngayon' : 'Real-Time Today'}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className="cp-daily-btn cp-daily-btn-primary"
-            onClick={handleAdvanceDay}
-            title={isFil ? 'Subukan ang pag-usad ng 1 araw (+1 Araw)' : 'Simulate +1 day progression (+1 Day)'}
-          >
-            <span>⏩</span>
-            <span>{isFil ? '+1 Araw (Subukan)' : '+1 Day (Simulate)'}</span>
-          </button>
-
-          {manualDayOffset > 0 && (
-            <button
-              type="button"
-              className="cp-daily-btn"
-              onClick={handleRewindDay}
-              title={isFil ? 'Ibalik ng 1 araw (-1 Araw)' : 'Step back 1 day (-1 Day)'}
-            >
-              <span>⏪</span>
-              <span>-1 {isFil ? 'Araw' : 'Day'}</span>
-            </button>
-          )}
-
-          {manualDayOffset !== 0 && (
-            <button
-              type="button"
-              className="cp-daily-btn cp-daily-btn-reset"
-              onClick={handleResetToRealToday}
-              title={isFil ? 'I-reset sa totoong petsa ngayon' : 'Reset to real today'}
-            >
-              <span>🔄</span>
-              <span>{isFil ? 'Totoong Petsa' : 'Reset to Today'}</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* 3. Key Metrics Stats Bar (Farmer Friendly) */}
       <div className="cp-stats-grid">
         <div className="cp-stat-card cp-stat-accuracy">
@@ -1374,8 +1241,6 @@ function Predictions({
           const riskDisplay = isLowRisk
             ? (isFil ? 'Mababang Panganib' : 'Low Risk')
             : (isFil ? 'Katamtamang Panganib' : 'Moderate Risk');
-          const qualityDisplay = isFil ? (QUALITY_FILIPINO[crop.qualityGrade] || crop.qualityGradeFil || crop.qualityGrade) : crop.qualityGrade;
-          const driverDisplay = isFil ? (DRIVER_FILIPINO[crop.id] || crop.forecastDriverFil || crop.forecastDriver) : crop.forecastDriver;
 
           return (
             <div
@@ -1392,16 +1257,6 @@ function Predictions({
                     <div className="cp-crop-subtitle">
                       {crop.variety} • ⏱️ {config.totalDays} {isFil ? 'araw na ikot' : 'days cycle'}
                     </div>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '5px' }}>
-                      <div className="cp-crop-auto-tag">
-                        <span>⚡</span>
-                        <span>{isFil ? 'Awtomatiko mula sa Dataset' : 'Automatic from Dataset'}</span>
-                      </div>
-                      <div className="cp-crop-daily-tag">
-                        <span>📅</span>
-                        <span>{isFil ? 'Araw-araw na ina-update (+1d)' : 'Updates daily (+1d)'}</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <span className={`cp-risk-badge ${crop.riskClass}`}>{riskDisplay}</span>
@@ -1415,11 +1270,6 @@ function Predictions({
                     <div>
                       <div className="cp-day-view-label">
                         {isFil ? 'Kasalukuyang Edad ng Pananim:' : 'Current Plant Age:'}
-                      </div>
-                      <div className="cp-day-view-sub">
-                        {isFil
-                          ? `Araw-araw na umuusad (+1 araw) • Nagsimula: ${crop.dailyStatus?.startDate || 'Ngayon'}`
-                          : `Advances daily (+1 day) • Tracking since: ${crop.dailyStatus?.startDate || 'Today'}`}
                       </div>
                     </div>
                   </div>
@@ -1471,10 +1321,6 @@ function Predictions({
                   <div className="cp-stage-progress-tag">
                     {stageInfo.progressPct}% {isFil ? 'ng Paglaki' : 'Maturity'}
                   </div>
-                </div>
-
-                <div className="cp-stage-hero-desc">
-                  {isFil ? currentStage.descFil : currentStage.descEn}
                 </div>
 
                 {/* Visual 5-Phase Growth Progress Stepper (View Only) */}
@@ -1564,23 +1410,6 @@ function Predictions({
                   <strong>{isFil ? `Alaga sa Yugtong Ito (Araw ${currentDay}):` : `Care at this Stage (Day ${currentDay}):`}</strong>{' '}
                   {isFil ? currentStage.careFil : currentStage.careEn}
                 </div>
-              </div>
-
-              {/* Growing Environment & Quality Attributes */}
-              <div className="cp-details-list">
-                <div className="cp-detail-item">
-                  <span className="cp-detail-key">{isFil ? 'Angkop sa Panahon:' : 'Weather Suitability:'}</span>
-                  <span className="cp-detail-val">🌤️ {crop.suitabilityScore}</span>
-                </div>
-                <div className="cp-detail-item">
-                  <span className="cp-detail-key">{isFil ? 'Inaasahang Kalidad:' : 'Expected Quality:'}</span>
-                  <span className="cp-detail-val">✨ {qualityDisplay}</span>
-                </div>
-              </div>
-
-              {/* Climate Factor Driver */}
-              <div className="cp-factor-banner">
-                <strong>{isFil ? 'Paliwanag sa Panahon:' : 'Climate Factor:'}</strong> {driverDisplay}
               </div>
             </div>
           );

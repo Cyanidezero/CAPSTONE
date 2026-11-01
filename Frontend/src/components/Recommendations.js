@@ -16,7 +16,7 @@ function detectLatestTrainedModel() {
       if (record && record.modelType) {
         const rawType = (record.modelType || '').toLowerCase();
         let key = 'hybrid';
-        let displayName = '🔀 Champion Hybrid (SARIMA-LSTM Framework)';
+        let displayName = '🔀 Hybrid (SARIMA-LSTM)';
         if (rawType.includes('lstm') && !rawType.includes('hybrid') && !rawType.includes('sarima')) {
           key = 'lstm';
           displayName = '🧠 Alternative LSTM Neural Network';
@@ -48,7 +48,7 @@ function detectLatestTrainedModel() {
     if (savedFc && savedFc.modelType) {
       const rawType = (savedFc.modelType || '').toLowerCase();
       let key = 'hybrid';
-      let displayName = '🔀 Champion Hybrid (SARIMA-LSTM Framework)';
+      let displayName = '🔀 Hybrid (SARIMA-LSTM)';
       if (rawType.includes('lstm') && !rawType.includes('hybrid') && !rawType.includes('sarima')) {
         key = 'lstm';
         displayName = '🧠 Alternative LSTM Neural Network';
@@ -80,7 +80,7 @@ function detectLatestTrainedModel() {
       return {
         isTrained: true,
         modelKey: 'hybrid',
-        modelName: '🔀 Champion Hybrid (SARIMA-LSTM Framework)',
+        modelName: '🔀 Hybrid (SARIMA-LSTM)',
         rawModelType: 'Hybrid SARIMA–LSTM Framework',
         target: 'Crop_Yield',
         targetLabel: 'Crop Yield',
@@ -102,7 +102,7 @@ function detectLatestTrainedModel() {
   return {
     isTrained: false,
     modelKey: 'hybrid',
-    modelName: '🔀 Hybrid (SARIMA-LSTM - Baseline)',
+    modelName: '🔀 Hybrid (SARIMA-LSTM)',
     rawModelType: 'Hybrid SARIMA–LSTM',
     target: 'Crop_Yield',
     targetLabel: 'Crop Yield',
@@ -325,7 +325,7 @@ function Recommendations({
       if (record && record.modelType) {
         const rawType = (record.modelType || '').toLowerCase();
         let key = 'hybrid';
-        let displayName = '🔀 Champion Hybrid (SARIMA-LSTM Framework)';
+        let displayName = '🔀 Hybrid (SARIMA-LSTM)';
         if (rawType.includes('lstm') && !rawType.includes('hybrid') && !rawType.includes('sarima')) {
           key = 'lstm';
           displayName = '🧠 Alternative LSTM Neural Network';
@@ -618,7 +618,7 @@ function Recommendations({
         </div>
 
         {/* Generate Actionable Recommendations Button */}
-        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <div className="rec-generate-btn-wrap">
           <button 
             className="btn-rec-generate" 
             onClick={fetchRecommendations}

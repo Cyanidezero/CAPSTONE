@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="chiveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="25%" stop-color="#4ade80"/>
+      <stop offset="75%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <filter id="chiveShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#chiveShadow)">
+    <!-- Clustered upright blades -->
+    <g stroke="url(#chiveGrad)" stroke-linecap="round" fill="none">
+      <path d="M110 195 Q90 110 70 30" stroke-width="4.5"/>
+      <path d="M112 195 Q102 105 92 20" stroke-width="4.2"/>
+      <path d="M114 195 Q112 95 110 15" stroke-width="4.5"/>
+      <path d="M116 195 Q125 105 132 25" stroke-width="4.2"/>
+      <path d="M118 195 Q135 110 152 35" stroke-width="4.5"/>
+      <path d="M110 195 Q80 125 55 50" stroke-width="3.5"/>
+      <path d="M120 195 Q148 125 170 55" stroke-width="3.5"/>
+    </g>
+
+    <!-- White base sheath -->
+    <ellipse cx="114" cy="190" rx="14" ry="8" fill="#f1f5f9"/>
+
+    <!-- Tie cord -->
+    <rect x="98" y="145" width="32" height="8" rx="2" fill="#ca8a04"/>
+  </g>
+</svg>

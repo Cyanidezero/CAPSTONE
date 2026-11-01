@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="100%" height="100%">
+  <defs>
+    <filter id="kinShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#14532d" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g filter="url(#kinShadow)">
+    <g stroke="#22c55e" stroke-width="3" stroke-linecap="round" fill="none">
+      <path d="M110 195 Q95 120 75 55"/>
+      <path d="M112 195 Q112 110 112 45"/>
+      <path d="M114 195 Q125 120 145 55"/>
+    </g>
+    <!-- Characteristic notched fan leaves -->
+    <g fill="#15803d">
+      <polygon points="75,55 60,42 70,38 78,48 85,38 90,48" stroke="#166534" stroke-width="1"/>
+      <polygon points="112,45 98,32 108,28 114,38 122,28 128,38" stroke="#166534" stroke-width="1"/>
+      <polygon points="145,55 130,42 140,38 148,48 155,38 160,48" stroke="#166534" stroke-width="1"/>
+    </g>
+  </g>
+</svg>

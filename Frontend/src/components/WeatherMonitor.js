@@ -139,57 +139,6 @@ const generateAgriculturalAlerts = (current, daily) => {
   return alerts;
 };
 
-// Benchmark Climatology MAE Metrics (calibrated from Hybrid SARIMA–LSTM empirical evaluations for Quezon City)
-export const CLIMATOLOGY_MAE_METRICS = {
-  Max_Temp: {
-    label: 'Max Temperature',
-    filipinoLabel: 'Pinakamataas na Temperatura',
-    unit: '°C',
-    icon: '🌡️',
-    mae: 0.87,
-    rmse: 1.18,
-    accuracy: '97.3%',
-    ciRange: '±0.87°C',
-    targetRole: 'Daytime Peak Heat & Evapotranspiration',
-    formula: 'Tmax_cal = Tmax_raw - (0.87°C × Residual_sign)'
-  },
-  Min_Temp: {
-    label: 'Min Temperature',
-    filipinoLabel: 'Pinakamababang Temperatura',
-    unit: '°C',
-    icon: '❄️',
-    mae: 0.66,
-    rmse: 0.78,
-    accuracy: '97.3%',
-    ciRange: '±0.66°C',
-    targetRole: 'Nocturnal Cooling & Vegetative Rest',
-    formula: 'Tmin_cal = Tmin_raw - (0.66°C × Residual_sign)'
-  },
-  Rainfall: {
-    label: 'Precipitation',
-    filipinoLabel: 'Buhos ng Ulan',
-    unit: 'mm',
-    icon: '🌧️',
-    mae: 6.30,
-    rmse: 12.55,
-    accuracy: '87.5%',
-    ciRange: '±6.30 mm',
-    targetRole: 'Monsoon Extremity & Drainage Stress',
-    formula: 'Precip_cal = Precip_raw (Clamped above MAE noise threshold)'
-  },
-  Humidity: {
-    label: 'Relative Humidity',
-    filipinoLabel: 'Moisture sa Hangin',
-    unit: '%',
-    icon: '💧',
-    mae: 3.93,
-    rmse: 5.16,
-    accuracy: '94.8%',
-    ciRange: '±3.93%',
-    targetRole: 'Atmospheric Vapor Deficit & Fungal Risk',
-    formula: 'RH_cal = RH_raw (Smoothed within ±3.93% error band)'
-  }
-};
 
 // Dynamic baseline for Quezon City — ensures realistic dates from today onward
 export const getDefaultQcWeather = () => {
@@ -420,48 +369,8 @@ export default function WeatherMonitor({
     ? hasWeatherProp
     : Boolean(systemStatus?.weatherDatasetLoaded || (systemStatus?.weatherCount && systemStatus.weatherCount > 0));
 
-  // Helper to load live or trained MAE metrics
-  const getActiveMaeMetrics = useCallback(() => {
-    try {
-      const allSaved = getAllSavedAiForecasts();
-      return {
-        Max_Temp: {
-          ...CLIMATOLOGY_MAE_METRICS.Max_Temp,
-          mae: allSaved.Max_Temp?.metrics?.mae !== undefined ? parseFloat(allSaved.Max_Temp.metrics.mae) : CLIMATOLOGY_MAE_METRICS.Max_Temp.mae,
-          rmse: allSaved.Max_Temp?.metrics?.rmse !== undefined ? parseFloat(allSaved.Max_Temp.metrics.rmse) : CLIMATOLOGY_MAE_METRICS.Max_Temp.rmse,
-          accuracy: allSaved.Max_Temp?.metrics?.accuracyRate || CLIMATOLOGY_MAE_METRICS.Max_Temp.accuracy,
-          isCustomTrained: !!allSaved.Max_Temp
-        },
-        Min_Temp: {
-          ...CLIMATOLOGY_MAE_METRICS.Min_Temp,
-          mae: allSaved.Min_Temp?.metrics?.mae !== undefined ? parseFloat(allSaved.Min_Temp.metrics.mae) : CLIMATOLOGY_MAE_METRICS.Min_Temp.mae,
-          rmse: allSaved.Min_Temp?.metrics?.rmse !== undefined ? parseFloat(allSaved.Min_Temp.metrics.rmse) : CLIMATOLOGY_MAE_METRICS.Min_Temp.rmse,
-          accuracy: allSaved.Min_Temp?.metrics?.accuracyRate || CLIMATOLOGY_MAE_METRICS.Min_Temp.accuracy,
-          isCustomTrained: !!allSaved.Min_Temp
-        },
-        Rainfall: {
-          ...CLIMATOLOGY_MAE_METRICS.Rainfall,
-          mae: allSaved.Rainfall?.metrics?.mae !== undefined ? parseFloat(allSaved.Rainfall.metrics.mae) : CLIMATOLOGY_MAE_METRICS.Rainfall.mae,
-          rmse: allSaved.Rainfall?.metrics?.rmse !== undefined ? parseFloat(allSaved.Rainfall.metrics.rmse) : CLIMATOLOGY_MAE_METRICS.Rainfall.rmse,
-          accuracy: allSaved.Rainfall?.metrics?.accuracyRate || CLIMATOLOGY_MAE_METRICS.Rainfall.accuracy,
-          isCustomTrained: !!allSaved.Rainfall
-        },
-        Humidity: {
-          ...CLIMATOLOGY_MAE_METRICS.Humidity,
-          mae: allSaved.Humidity?.metrics?.mae !== undefined ? parseFloat(allSaved.Humidity.metrics.mae) : CLIMATOLOGY_MAE_METRICS.Humidity.mae,
-          rmse: allSaved.Humidity?.metrics?.rmse !== undefined ? parseFloat(allSaved.Humidity.metrics.rmse) : CLIMATOLOGY_MAE_METRICS.Humidity.rmse,
-          accuracy: allSaved.Humidity?.metrics?.accuracyRate || CLIMATOLOGY_MAE_METRICS.Humidity.accuracy,
-          isCustomTrained: !!allSaved.Humidity
-        }
-      };
-    } catch {
-      return CLIMATOLOGY_MAE_METRICS;
-    }
-  }, []);
-
-  // MAE Calibration State: Only calibrated when weather dataset is actually loaded and models trained
-  const [maeMetrics, setMaeMetrics] = useState(getActiveMaeMetrics);
-  const maeCalibrated = hasWeather && Boolean(
+  // Calibration State: calibrated when weather dataset is loaded and models trained
+  const isCalibrated = hasWeather && Boolean(
     systemStatus?.trainingStatus?.lstm === 'Trained' ||
     systemStatus?.trainingStatus?.hybrid === 'Trained' ||
     (typeof localStorage !== 'undefined' && localStorage.getItem('climayield_lstm_trained') === 'true')
@@ -499,7 +408,6 @@ export default function WeatherMonitor({
   // Reactive listeners for real-time model training completions & dataset updates
   useEffect(() => {
     const handleAiSync = () => {
-      setMaeMetrics(getActiveMaeMetrics());
       try {
         setAiSavedModels(getAllSavedAiForecasts() || {});
       } catch {}
@@ -533,7 +441,7 @@ export default function WeatherMonitor({
       window.removeEventListener('cropDatasetUpdated', handleCropSync);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [getActiveMaeMetrics]);
+  }, []);
 
   // Automatic Open-Meteo Weather Fetcher
   const fetchWeatherData = useCallback(async () => {
@@ -670,15 +578,12 @@ export default function WeatherMonitor({
   const safeForecast = Array.isArray(weatherData?.forecast) && weatherData.forecast.length > 0 ? weatherData.forecast : DEFAULT_QC_WEATHER.forecast;
   const safeAlerts = Array.isArray(weatherData?.alerts) && weatherData.alerts.length > 0 ? weatherData.alerts : DEFAULT_QC_WEATHER.alerts;
 
-  // Derive MAE-calibrated accurate forecast
+  // Derive calibrated accurate forecast
   const activeForecast = safeForecast.map((day) => {
-    if (!maeCalibrated) return day;
+    if (!isCalibrated) return day;
 
     const rawMax = Number(day.maxTemp);
     const rawMin = Number(day.minTemp);
-    const maxMae = maeMetrics.Max_Temp?.mae || 0.87;
-    const minMae = maeMetrics.Min_Temp?.mae || 0.66;
-    const rainMae = maeMetrics.Rainfall?.mae || 6.30;
 
     const calMax = Math.round(rawMax);
     const calMin = Math.round(rawMin);
@@ -692,22 +597,17 @@ export default function WeatherMonitor({
       minTemp: calMin,
       maxTemp: calMax,
       rainSum: calRain,
-      rainProb: calPop,
-      maeMaxRange: `±${maxMae}°C`,
-      maeMinRange: `±${minMae}°C`,
-      maeAccuracy: maeMetrics.Max_Temp?.accuracy || '97.3%',
-      rainMaeRange: `±${rainMae}mm`
+      rainProb: calPop
     };
   });
 
   const activeHourly = safeHourly.map((item) => {
-    if (!maeCalibrated) return item;
+    if (!isCalibrated) return item;
     const rawPrecip = Number(item.precip) || 0;
     const calPrecip = rawPrecip < 0.3 ? 0 : Math.round(rawPrecip * 10) / 10;
     return {
       ...item,
-      precip: calPrecip,
-      maeRange: `±${maeMetrics.Max_Temp?.mae || 0.87}°C`
+      precip: calPrecip
     };
   });
 
@@ -978,10 +878,6 @@ export default function WeatherMonitor({
               <span className="gw-live-dot"></span>
               {isFil ? 'DIREKTA • Ulat Panahon ng QC' : 'LIVE • Quezon City Stations'}
             </span>
-            <span className="gw-mae-badge-pill" title="Calibrated with Mean Absolute Error metrics">
-              <span>🎯</span>
-              <span>{maeCalibrated ? `MAE ±${maeMetrics.Max_Temp.mae}°C (${maeMetrics.Max_Temp.accuracy})` : 'Raw Feed'}</span>
-            </span>
           </div>
           <div className="gw-subtitle">
             {isFil ? 'Panahon • ' : 'Weather • '}
@@ -1138,11 +1034,6 @@ export default function WeatherMonitor({
               </div>
               <div className="gw-hero-feels">
                 {isFil ? `Pakiramdam: ${formatTemp(safeCurrent.feelsLike)}` : `Feels like ${formatTemp(safeCurrent.feelsLike)}`}
-                {maeCalibrated && (
-                  <span className="gw-feels-mae" title={`Calibrated via Mean Absolute Error: ±${maeMetrics.Max_Temp.mae}°C`}>
-                    • {isFil ? `Katumpakan: ${maeMetrics.Max_Temp.accuracy}` : `Accuracy: ${maeMetrics.Max_Temp.accuracy}`} (±{maeMetrics.Max_Temp.mae}°C MAE)
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -1155,7 +1046,6 @@ export default function WeatherMonitor({
               </span>
               <span className="gw-stat-value">
                 {safeCurrent.precipitation} mm ({activeHourly[0]?.pop || 0}%)
-                {maeCalibrated && <span className="gw-mini-mae"> (±{maeMetrics.Rainfall.mae}mm MAE)</span>}
               </span>
             </div>
 
@@ -1165,7 +1055,6 @@ export default function WeatherMonitor({
               </span>
               <span className="gw-stat-value">
                 {safeCurrent.humidity}%
-                {maeCalibrated && <span className="gw-mini-mae"> (±{maeMetrics.Humidity.mae}% MAE)</span>}
               </span>
             </div>
 
@@ -1173,7 +1062,7 @@ export default function WeatherMonitor({
               <span className="gw-stat-label">
                 <span>💨</span> {isFil ? 'Hangin:' : 'Wind:'}
               </span>
-              <span className="gw-stat-value">{safeCurrent.windSpeed} km/h {safeCurrent.windDirection}</span>
+              <span className="gw-stat-value">{safeCurrent.windSpeed} kph</span>
             </div>
           </div>
         </div>
@@ -1182,19 +1071,12 @@ export default function WeatherMonitor({
 
 
       {/* ===================================================================== */}
-      {/* 5. 24-HOUR HOURLY FORECAST (MAE CALIBRATED)                           */}
+      {/* 4. 24-HOUR HOURLY FORECAST                                            */}
       {/* ===================================================================== */}
       <div className="gw-hourly-section">
         <div className="gw-hourly-header">
-          <div className="gw-hourly-title-group">
-            <div className="gw-hourly-title">
-              {isFil ? 'Oras-oras na Panahon (Susunod na 24 Oras)' : 'Hourly Forecast (Next 24 Hours)'}
-            </div>
-            {maeCalibrated && (
-              <span className="gw-hourly-mae-badge">
-                🎯 {isFil ? 'Naka-calibrate ang Temperatura at Ulan' : 'MAE-Calibrated Diurnal Sequence'}
-              </span>
-            )}
+          <div className="gw-hourly-title">
+            {isFil ? 'Oras-oras na Panahon (Susunod na 24 Oras)' : 'Hourly Forecast (Next 24 Hours)'}
           </div>
 
           <div className="gw-tabs">
@@ -1227,12 +1109,7 @@ export default function WeatherMonitor({
               <div className="gw-hourly-icon">{wmoCodeToIcon(item.weatherCode)}</div>
 
               {hourlyTab === 'temp' && (
-                <>
-                  <div className="gw-hourly-val">{formatTemp(item.temp)}</div>
-                  {maeCalibrated && (
-                    <div className="gw-hourly-sub-mae">±{maeMetrics.Max_Temp.mae}°C</div>
-                  )}
-                </>
+                <div className="gw-hourly-val">{formatTemp(item.temp)}</div>
               )}
 
               {hourlyTab === 'precip' && (
@@ -1251,7 +1128,7 @@ export default function WeatherMonitor({
 
               {hourlyTab === 'wind' && (
                 <div className="gw-hourly-val" style={{ fontSize: '0.82rem', color: '#3c4043' }}>
-                  {item.wind} km/h
+                  {item.wind} kph
                 </div>
               )}
             </div>
@@ -1274,12 +1151,6 @@ export default function WeatherMonitor({
                 : 'Clear weather conditions and actionable advice tailored to protect and optimize your vegetable crops'}
             </div>
           </div>
-          {maeCalibrated && (
-            <div className="gw-7day-header-mae-badge">
-              <span>🎯</span>
-              <span>{isFil ? 'Lahat ng Araw ay Naka-calibrate sa MAE Metrics' : 'All Projections Bounded by MAE Confidence Bounds'}</span>
-            </div>
-          )}
         </div>
 
         {/* Table column headers for quick scanning by farmers */}
@@ -1287,7 +1158,6 @@ export default function WeatherMonitor({
           <div className="gw-th-day">{isFil ? 'Araw' : 'Day'}</div>
           <div className="gw-th-rain">{isFil ? 'Buhos ng Ulan' : 'Rainfall'}</div>
           <div className="gw-th-temp">{isFil ? 'Temperatura (Gabi/Araw)' : 'Temp (Min/Max)'}</div>
-          {maeCalibrated && <div className="gw-th-acc">{isFil ? 'Katumpakan' : 'Accuracy'}</div>}
           <div className="gw-th-cond">{isFil ? 'Kalagayan ng Panahon at Gabay sa Bukid' : 'Weather Condition & Agricultural Guidance'}</div>
         </div>
 
@@ -1308,11 +1178,6 @@ export default function WeatherMonitor({
                       <div className="gw-rain-chip">
                         <span>💧</span>
                         <span className="gw-rain-amt">{day.rainSum} mm</span>
-                        {maeCalibrated && (
-                          <span className="gw-rain-mae" title={`Rainfall bounded by MAE: ${day.rainMaeRange}`}>
-                            ({day.rainMaeRange})
-                          </span>
-                        )}
                       </div>
                     ) : (
                       <span className="gw-rain-dry">{isFil ? '0 mm (Tuyot)' : '0 mm (Dry)'}</span>
@@ -1333,16 +1198,6 @@ export default function WeatherMonitor({
                       {isFil ? 'Gabi – Tanghali' : 'Night – Midday'}
                     </span>
                   </div>
-
-                  {maeCalibrated && (
-                    <div 
-                      className="gw-7day-mae-accuracy" 
-                      title={isFil ? `Katumpakan ng AI: ${day.maeAccuracy || '97.3%'} (MAE: ±${maeMetrics.Max_Temp?.mae || 0.87}°C)` : `AI Accuracy: ${day.maeAccuracy || '97.3%'} (MAE: ±${maeMetrics.Max_Temp?.mae || 0.87}°C)`}
-                    >
-                      <span className="mae-dot"></span>
-                      <span className="mae-acc-sub">{day.maeAccuracy || '97.3%'}</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Farmer-Understandable Weather Condition and Agricultural Impact */}
