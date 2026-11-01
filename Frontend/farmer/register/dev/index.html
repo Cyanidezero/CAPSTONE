@@ -746,7 +746,11 @@
         } catch (parseErr) {}
 
         if (!res.ok || (data && (data.error || data.success === false))) {
-          const errMsg = (data && data.error) ? data.error : 'Registration failed: This email address is already registered in the system.';
+          const errMsg = (data && data.error) 
+            ? data.error 
+            : (res.status === 409 
+                ? 'This email address is already registered in the system. Please use a different email or log in.' 
+                : 'Registration failed. Please verify your details and try again.');
           resultBox.style.display = 'block';
           resultBox.className = 'error';
           resultBox.innerHTML = '<strong>⚠️ ' + sanitizeText(errMsg) + '</strong>';

@@ -180,11 +180,6 @@ try {
             'crops'        => ($targetRole === 'farmer') ? ['Pechay', 'Mustasa', 'Kangkong'] : null
         ]
     ];
-            'location'     => ($targetRole === 'farmer') ? ($location ?? '') : null,
-            'organization' => ($targetRole === 'dev') ? ($org ?? '') : null,
-            'crops'        => ($targetRole === 'farmer') ? ['Pechay', 'Mustasa', 'Kangkong'] : null
-        ]
-    ];
 
     sendResponse([
         'success' => true,
