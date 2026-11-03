@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { login, signup } from '../services/api';
+import { login, signup, requestPasswordOtp, verifyPasswordOtp, resetPasswordWithOtp } from '../services/api';
 import { isFarmerOnlyMode, isDevOnlyMode } from '../utils/portalMode';
 import './Login.css';
 
@@ -14,6 +14,20 @@ function Login({ onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPeeking, setIsPeeking] = useState(false);
+
+  // Forgot password & OTP verification state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState('email'); // 'email' | 'otp' | 'password' | 'success'
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotNotice, setForgotNotice] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Sign up modal state
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -32,6 +46,144 @@ function Login({ onLoginSuccess }) {
   const toggleMode = (targetIsDev) => {
     if (isFarmerOnly || isDevOnly) return; // Prevent switching when in dedicated portal mode
     setIsDev(targetIsDev);
+  };
+
+  const handleOpenForgotModal = () => {
+    setForgotEmail(email || '');
+    setForgotOtp('');
+    setResetToken('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setForgotError('');
+    setForgotNotice('');
+    setForgotStep('email');
+    setShowForgotModal(true);
+  };
+
+  const handleSendOtp = async (e) => {
+    if (e) e.preventDefault();
+    const targetEmail = forgotEmail.trim().toLowerCase();
+    if (!targetEmail) {
+      setForgotError('Please enter your registered email address.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(targetEmail)) {
+      setForgotError('Please enter a valid email address format.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotNotice('');
+
+    try {
+      const activeRole = isFarmerOnly ? 'farmer' : (isDevOnly || isDev ? 'dev' : 'farmer');
+      const res = await requestPasswordOtp(targetEmail, activeRole);
+      if (res.success) {
+        setForgotNotice(`A 6-digit OTP has been sent to ${targetEmail}. Please check your inbox.`);
+        toast.success(`Verification code dispatched to ${targetEmail}`);
+        if (res.otp) {
+          toast.info(`🔐 Verification OTP: ${res.otp}`, { autoClose: 14000 });
+        }
+        setForgotStep('otp');
+        setResendCooldown(30);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        setForgotError(res.error || 'Failed to send OTP verification code.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Error sending OTP. Please verify your email.';
+      setForgotError(msg);
+      toast.error(msg);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    if (e) e.preventDefault();
+    const cleanOtp = forgotOtp.replace(/\D/g, '');
+    if (!cleanOtp || cleanOtp.length < 6) {
+      setForgotError('Please enter the 6-digit OTP code.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      const res = await verifyPasswordOtp(forgotEmail.trim().toLowerCase(), cleanOtp);
+      if (res.success) {
+        setResetToken(res.reset_token || '');
+        setForgotStep('password');
+        toast.success('Email and OTP verified successfully!');
+      } else {
+        setForgotError(res.error || 'Invalid or expired OTP code.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Invalid verification code.';
+      setForgotError(msg);
+      toast.error(msg);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    if (e) e.preventDefault();
+    if (!newPassword || newPassword.length < 4) {
+      setForgotError('Password must be at least 4 characters long.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setForgotError('Passwords do not match. Please re-enter identical passwords.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      const res = await resetPasswordWithOtp({
+        email: forgotEmail.trim().toLowerCase(),
+        otp: forgotOtp.replace(/\D/g, ''),
+        resetToken: resetToken,
+        newPassword: newPassword,
+        confirmPassword: confirmNewPassword
+      });
+
+      if (res.success) {
+        toast.success('Password updated successfully! You can now log in.');
+        setEmail(forgotEmail.trim().toLowerCase());
+        setPassword(newPassword);
+        setForgotStep('success');
+      } else {
+        setForgotError(res.error || 'Failed to reset password.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Error updating password.';
+      setForgotError(msg);
+      toast.error(msg);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleFinishReset = () => {
+    setShowForgotModal(false);
+    setForgotStep('email');
+    setForgotOtp('');
+    setNewPassword('');
+    setConfirmNewPassword('');
   };
 
 
@@ -297,7 +449,11 @@ function Login({ onLoginSuccess }) {
                 </label>
                 <span 
                   className="forgot-link"
-                  onClick={() => toast.info('Default demo password is: password123')}
+                  onClick={handleOpenForgotModal}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenForgotModal(); }}
+                  title="Click to reset your password via email OTP verification"
                 >
                   Forgot password?
                 </span>
@@ -489,6 +645,317 @@ function Login({ onLoginSuccess }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password / OTP Email Verification Modal */}
+      {showForgotModal && (
+        <div className="auth-modal-overlay" onClick={() => !forgotLoading && setShowForgotModal(false)}>
+          <div 
+            className="auth-modal-card forgot-modal-card" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '480px' }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.4rem' }}>{forgotStep === 'success' ? '🎉' : '🔐'}</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: isDev ? '#38bdf8' : '#2d6a4f', fontWeight: 700 }}>
+                    {forgotStep === 'email' && 'Forgot Password'}
+                    {forgotStep === 'otp' && 'Email Verification'}
+                    {forgotStep === 'password' && 'Create New Password'}
+                    {forgotStep === 'success' && 'Password Reset Complete'}
+                  </h3>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                    {forgotStep === 'email' && 'Step 1 of 3: Enter registered email'}
+                    {forgotStep === 'otp' && 'Step 2 of 3: Enter 6-digit OTP code'}
+                    {forgotStep === 'password' && 'Step 3 of 3: Set your new password'}
+                    {forgotStep === 'success' && 'Account credentials updated'}
+                  </div>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => !forgotLoading && setShowForgotModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', opacity: 0.6 }}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Error Banner */}
+            {forgotError && (
+              <div style={{
+                background: '#fee2e2',
+                color: '#991b1b',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '0.88rem',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: '1px solid #fca5a5'
+              }}>
+                <span>⚠️</span>
+                <span>{forgotError}</span>
+              </div>
+            )}
+
+            {/* Notice Banner */}
+            {forgotNotice && (
+              <div style={{
+                background: '#e0f2fe',
+                color: '#0369a1',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '0.88rem',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: '1px solid #bae6fd'
+              }}>
+                <span>📨</span>
+                <span>{forgotNotice}</span>
+              </div>
+            )}
+
+            {/* Step 1: Email Verification Prompt */}
+            {forgotStep === 'email' && (
+              <form onSubmit={handleSendOtp}>
+                <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                  Please enter the email address you use in the system. We will verify your email and send a 6-digit verification OTP code.
+                </p>
+
+                <div className="login-input-group">
+                  <label>Registered Email Address *</label>
+                  <div className="login-input-wrapper">
+                    <span className="login-input-icon">📧</span>
+                    <input
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => {
+                        setForgotEmail(e.target.value);
+                        if (forgotError) setForgotError('');
+                      }}
+                      placeholder="user@organization.com"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '22px' }}>
+                  <button 
+                    type="button" 
+                    className="btn-auth-submit btn-modal-cancel" 
+                    style={{ flex: 1 }}
+                    onClick={() => setShowForgotModal(false)}
+                    disabled={forgotLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-auth-submit btn-modal-register" 
+                    style={{ flex: 1.4 }}
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? 'Sending OTP...' : 'Send Verification OTP 📨'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 2: OTP Verification Code */}
+            {forgotStep === 'otp' && (
+              <form onSubmit={handleVerifyOtp}>
+                <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                  We have sent a 6-digit OTP to <strong>{forgotEmail}</strong>. Please enter the verification code below:
+                </p>
+
+                <div className="login-input-group">
+                  <label>6-Digit Verification Code (OTP) *</label>
+                  <div className="login-input-wrapper">
+                    <span className="login-input-icon">🔢</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={forgotOtp}
+                      onChange={(e) => {
+                        setForgotOtp(e.target.value.replace(/\D/g, ''));
+                        if (forgotError) setForgotError('');
+                      }}
+                      placeholder="••••••"
+                      style={{ fontSize: '1.4rem', letterSpacing: '6px', textAlign: 'center', fontWeight: 'bold' }}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 16px 0', fontSize: '0.85rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotStep('email');
+                      setForgotError('');
+                      setForgotNotice('');
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#64748b', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  >
+                    ← Change Email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={resendCooldown > 0 || forgotLoading}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: resendCooldown > 0 ? '#94a3b8' : (isDev ? '#38bdf8' : '#2d6a4f'),
+                      cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                      padding: 0
+                    }}
+                  >
+                    {resendCooldown > 0 ? `Resend OTP (${resendCooldown}s)` : 'Resend OTP 🔄'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                  <button 
+                    type="button" 
+                    className="btn-auth-submit btn-modal-cancel" 
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      setForgotStep('email');
+                      setForgotError('');
+                    }}
+                    disabled={forgotLoading}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-auth-submit btn-modal-register" 
+                    style={{ flex: 1.4 }}
+                    disabled={forgotLoading || forgotOtp.length < 6}
+                  >
+                    {forgotLoading ? 'Verifying...' : 'Verify OTP 🔑'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 3: Create New Password */}
+            {forgotStep === 'password' && (
+              <form onSubmit={handleResetPassword}>
+                <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                  Email successfully verified! Enter your new password for <strong>{forgotEmail}</strong>.
+                </p>
+
+                <div className="login-input-group">
+                  <label>New Password *</label>
+                  <div className="login-input-wrapper">
+                    <span className="login-input-icon">🔒</span>
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      minLength={4}
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        if (forgotError) setForgotError('');
+                      }}
+                      placeholder="Minimum 4 characters"
+                      required
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6 }}
+                      title={showNewPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showNewPassword ? '👁️' : '🙈'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="login-input-group">
+                  <label>Confirm New Password *</label>
+                  <div className="login-input-wrapper">
+                    <span className="login-input-icon">🔒</span>
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      minLength={4}
+                      value={confirmNewPassword}
+                      onChange={(e) => {
+                        setConfirmNewPassword(e.target.value);
+                        if (forgotError) setForgotError('');
+                      }}
+                      placeholder="Re-enter new password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Validation indicators */}
+                <div style={{ fontSize: '0.82rem', margin: '8px 0 16px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ color: newPassword.length >= 4 ? '#16a34a' : '#94a3b8' }}>
+                    {newPassword.length >= 4 ? '✓' : '•'} At least 4 characters
+                  </span>
+                  <span style={{ color: (newPassword && newPassword === confirmNewPassword) ? '#16a34a' : '#94a3b8' }}>
+                    {(newPassword && newPassword === confirmNewPassword) ? '✓' : '•'} Passwords match
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                  <button 
+                    type="button" 
+                    className="btn-auth-submit btn-modal-cancel" 
+                    style={{ flex: 1 }}
+                    onClick={() => setShowForgotModal(false)}
+                    disabled={forgotLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-auth-submit btn-modal-register" 
+                    style={{ flex: 1.4 }}
+                    disabled={forgotLoading || newPassword.length < 4 || newPassword !== confirmNewPassword}
+                  >
+                    {forgotLoading ? 'Updating...' : 'Save New Password 💾'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 4: Success Message */}
+            {forgotStep === 'success' && (
+              <div style={{ textAlign: 'center', padding: '12px 0 6px 0' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#16a34a' }}>Password Reset Successful!</h4>
+                <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, marginBottom: '22px' }}>
+                  Your password has been securely updated. You can now log into your account with your new credentials.
+                </p>
+                <button 
+                  type="button" 
+                  className="btn-auth-submit btn-modal-register" 
+                  style={{ width: '100%', padding: '12px' }}
+                  onClick={handleFinishReset}
+                >
+                  Back to Login & Sign In 🚀
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

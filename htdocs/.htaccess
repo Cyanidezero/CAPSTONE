@@ -30,6 +30,9 @@ DirectoryIndex index.php index.html
     RewriteRule ^api/auth/login/?$ /api/auth/login.php [L,QSA]
     RewriteRule ^api/auth/signup/?$ /api/auth/signup.php [L,QSA]
     RewriteRule ^api/auth/demo-accounts/?$ /api/auth/demo-accounts.php [L,QSA]
+    RewriteRule ^api/auth/forgot-password/?$ /api/auth/forgot-password.php [L,QSA]
+    RewriteRule ^api/auth/verify-otp/?$ /api/auth/verify-otp.php [L,QSA]
+    RewriteRule ^api/auth/reset-password/?$ /api/auth/reset-password.php [L,QSA]
     RewriteRule ^api/auth/logout/?$ /api/auth/logout.php [L,QSA]
 
     # Route Dataset Management endpoints

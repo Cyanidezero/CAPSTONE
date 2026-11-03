@@ -86,6 +86,28 @@ export const signup = async (userData) => {
   return res.data;
 };
 
+export const requestPasswordOtp = async (email, role) => {
+  const res = await api.post('/auth/forgot-password', { action: 'send_otp', email, role });
+  return res.data;
+};
+
+export const verifyPasswordOtp = async (email, otp) => {
+  const res = await api.post('/auth/forgot-password', { action: 'verify_otp', email, otp });
+  return res.data;
+};
+
+export const resetPasswordWithOtp = async (params) => {
+  const res = await api.post('/auth/forgot-password', {
+    action: 'reset_password',
+    email: params.email,
+    otp: params.otp,
+    resetToken: params.resetToken,
+    newPassword: params.newPassword,
+    confirmPassword: params.confirmPassword,
+  });
+  return res.data;
+};
+
 export const getDemoAccounts = async () => {
   const res = await api.get('/auth/demo-accounts');
   return res.data;

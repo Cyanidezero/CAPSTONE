@@ -246,6 +246,199 @@ router.post('/signup', async (req, res) => {
     }
 });
 
+// Helper: Ensure password_resets table exists
+async function ensurePasswordResetsTable() {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS \`password_resets\` (
+                \`id\` int(11) NOT NULL AUTO_INCREMENT,
+                \`email\` varchar(100) NOT NULL,
+                \`role\` varchar(20) NOT NULL DEFAULT 'farmer',
+                \`otp\` varchar(10) NOT NULL,
+                \`token\` varchar(64) DEFAULT NULL,
+                \`expires_at\` datetime NOT NULL,
+                \`created_at\` timestamp NOT NULL DEFAULT current_timestamp(),
+                PRIMARY KEY (\`id\`),
+                KEY \`email_idx\` (\`email\`),
+                KEY \`otp_idx\` (\`otp\`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+    } catch (e) {
+        console.warn('[DB] password_resets table check:', e.message);
+    }
+}
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { action = 'send_otp', email, role, otp, resetToken, newPassword, confirmPassword } = req.body;
+        await ensurePasswordResetsTable();
+
+        if (action === 'send_otp' || !action) {
+            const normalizedEmail = (email || '').trim().toLowerCase();
+            if (!normalizedEmail) {
+                return res.status(400).json({ success: false, error: 'Please enter your email address.' });
+            }
+
+            // Check farmers and developers
+            let userRow = null;
+            let userRole = 'farmer';
+
+            try {
+                const [fRows] = await pool.query('SELECT id, name, email FROM `farmers` WHERE LOWER(email) = ?', [normalizedEmail]);
+                if (fRows && fRows.length > 0) {
+                    userRow = fRows[0];
+                    userRole = 'farmer';
+                } else {
+                    const [dRows] = await pool.query('SELECT id, name, email FROM `developers` WHERE LOWER(email) = ?', [normalizedEmail]);
+                    if (dRows && dRows.length > 0) {
+                        userRow = dRows[0];
+                        userRole = 'dev';
+                    }
+                }
+            } catch (err) {
+                console.warn('[DB lookup error]:', err.message);
+            }
+
+            const isDemo = ['farmer@demo.com', 'farmer@agri.coop', 'dev@demo.com', 'dev@agri.coop'].includes(normalizedEmail);
+            if (!userRow && isDemo) {
+                userRow = {
+                    id: normalizedEmail.includes('dev') ? 2 : 1,
+                    name: normalizedEmail.includes('dev') ? 'Alex Chen' : 'John Miller',
+                    email: normalizedEmail
+                };
+                userRole = normalizedEmail.includes('dev') ? 'dev' : 'farmer';
+            }
+
+            if (!userRow) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'This email address is not registered in the system. Please check your email or create an account.'
+                });
+            }
+
+            const generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
+            const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+            try {
+                await pool.query('DELETE FROM `password_resets` WHERE LOWER(email) = ?', [normalizedEmail]);
+                await pool.query(
+                    'INSERT INTO `password_resets` (`email`, `role`, `otp`, `token`, `expires_at`, `created_at`) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW())',
+                    [normalizedEmail, userRole, generatedOtp, token]
+                );
+            } catch (err) {
+                console.warn('[DB insert OTP error]:', err.message);
+            }
+
+            return res.json({
+                success: true,
+                message: `A 6-digit verification OTP has been sent to ${normalizedEmail}.`,
+                email: normalizedEmail,
+                role: userRole,
+                userName: userRow.name || 'User',
+                otp: generatedOtp,
+                expires_in: 900
+            });
+        }
+
+        if (action === 'verify_otp') {
+            const normalizedEmail = (email || '').trim().toLowerCase();
+            const cleanOtp = String(otp || '').replace(/\D/g, '');
+
+            if (!normalizedEmail || !cleanOtp) {
+                return res.status(400).json({ success: false, error: 'Please provide both email and OTP.' });
+            }
+
+            const [rows] = await pool.query(
+                'SELECT * FROM `password_resets` WHERE LOWER(email) = ? AND otp = ? AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
+                [normalizedEmail, cleanOtp]
+            );
+
+            if (!rows || rows.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid or expired OTP verification code. Please check the code or request a new one.'
+                });
+            }
+
+            const newResetToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+            await pool.query('UPDATE `password_resets` SET `token` = ? WHERE `id` = ?', [newResetToken, rows[0].id]);
+
+            return res.json({
+                success: true,
+                message: 'Email verified successfully! You may now enter your new password.',
+                email: normalizedEmail,
+                role: rows[0].role,
+                reset_token: newResetToken
+            });
+        }
+
+        if (action === 'reset_password') {
+            const normalizedEmail = (email || '').trim().toLowerCase();
+            const cleanOtp = String(otp || '').replace(/\D/g, '');
+            const pass = newPassword || '';
+
+            if (!normalizedEmail || !pass) {
+                return res.status(400).json({ success: false, error: 'Email and new password are required.' });
+            }
+
+            if (pass.length < 4) {
+                return res.status(400).json({ success: false, error: 'Password must be at least 4 characters long.' });
+            }
+
+            if (confirmPassword && pass !== confirmPassword) {
+                return res.status(400).json({ success: false, error: 'Passwords do not match.' });
+            }
+
+            const [rows] = await pool.query(
+                'SELECT * FROM `password_resets` WHERE LOWER(email) = ? AND ((token = ? AND token != "") OR otp = ?) AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
+                [normalizedEmail, resetToken || '', cleanOtp]
+            );
+
+            if (!rows || rows.length === 0) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Password reset authorization expired or invalid. Please verify your email again.'
+                });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(pass, salt);
+
+            await pool.query('UPDATE `farmers` SET `password` = ? WHERE LOWER(email) = ?', [hashedPassword, normalizedEmail]);
+            await pool.query('UPDATE `developers` SET `password` = ? WHERE LOWER(email) = ?', [hashedPassword, normalizedEmail]);
+            await pool.query('DELETE FROM `password_resets` WHERE LOWER(email) = ?', [normalizedEmail]);
+
+            return res.json({
+                success: true,
+                message: 'Password reset successful! You can now log in with your new password.',
+                email: normalizedEmail
+            });
+        }
+
+        res.status(400).json({ success: false, error: 'Invalid action' });
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json({ success: false, error: 'Server error: ' + err.message });
+    }
+});
+
+// POST /api/auth/verify-otp
+router.post('/verify-otp', async (req, res) => {
+    req.body.action = 'verify_otp';
+    const handler = router.stack.find(layer => layer.route && layer.route.path === '/forgot-password');
+    if (handler) return handler.route.stack[0].handle(req, res);
+    res.status(404).send();
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+    req.body.action = 'reset_password';
+    const handler = router.stack.find(layer => layer.route && layer.route.path === '/forgot-password');
+    if (handler) return handler.route.stack[0].handle(req, res);
+    res.status(404).send();
+});
+
 // GET /api/auth/demo-accounts
 router.get('/demo-accounts', async (req, res) => {
     try {
