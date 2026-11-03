@@ -111,17 +111,20 @@ try {
     try { $pdo->exec("ALTER TABLE `developers` ADD COLUMN `organization` varchar(255) DEFAULT ''"); } catch (Exception $e) {}
 
     // 1. Strict duplicate check: ONLY check table for the role being registered
+    // Emails with numbers/numerical variations (e.g. rhenzmatipo4@gmail.com, angelle3@gmail.com) are distinct accounts and 100% permitted
     if ($targetRole === 'farmer') {
         $chkFarmer = $pdo->prepare("SELECT id FROM farmers WHERE LOWER(email) = ? LIMIT 1");
         $chkFarmer->execute([$email]);
         if ($chkFarmer->fetch()) {
-            sendError('This email address is already registered as a farmer account. Please log in or use a different email.', 409);
+            $suggested = preg_replace('/@/', '1@', $email, 1);
+            sendError('This exact email address is already registered as a farmer account. Please log in or use a different email (you can also add a number, e.g. ' . $suggested . ').', 409);
         }
     } else {
         $chkDev = $pdo->prepare("SELECT id FROM developers WHERE LOWER(email) = ? LIMIT 1");
         $chkDev->execute([$email]);
         if ($chkDev->fetch()) {
-            sendError('This email address is already registered as a developer account. Please log in or use a different email.', 409);
+            $suggested = preg_replace('/@/', '1@', $email, 1);
+            sendError('This exact email address is already registered as a developer account. Please log in or use a different email (you can also add a number, e.g. ' . $suggested . ').', 409);
         }
     }
 
@@ -174,7 +177,8 @@ try {
         }
     } catch (PDOException $e) {
         if ($e->getCode() == 23000 || stripos($e->getMessage(), 'Duplicate') !== false) {
-            sendError('This email address is already registered in the system. Please use a different email or log in.', 409);
+            $suggested = preg_replace('/@/', '1@', $email, 1);
+            sendError('This exact email address is already registered in the system. Please use a different email or add a number (e.g. ' . $suggested . ').', 409);
         }
         sendError('Failed to create account: ' . $e->getMessage(), 500);
     }
