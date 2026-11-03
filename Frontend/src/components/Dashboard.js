@@ -1688,7 +1688,7 @@ function Dashboard({
           <div className="fd-hero-text">
             <h2>
               <span>🧑‍🌾</span>
-              <span>Kamusta, {user?.name || (isFil ? 'Magsasaka' : 'Farmer')}!</span>
+              <span>{isFil ? 'Kumusta' : 'Welcome'}, {user?.name || (isFil ? 'Magsasaka' : 'Farmer')}!</span>
             </h2>
             <p>
               {isFil
