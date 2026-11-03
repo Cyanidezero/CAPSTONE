@@ -233,18 +233,29 @@ function getDetectedCropsFromDatabase(PDO $pdo): array {
 
     // 1. Check if crop_yield_data has records
     $cCount = (int)$pdo->query("SELECT COUNT(*) FROM crop_yield_data")->fetchColumn();
-    if ($cCount === 0) {
-        return [];
+    if ($cCount > 0) {
+        $stmt = $pdo->query("SELECT crop_name FROM crop_yield_data WHERE crop_name IS NOT NULL AND crop_name != '' GROUP BY crop_name ORDER BY MIN(id) ASC");
+        $names = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+        $rich = detectRichCrops($names);
+        if (!empty($rich)) {
+            setStateValue($pdo, 'detected_crops', $rich);
+            return $rich;
+        }
     }
 
-    // 2. Always derive from ALL distinct crop_name values in crop_yield_data (never truncated by LIMIT 500)
-    $stmt = $pdo->query("SELECT crop_name FROM crop_yield_data WHERE crop_name IS NOT NULL AND crop_name != '' GROUP BY crop_name ORDER BY MIN(id) ASC");
-    $names = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
-    $rich = detectRichCrops($names);
-    if (!empty($rich)) {
-        setStateValue($pdo, 'detected_crops', $rich);
+    // 2. Check if crops are stored in ai_model_state
+    $savedState = getStateValue($pdo, 'detected_crops');
+    if (!empty($savedState)) {
+        if (is_array($savedState) && count($savedState) > 0) {
+            return $savedState;
+        }
+        $decoded = json_decode((string)$savedState, true);
+        if (is_array($decoded) && count($decoded) > 0) {
+            return $decoded;
+        }
     }
-    return $rich;
+
+    return [];
 }
 
 function syncAgriculturalData(PDO $pdo): int {

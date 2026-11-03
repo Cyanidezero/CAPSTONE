@@ -21,9 +21,9 @@ export function syncFarmerFrontendWithBackend(statusData) {
     );
 
     if (hasCrops && Array.isArray(statusData.detectedCrops) && statusData.detectedCrops.length > 0) {
-      if (localStorage.getItem('climayield_dataset_crops_cleared') === 'true') {
-        return;
-      }
+      try {
+        localStorage.removeItem('climayield_dataset_crops_cleared');
+      } catch (e) {}
 
       const { sanitized } = sanitizeDatasetCrops(statusData.detectedCrops);
       const rawValidCrops = sanitized && sanitized.length > 0 ? sanitized : statusData.detectedCrops;

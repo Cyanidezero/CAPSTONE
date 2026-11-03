@@ -437,10 +437,12 @@
 
   <script>
     // Role defaults to 'farmer' in code (no role query parameter needed).
-    // If accessed via /register/dev or /dev/register, automatically treat the person registering as 'dev'.
+    // If accessed via /register/dev, /dev/register, role=dev query or dev hash, automatically treat registrant as 'dev'.
     let currentRole = 'farmer';
     const pathname = window.location.pathname.toLowerCase();
-    if (pathname.includes('/register/dev') || pathname.includes('/dev/') || pathname.endsWith('/dev')) {
+    const search = window.location.search.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (pathname.includes('/register/dev') || pathname.includes('/dev/') || pathname.endsWith('/dev') || search.includes('role=dev') || hash.includes('dev')) {
       currentRole = 'dev';
     }
     const isDev = currentRole === 'dev';

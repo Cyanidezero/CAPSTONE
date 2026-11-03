@@ -1,5 +1,5 @@
 # ClimaYield-X - Apache .htaccess for InfinityFree
-# Handles CORS preflight headers and REST API rewrites
+# Handles CORS preflight headers, asset routing, and REST API rewrites
 
 DirectoryIndex index.php index.html
 
@@ -7,15 +7,43 @@ DirectoryIndex index.php index.html
     RewriteEngine On
     RewriteBase /
 
+    # Automatically redirect HTTP to HTTPS on InfinityFree
+    RewriteCond %{HTTP_HOST} \.infinityfree\.me$ [NC]
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Return 200 on OPTIONS preflight
     RewriteCond %{REQUEST_METHOD} OPTIONS
     RewriteRule ^(.*)$ $1 [R=200,L]
+
+    # Route portal relative vegetable asset requests to root /assets/vegetables/
+    RewriteRule ^(farmer|dev)/assets/vegetables/(.*)$ /assets/vegetables/$2 [L]
+
+    # Clean role-less registration routes: /register defaults to farmer, /register/dev treats registrant as dev
+    RewriteRule ^register/?$ /register.html [L,QSA]
+    RewriteRule ^register/dev/?$ /dev/register.html [L,QSA]
+    RewriteRule ^farmer/register/?$ /farmer/register.html [L,QSA]
+    RewriteRule ^dev/register/?$ /dev/register.html [L,QSA]
 
     # Route /api/auth/* requests to /api/auth/*.php
     RewriteRule ^api/auth/login/?$ /api/auth/login.php [L,QSA]
     RewriteRule ^api/auth/signup/?$ /api/auth/signup.php [L,QSA]
     RewriteRule ^api/auth/demo-accounts/?$ /api/auth/demo-accounts.php [L,QSA]
     RewriteRule ^api/auth/logout/?$ /api/auth/logout.php [L,QSA]
+
+    # Route Dataset Management endpoints
+    RewriteRule ^api/datasets/?$ /api/datasets.php [L,QSA]
+    RewriteRule ^api/datasets/preset/crops/?$ /api/datasets.php?action=preset_crops [L,QSA]
+    RewriteRule ^api/datasets/preset/weather/?$ /api/datasets.php?action=preset_weather [L,QSA]
+    RewriteRule ^api/datasets/clear/?$ /api/datasets.php?action=clear [L,QSA]
+
+    # Route AI Model Training & Sync endpoints
+    RewriteRule ^api/train/sarima/?$ /api/train.php?model=sarima [L,QSA]
+    RewriteRule ^api/train/lstm/?$ /api/train.php?model=lstm [L,QSA]
+    RewriteRule ^api/train/hybrid/?$ /api/train.php?model=hybrid [L,QSA]
+    RewriteRule ^api/training/latest/?$ /api/train.php?model=latest [L,QSA]
+    RewriteRule ^api/training/sync/?$ /api/train.php?model=sync [L,QSA]
 
     # Route core /api/* endpoints
     RewriteRule ^api/health/?$ /api/health.php [L,QSA]
@@ -28,6 +56,7 @@ DirectoryIndex index.php index.html
     RewriteRule ^api/predict/?$ /api/predict.php [L,QSA]
     RewriteRule ^api/reset/?$ /api/reset.php [L,QSA]
     RewriteRule ^api/weather/?$ /api/weather.php [L,QSA]
+    RewriteRule ^api/upload/?$ /api/upload.php [L,QSA]
 
     # Fallback to /api/index.php for any other /api routes
     RewriteCond %{REQUEST_FILENAME} !-f
@@ -40,4 +69,5 @@ DirectoryIndex index.php index.html
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-XSS-Protection "1; mode=block"
+    Header always set Content-Security-Policy "upgrade-insecure-requests"
 </IfModule>

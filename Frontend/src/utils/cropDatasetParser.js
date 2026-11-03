@@ -1213,7 +1213,7 @@ export function saveDatasetCrops(crops) {
     // Sync detected crops to backend MySQL so Farmer Portal receives them even from client-parsed files
     if (typeof window !== 'undefined' && typeof fetch !== 'undefined' && Array.isArray(crops) && crops.length > 0) {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const apiBase = isLocal ? 'http://localhost:5000/api' : `${window.location.origin}/api`;
+      const apiBase = isLocal ? 'http://localhost:5000/api' : '/api';
       fetch(`${apiBase}/crops`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

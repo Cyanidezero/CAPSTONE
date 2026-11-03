@@ -1074,13 +1074,13 @@ function Dashboard({
       }
       return;
     }
-    if (isDatasetCropsCleared()) return;
     if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
       const currentIds = datasetCrops.map(c => c.id || c.name).join(',');
       const incomingIds = systemStatus.detectedCrops.map(c => c.id || c.name).join(',');
       if (datasetCrops.length === 0 || currentIds !== incomingIds) {
         setDatasetCrops(systemStatus.detectedCrops);
         try {
+          localStorage.removeItem('climayield_dataset_crops_cleared');
           localStorage.setItem('climayield_dataset_crops', JSON.stringify(systemStatus.detectedCrops));
         } catch {}
       }
@@ -1090,7 +1090,7 @@ function Dashboard({
   // When crop AI model is trained, restore crops from the uploaded dataset only (no built-in defaults)
   useEffect(() => {
     if (!hasCrops) return;
-    if (isCropModelTrained && !isDatasetCropsCleared()) {
+    if (isCropModelTrained) {
       if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
         setDatasetCrops(systemStatus.detectedCrops);
       } else if (datasetCrops.length === 0) {

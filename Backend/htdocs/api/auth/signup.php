@@ -110,48 +110,62 @@ try {
     try { $pdo->exec("ALTER TABLE `developers` ADD COLUMN `phone` varchar(30) NOT NULL DEFAULT ''"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE `developers` ADD COLUMN `organization` varchar(255) DEFAULT ''"); } catch (Exception $e) {}
 
-    // 1. Strict duplicate check: NEVER allow registering an email that already exists
-    $chkFarmer = $pdo->prepare("SELECT id FROM farmers WHERE LOWER(email) = ? LIMIT 1");
-    $chkFarmer->execute([$email]);
-    if ($chkFarmer->fetch()) {
-        sendError('This email address is already registered in the system. Please use a different email or log in.', 409);
-    }
-
-    $chkDev = $pdo->prepare("SELECT id FROM developers WHERE LOWER(email) = ? LIMIT 1");
-    $chkDev->execute([$email]);
-    if ($chkDev->fetch()) {
-        sendError('This email address is already registered in the system. Please use a different email or log in.', 409);
+    // 1. Strict duplicate check: ONLY check table for the role being registered
+    if ($targetRole === 'farmer') {
+        $chkFarmer = $pdo->prepare("SELECT id FROM farmers WHERE LOWER(email) = ? LIMIT 1");
+        $chkFarmer->execute([$email]);
+        if ($chkFarmer->fetch()) {
+            sendError('This email address is already registered as a farmer account. Please log in or use a different email.', 409);
+        }
+    } else {
+        $chkDev = $pdo->prepare("SELECT id FROM developers WHERE LOWER(email) = ? LIMIT 1");
+        $chkDev->execute([$email]);
+        if ($chkDev->fetch()) {
+            sendError('This email address is already registered as a developer account. Please log in or use a different email.', 409);
+        }
     }
 
     // 2. Hash Password using bcrypt
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
+
+    // Check if phone column actually exists in table
+    $hasFarmerPhone = false;
+    if ($targetRole === 'farmer') {
+        try {
+            $colQ = $pdo->query("SHOW COLUMNS FROM `farmers` LIKE 'phone'");
+            $hasFarmerPhone = ($colQ && $colQ->rowCount() > 0);
+        } catch (Exception $e) {
+            $hasFarmerPhone = false;
+        }
+    }
 
     // 3. Insert new user record
     $insertedId = 0;
     try {
         if ($targetRole === 'farmer') {
             $location = $farmLocation ?: ($farmName ?: "{$name}'s Farm");
-            try {
-                $stmt = $pdo->prepare("INSERT INTO farmers (name, age, phone, farm_location, email, password) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$name, $age, $phone, $location, $email, $hashedPassword]);
-            } catch (PDOException $e) {
-                if (strpos($e->getMessage(), 'phone') !== false) {
+            if ($hasFarmerPhone) {
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO farmers (name, age, phone, farm_location, email, password) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$name, $age, $phone, $location, $email, $hashedPassword]);
+                } catch (PDOException $e) {
                     $stmt = $pdo->prepare("INSERT INTO farmers (name, age, farm_location, email, password) VALUES (?, ?, ?, ?, ?)");
                     $stmt->execute([$name, $age, $location, $email, $hashedPassword]);
-                } else {
-                    throw $e;
                 }
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO farmers (name, age, farm_location, email, password) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $age, $location, $email, $hashedPassword]);
             }
             $insertedId = (int)$pdo->lastInsertId();
         } else {
             $org = $organization ?: "{$name}'s Lab";
             try {
-                $stmt = $pdo->prepare("INSERT INTO developers (name, age, phone, organization, email, password) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$name, $age, $phone, $org, $email, $hashedPassword]);
+                $stmt = $pdo->prepare("INSERT INTO developers (name, age, organization, email, password) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $age, $org, $email, $hashedPassword]);
             } catch (PDOException $e) {
-                if (strpos($e->getMessage(), 'phone') !== false) {
-                    $stmt = $pdo->prepare("INSERT INTO developers (name, age, organization, email, password) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->execute([$name, $age, $org, $email, $hashedPassword]);
+                if (stripos($e->getMessage(), 'phone') !== false) {
+                    $stmt = $pdo->prepare("INSERT INTO developers (name, age, phone, organization, email, password) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$name, $age, '', $org, $email, $hashedPassword]);
                 } else {
                     throw $e;
                 }
@@ -159,7 +173,7 @@ try {
             $insertedId = (int)$pdo->lastInsertId();
         }
     } catch (PDOException $e) {
-        if ($e->getCode() == 23000 || strpos($e->getMessage(), 'Duplicate') !== false) {
+        if ($e->getCode() == 23000 || stripos($e->getMessage(), 'Duplicate') !== false) {
             sendError('This email address is already registered in the system. Please use a different email or log in.', 409);
         }
         sendError('Failed to create account: ' . $e->getMessage(), 500);

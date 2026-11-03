@@ -321,9 +321,23 @@ function Login({ onLoginSuccess }) {
             <div className="auth-switch-prompt">
               Don't have an account yet?{' '}
               <a 
-                href={isDev ? '/register/dev' : '/register'}
+                href={isDev ? '/dev/register.html' : '/farmer/register.html'}
                 className="auth-switch-btn"
-                style={{ textDecoration: 'none', display: 'inline-block' }}
+                style={{ textDecoration: 'none', display: 'inline-block', cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSignupForm({
+                    role: isDev ? 'dev' : 'farmer',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    name: '',
+                    age: '',
+                    phone: '',
+                    organization: ''
+                  });
+                  setShowSignupModal(true);
+                }}
               >
                 Create {isDev ? 'Dev Profile' : 'Farm Profile'}
               </a>

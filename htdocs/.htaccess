@@ -22,7 +22,7 @@ DirectoryIndex index.php index.html
 
     # Clean role-less registration routes: /register defaults to farmer, /register/dev treats registrant as dev
     RewriteRule ^register/?$ /register.html [L,QSA]
-    RewriteRule ^register/dev/?$ /register.html [L,QSA]
+    RewriteRule ^register/dev/?$ /dev/register.html [L,QSA]
     RewriteRule ^farmer/register/?$ /farmer/register.html [L,QSA]
     RewriteRule ^dev/register/?$ /dev/register.html [L,QSA]
 
