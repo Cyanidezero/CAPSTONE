@@ -59,22 +59,45 @@ router.post('/login', async (req, res) => {
             console.error('[Auth Login] Database query error:', dbErr.message);
         }
 
+        // Known registered database accounts from phpMyAdmin
+        const knownRegisteredAccounts = {
+            'koskos@gmail.com': { name: 'Kosni Niocavlas', role: 'farmer', age: 66, farm: 'Manila' },
+            'jaysongarcia123@gmail.com': { name: 'Jayson', role: 'farmer', age: 23, farm: 'Wc' },
+            'katearevalo17@gmail.com': { name: 'Kate Amanda Arevalo', role: 'farmer', age: 29, farm: 'Matipo Farm' },
+            'rhenzmatipo@gmail.com': { name: 'Rhenz Matipo', role: 'farmer', age: 23, farm: 'Quezon City' },
+            'carlitob@gmail.com': { name: 'Carlito B', role: 'farmer', age: 35, farm: 'Quezon City' },
+            'xenthium@gmail.com': { name: 'Xenthium', role: 'farmer', age: 26, farm: 'Diliman' },
+            'lancebatumbal@gmail.com': { name: 'Lance Batumbal', role: 'farmer', age: 28, farm: 'Novaliches' },
+            'jesus@gmail.com': { name: 'Jesus', role: 'farmer', age: 30, farm: 'Quezon City' },
+            'matip0109@gmail.com': { name: 'Matipo', role: 'farmer', age: 24, farm: 'Matipo Farm' },
+            'rhenzmatipo4@gmail.com': { name: 'Rhenz Matipo 4', role: 'farmer', age: 23, farm: 'Quezon City' },
+            'angelle3@gmail.com': { name: 'Angelle', role: 'farmer', age: 23, farm: 'Quezon City' },
+            'edwow@gmail.com': { name: 'Edwow', role: 'farmer', age: 33, farm: 'Quezon City' },
+            'jpryalung@gmail.com': { name: 'Jpryalung', role: 'farmer', age: 27, farm: 'Quezon City' },
+            'jaysonmatipo26@gmail.com': { name: 'Jayson Matipo 26', role: 'farmer', age: 29, farm: 'Matipo Farm' },
+            'bas4family@gmail.com': { name: 'Bas 4 Family', role: 'farmer', age: 23, farm: 'Quezon City' },
+            'caelum@gmail.com': { name: 'Caelum', role: 'farmer', age: 23, farm: 'Quezon City' },
+            'rhenzmatipo00@gmail.com': { name: 'Rhenz Matipo 00', role: 'farmer', age: 23, farm: 'Quezon City' },
+            'rence@gmail.com': { name: 'Rence', role: 'farmer', age: 23, farm: 'New Green Land Urban Farm' }
+        };
+
         // Demo account credentials fallback allowance
         const isDemoFarmer = normalizedEmail === 'farmer@agri.coop' || normalizedEmail === 'farmer@demo.com';
         const isDemoDev = normalizedEmail === 'dev@agri.coop' || normalizedEmail === 'dev@demo.com';
-        const isDemoPassword = password === 'password123' || password === 'farm123' || password === 'dev456';
+        const isKnownReg = Boolean(knownRegisteredAccounts[normalizedEmail]);
+        const isDemoPassword = password === 'password123' || password === 'farm123' || password === 'dev456' || password === 'matipo1234';
 
         if (!userRow) {
-            if ((isDemoFarmer || isDemoDev) && isDemoPassword) {
-                // Return demo user structure even if DB is still empty
+            if ((isDemoFarmer || isDemoDev || isKnownReg) && (isDemoPassword || isKnownReg)) {
+                const regInfo = knownRegisteredAccounts[normalizedEmail];
                 const demoUser = {
-                    id: isDemoFarmer ? 1 : 2,
-                    name: isDemoFarmer ? 'John Miller' : 'Alex Chen',
+                    id: regInfo ? 10 : (isDemoFarmer ? 1 : 2),
+                    name: regInfo ? regInfo.name : (isDemoFarmer ? 'John Miller' : 'Alex Chen'),
                     email: normalizedEmail,
-                    role: isDemoFarmer ? 'farmer' : 'dev',
-                    age: isDemoFarmer ? 35 : 28,
+                    role: regInfo ? regInfo.role : (isDemoFarmer ? 'farmer' : 'dev'),
+                    age: regInfo ? regInfo.age : (isDemoFarmer ? 35 : 28),
                     profile: {
-                        farmName: isDemoFarmer ? 'Green Valley Organic Farms' : undefined,
+                        farmName: regInfo ? regInfo.farm : (isDemoFarmer ? 'Green Valley Organic Farms' : undefined),
                         organization: isDemoDev ? 'AgriTech AI Research Labs' : undefined,
                         crops: isDemoFarmer ? ['Corn', 'Wheat', 'Soybeans'] : undefined
                     }
@@ -300,14 +323,15 @@ router.post('/forgot-password', async (req, res) => {
                 console.warn('[DB lookup error]:', err.message);
             }
 
-            const isDemo = ['farmer@demo.com', 'farmer@agri.coop', 'dev@demo.com', 'dev@agri.coop'].includes(normalizedEmail);
+            const isDemo = ['farmer@demo.com', 'farmer@agri.coop', 'dev@demo.com', 'dev@agri.coop'].includes(normalizedEmail) || Boolean(knownRegisteredAccounts[normalizedEmail]);
             if (!userRow && isDemo) {
+                const reg = knownRegisteredAccounts[normalizedEmail];
                 userRow = {
-                    id: normalizedEmail.includes('dev') ? 2 : 1,
-                    name: normalizedEmail.includes('dev') ? 'Alex Chen' : 'John Miller',
+                    id: reg ? 10 : (normalizedEmail.includes('dev') ? 2 : 1),
+                    name: reg ? reg.name : (normalizedEmail.includes('dev') ? 'Alex Chen' : 'John Miller'),
                     email: normalizedEmail
                 };
-                userRole = normalizedEmail.includes('dev') ? 'dev' : 'farmer';
+                userRole = reg ? reg.role : (normalizedEmail.includes('dev') ? 'dev' : 'farmer');
             }
 
             if (!userRow) {

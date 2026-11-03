@@ -67,17 +67,38 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
-    // Seed Farmers if empty
-    $fCount = (int)$pdo->query("SELECT COUNT(*) FROM farmers")->fetchColumn();
-    if ($fCount === 0) {
-        $hash = password_hash('password123', PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare("INSERT INTO farmers (name, age, farm_location, email, password) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute(['John Miller', 42, 'Green Valley Organic Farm, Benguet', 'farmer@agri.coop', $hash]);
-        $stmt->execute(['Maria Santos', 38, 'Central Luzon High-Yield Plots, Nueva Ecija', 'farmer@demo.com', $hash]);
-        echo "<p><span class='badge badge-success'>Seeded</span> Added 2 demo Farmer accounts into <code>farmers</code> table.</p>";
-    } else {
-        echo "<p><span class='badge badge-info'>Active</span> <code>farmers</code> table has <strong>{$fCount}</strong> accounts.</p>";
+    // Seed Registered Farmers from database table
+    $registeredFarmersToSeed = [
+        ['Kosni Niocavlas', 66, 'Manila', 'koskos@gmail.com'],
+        ['Jayson', 23, 'Wc', 'jaysongarcia123@gmail.com'],
+        ['Kate Amanda Arevalo', 29, 'Matipo Farm', 'katearevalo17@gmail.com'],
+        ['Rhenz Matipo', 23, 'Quezon City', 'rhenzmatipo@gmail.com'],
+        ['Carlito B', 35, 'Quezon City', 'carlitob@gmail.com'],
+        ['Xenthium', 26, 'Diliman', 'xenthium@gmail.com'],
+        ['Lance Batumbal', 28, 'Novaliches', 'lancebatumbal@gmail.com'],
+        ['Jesus', 30, 'Quezon City', 'jesus@gmail.com'],
+        ['Matipo', 24, 'Matipo Farm', 'matip0109@gmail.com'],
+        ['Rhenz Matipo 4', 23, 'Quezon City', 'rhenzmatipo4@gmail.com'],
+        ['Angelle', 23, 'Quezon City', 'angelle3@gmail.com'],
+        ['Edwow', 33, 'Quezon City', 'edwow@gmail.com'],
+        ['Jpryalung', 27, 'Quezon City', 'jpryalung@gmail.com'],
+        ['Jayson Matipo 26', 29, 'Matipo Farm', 'jaysonmatipo26@gmail.com'],
+        ['Bas 4 Family', 23, 'Quezon City', 'bas4family@gmail.com'],
+        ['Caelum', 23, 'Quezon City', 'caelum@gmail.com'],
+        ['Rhenz Matipo 00', 23, 'Quezon City', 'rhenzmatipo00@gmail.com'],
+        ['Rence', 23, 'New Green Land Urban Farm', 'rence@gmail.com'],
+        ['John Miller', 42, 'Green Valley Organic Farm, Benguet', 'farmer@agri.coop'],
+        ['Maria Santos', 38, 'Central Luzon High-Yield Plots, Nueva Ecija', 'farmer@demo.com']
+    ];
+
+    $hash = password_hash('matipo1234', PASSWORD_BCRYPT);
+    $seedStmt = $pdo->prepare("INSERT IGNORE INTO farmers (name, age, farm_location, email, password) VALUES (?, ?, ?, ?, ?)");
+    foreach ($registeredFarmersToSeed as $rf) {
+        $seedStmt->execute([$rf[0], $rf[1], $rf[2], $rf[3], $hash]);
     }
+
+    $fCount = (int)$pdo->query("SELECT COUNT(*) FROM farmers")->fetchColumn();
+    echo "<p><span class='badge badge-success'>Seeded & Synchronized</span> <code>farmers</code> table has <strong>{$fCount}</strong> accounts registered.</p>";
 
     // Seed Developers if empty
     $dCount = (int)$pdo->query("SELECT COUNT(*) FROM developers")->fetchColumn();

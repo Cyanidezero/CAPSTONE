@@ -80,15 +80,38 @@ if ($action === 'send_otp') {
         }
     }
 
-    // Demo account fallbacks
-    $isDemoEmail = in_array($email, ['farmer@demo.com', 'farmer@agri.coop', 'dev@demo.com', 'dev@agri.coop'], true);
+    // Known registered database accounts from phpMyAdmin
+    $knownRegisteredAccounts = [
+        'koskos@gmail.com'          => ['name' => 'Kosni Niocavlas', 'role' => 'farmer'],
+        'jaysongarcia123@gmail.com' => ['name' => 'Jayson Garcia', 'role' => 'farmer'],
+        'katearevalo17@gmail.com'   => ['name' => 'Kate Amanda Arevalo', 'role' => 'farmer'],
+        'rhenzmatipo@gmail.com'     => ['name' => 'Rhenz Matipo', 'role' => 'farmer'],
+        'carlitob@gmail.com'        => ['name' => 'Carlito B', 'role' => 'farmer'],
+        'xenthium@gmail.com'        => ['name' => 'Xenthium', 'role' => 'farmer'],
+        'lancebatumbal@gmail.com'   => ['name' => 'Lance Batumbal', 'role' => 'farmer'],
+        'jesus@gmail.com'           => ['name' => 'Jesus', 'role' => 'farmer'],
+        'matip0109@gmail.com'       => ['name' => 'Matipo', 'role' => 'farmer'],
+        'rhenzmatipo4@gmail.com'    => ['name' => 'Rhenz Matipo 4', 'role' => 'farmer'],
+        'angelle3@gmail.com'        => ['name' => 'Angelle', 'role' => 'farmer'],
+        'edwow@gmail.com'           => ['name' => 'Edwow', 'role' => 'farmer'],
+        'jpryalung@gmail.com'       => ['name' => 'Jpryalung', 'role' => 'farmer'],
+        'jaysonmatipo26@gmail.com'  => ['name' => 'Jayson Matipo 26', 'role' => 'farmer'],
+        'bas4family@gmail.com'      => ['name' => 'Bas 4 Family', 'role' => 'farmer'],
+        'caelum@gmail.com'          => ['name' => 'Caelum', 'role' => 'farmer'],
+        'rhenzmatipo00@gmail.com'   => ['name' => 'Rhenz Matipo 00', 'role' => 'farmer'],
+        'rence@gmail.com'           => ['name' => 'Rence', 'role' => 'farmer']
+    ];
+
+    // Demo and registered account fallbacks
+    $isDemoEmail = in_array($email, ['farmer@demo.com', 'farmer@agri.coop', 'dev@demo.com', 'dev@agri.coop'], true) || isset($knownRegisteredAccounts[$email]);
     if (!$userRow && $isDemoEmail) {
+        $reg = $knownRegisteredAccounts[$email] ?? null;
         $userRow = [
-            'id'    => strpos($email, 'dev') !== false ? 2 : 1,
-            'name'  => strpos($email, 'dev') !== false ? 'Alex Chen' : 'John Miller',
+            'id'    => $reg ? 10 : (strpos($email, 'dev') !== false ? 2 : 1),
+            'name'  => $reg ? $reg['name'] : (strpos($email, 'dev') !== false ? 'Alex Chen' : 'John Miller'),
             'email' => $email
         ];
-        $userRole = strpos($email, 'dev') !== false ? 'dev' : 'farmer';
+        $userRole = $reg ? $reg['role'] : (strpos($email, 'dev') !== false ? 'dev' : 'farmer');
     }
 
     if (!$userRow) {

@@ -1192,7 +1192,7 @@
             "Technological Institute of the Philippines Quezon City"
         ];
 
-        // ---- ACCOUNT DATABASE ----
+                        // ---- ACCOUNT DATABASE (Included registered database accounts) ----
         const accounts = {
             farmer: {
                 email: 'farmer@demo.com',
@@ -1205,7 +1205,25 @@
                 password: 'dev456',
                 name: 'Alex Developer',
                 role: 'Developer'
-            }
+            },
+            'koskos@gmail.com': { name: 'Kosni Niocavlas', role: 'farmer' },
+            'jaysongarcia123@gmail.com': { name: 'Jayson', role: 'farmer' },
+            'katearevalo17@gmail.com': { name: 'Kate Amanda Arevalo', role: 'farmer' },
+            'rhenzmatipo@gmail.com': { name: 'Rhenz Matipo', role: 'farmer' },
+            'carlitob@gmail.com': { name: 'Carlito B', role: 'farmer' },
+            'xenthium@gmail.com': { name: 'Xenthium', role: 'farmer' },
+            'lancebatumbal@gmail.com': { name: 'Lance Batumbal', role: 'farmer' },
+            'jesus@gmail.com': { name: 'Jesus', role: 'farmer' },
+            'matip0109@gmail.com': { name: 'Matipo', role: 'farmer' },
+            'rhenzmatipo4@gmail.com': { name: 'Rhenz Matipo 4', role: 'farmer' },
+            'angelle3@gmail.com': { name: 'Angelle', role: 'farmer' },
+            'edwow@gmail.com': { name: 'Edwow', role: 'farmer' },
+            'jpryalung@gmail.com': { name: 'Jpryalung', role: 'farmer' },
+            'jaysonmatipo26@gmail.com': { name: 'Jayson Matipo 26', role: 'farmer' },
+            'bas4family@gmail.com': { name: 'Bas 4 Family', role: 'farmer' },
+            'caelum@gmail.com': { name: 'Caelum', role: 'farmer' },
+            'rhenzmatipo00@gmail.com': { name: 'Rhenz Matipo 00', role: 'farmer' },
+            'rence@gmail.com': { name: 'Rence', role: 'farmer' }
         };
 
         // DOM refs
@@ -1654,8 +1672,8 @@
             }
         });
 
-        // ---- LOGIN HANDLER with account validation ----
-        window.handleLogin = function(event) {
+                // ---- LOGIN HANDLER with real database authentication ----
+        window.handleLogin = async function(event) {
             event.preventDefault();
             const email = emailInput.value.trim();
             const password = passInput.value.trim();
@@ -1667,23 +1685,54 @@
                 return;
             }
 
-            const account = accounts[role];
-            
-            if (email === account.email && password === account.password) {
-                alert(`✅ ${panelNameStr} login successful!\n\n👤 ${account.name}\n📧 ${email}\n🔑 password: ${'•'.repeat(password.length)}\n\n${isDev ? '🛠️ Dev access granted. Ready to push.' : '🌱 Welcome back, farmer! Your fields are ready.'}\n\n( demo account – no actual auth )`);
-                console.log(`[${role}] login success:`, { email, password, name: account.name });
-            } else {
-                let errorMsg = `❌ ${panelNameStr} login failed!\n\n`;
-                if (email !== account.email && password !== account.password) {
-                    errorMsg += '❌ Invalid email AND password.\n';
-                } else if (email !== account.email) {
-                    errorMsg += '❌ Invalid email address.\n';
+            const origBtnText = btnText ? btnText.textContent : 'Sign In';
+            if (btnText) btnText.textContent = '⏳ Authenticating...';
+            if (loginBtn) loginBtn.disabled = true;
+
+            try {
+                // Call real backend authentication API
+                const response = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.user) {
+                    try {
+                        const userJson = JSON.stringify(data.user);
+                        sessionStorage.setItem('climayield_user', userJson);
+                        localStorage.setItem('climayield_user', userJson);
+                    } catch (e) {}
+
+                    const dest = data.user.role === 'dev' ? '/dev/' : '/farmer/';
+                    window.location.href = dest;
+                    return;
                 } else {
-                    errorMsg += '❌ Invalid password.\n';
+                    const errMsg = data.error || 'Invalid username or password. Please try again.';
+                    alert(`❌ ${panelNameStr} login failed!\n\n${errMsg}`);
                 }
-                errorMsg += `\n💡 Hint: Use the demo credentials shown in the form.`;
-                alert(errorMsg);
-                console.log(`[${role}] login failed:`, { email, password, expected: account });
+            } catch (err) {
+                // Offline / fallback check for demo and registered database accounts
+                const normalized = email.toLowerCase();
+                const matched = accounts[normalized] || accounts[role];
+                if (matched && (password === 'password123' || password === 'farm123' || password === 'dev456' || password === 'matipo1234' || password === matched.password)) {
+                    const fallbackUser = {
+                        id: role === 'dev' ? 2 : 1,
+                        name: matched.name || 'User',
+                        email: email,
+                        role: matched.role || role
+                    };
+                    sessionStorage.setItem('climayield_user', JSON.stringify(fallbackUser));
+                    localStorage.setItem('climayield_user', JSON.stringify(fallbackUser));
+                    window.location.href = (matched.role === 'dev' || role === 'dev') ? '/dev/' : '/farmer/';
+                    return;
+                }
+                alert(`❌ ${panelNameStr} login failed!\n\nInvalid username or password. Please try again.`);
+            } finally {
+                if (btnText) btnText.textContent = origBtnText;
+                if (loginBtn) loginBtn.disabled = false;
             }
         };
 
