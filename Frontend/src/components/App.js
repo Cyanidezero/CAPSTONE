@@ -308,8 +308,8 @@ function App() {
 
   useEffect(() => {
     fetchStatus();
-    // Poll every 5 seconds on both FarmerSide and DevSide for instant cross-portal synchronization
-    const pollInterval = 5000;
+    // Poll every 3 seconds on both FarmerSide and DevSide for instant cross-portal synchronization
+    const pollInterval = 3000;
     const interval = setInterval(fetchStatus, pollInterval);
 
     const handleLstmUpdate = () => fetchStatus();
@@ -385,6 +385,29 @@ function App() {
 
   // Tab Router
   const renderActiveTab = () => {
+    const hasWeatherDataset = Boolean(
+      systemStatus?.weatherDatasetLoaded || 
+      (systemStatus?.weatherCount && systemStatus.weatherCount > 0)
+    );
+
+    const hasCropDataset = Boolean(
+      systemStatus?.cropDatasetLoaded || 
+      (systemStatus?.cropCount && systemStatus.cropCount > 0) ||
+      (Array.isArray(systemStatus?.detectedCrops) && systemStatus.detectedCrops.length > 0)
+    );
+
+    const isLstmTrained = Boolean(
+      systemStatus?.trainingStatus?.lstm === 'Trained' || 
+      systemStatus?.trainingStatus?.hybrid === 'Trained' ||
+      systemStatus?.latestTraining ||
+      localStorage.getItem('climayield_lstm_trained') === 'true'
+    );
+
+    const isCropModelTrained = Boolean(
+      systemStatus?.trainingStatus?.cropModelTrained === true ||
+      localStorage.getItem('climayield_crop_model_trained') === 'true'
+    );
+
     // If running in dedicated farmer mode, strictly block developer views
     if (isFarmerOnly && (activeTab === 'data' || activeTab === 'training')) {
       return (
@@ -392,6 +415,10 @@ function App() {
           userRole="farmer"
           user={user}
           systemStatus={systemStatus} 
+          hasWeatherDataset={hasWeatherDataset}
+          hasCropDataset={hasCropDataset}
+          isLstmTrained={isLstmTrained}
+          isCropModelTrained={isCropModelTrained}
           setActiveTab={setActiveTab} 
           onRefresh={fetchStatus} 
           lang={lang}
@@ -405,6 +432,10 @@ function App() {
           userRole={userRole}
           user={user}
           systemStatus={systemStatus} 
+          hasWeatherDataset={hasWeatherDataset}
+          hasCropDataset={hasCropDataset}
+          isLstmTrained={isLstmTrained}
+          isCropModelTrained={isCropModelTrained}
           setActiveTab={setActiveTab} 
           onRefresh={fetchStatus} 
           lang={lang}
@@ -419,35 +450,16 @@ function App() {
           userRole={userRole}
           user={user}
           systemStatus={systemStatus} 
+          hasWeatherDataset={hasWeatherDataset}
+          hasCropDataset={hasCropDataset}
+          isLstmTrained={isLstmTrained}
+          isCropModelTrained={isCropModelTrained}
           setActiveTab={setActiveTab} 
           onRefresh={fetchStatus} 
           lang={lang}
         />
       );
     }
-
-    const hasWeatherDataset = Boolean(
-      systemStatus?.weatherDatasetLoaded || 
-      (systemStatus?.weatherCount && systemStatus.weatherCount > 0)
-    );
-
-    const hasCropDataset = Boolean(
-      (systemStatus?.cropDatasetLoaded || (systemStatus?.cropCount && systemStatus.cropCount > 0)) &&
-      (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0)
-    );
-
-    const isLstmTrained = 
-      hasWeatherDataset && (
-        systemStatus?.trainingStatus?.lstm === 'Trained' || 
-        systemStatus?.trainingStatus?.hybrid === 'Trained' ||
-        (systemStatus?.trainingStatus?.lstm !== 'Not Trained' && localStorage.getItem('climayield_lstm_trained') === 'true')
-      );
-
-    const isCropModelTrained =
-      hasCropDataset && (
-        systemStatus?.trainingStatus?.cropModelTrained === true ||
-        localStorage.getItem('climayield_crop_model_trained') === 'true'
-      );
 
     switch (activeTab) {
       case 'dashboard':

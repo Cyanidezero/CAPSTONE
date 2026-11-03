@@ -5,8 +5,7 @@ import { DevDashboardLogo, DevSarimaIcon, DevLstmIcon, DevHybridIcon, DevHeroBad
 import { AnimatedVegetableImage, VegetableImageModal } from './AnimatedVegetable';
 import { 
   getSavedDatasetCrops, 
-  clearDatasetCrops,
-  isDatasetCropsCleared
+  clearDatasetCrops
 } from '../utils/cropDatasetParser';
 import { getVegetableFunFact } from '../utils/vegetableFunFacts';
 import { API_URL } from '../utils/apiConfig';
@@ -764,23 +763,29 @@ function Dashboard({
       .catch(() => {});
   }, []);
 
+  // Crops loaded from inputted dataset (empty initially; automatically populated from Dev Side Data Management)
+  const [datasetCrops, setDatasetCrops] = useState(() => {
+    return getSavedDatasetCrops();
+  });
+
   const hasWeather = hasWeatherProp !== undefined 
     ? hasWeatherProp 
     : Boolean(systemStatus?.weatherDatasetLoaded || (systemStatus?.weatherCount && systemStatus.weatherCount > 0));
 
-  const hasCrops = hasCropProp !== undefined 
-    ? hasCropProp 
-    : Boolean(
-        (systemStatus?.cropDatasetLoaded || (systemStatus?.cropCount && systemStatus.cropCount > 0)) && 
-        (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0)
-      );
+  const hasCrops = Boolean(
+    hasCropProp ||
+    systemStatus?.cropDatasetLoaded || 
+    (systemStatus?.cropCount && systemStatus.cropCount > 0) ||
+    (Array.isArray(systemStatus?.detectedCrops) && systemStatus.detectedCrops.length > 0) ||
+    (datasetCrops && datasetCrops.length > 0)
+  );
 
   const hasAnyDataset = hasWeather || hasCrops;
 
   // LSTM AI Model Training Status Detection
   const [lstmReady, setLstmReady] = useState(() => {
     if (isLstmTrainedProp !== undefined) return Boolean(isLstmTrainedProp);
-    if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') return true;
+    if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained' || systemStatus?.latestTraining) return true;
     if (systemStatus?.trainingStatus?.lstm === 'Not Trained' && systemStatus?.trainingStatus?.hybrid === 'Not Trained') return false;
     try {
       return localStorage.getItem('climayield_lstm_trained') === 'true';
@@ -792,8 +797,13 @@ function Dashboard({
   useEffect(() => {
     if (isLstmTrainedProp !== undefined) {
       setLstmReady(Boolean(isLstmTrainedProp));
-    } else if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') {
+    } else if (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained' || systemStatus?.latestTraining) {
       setLstmReady(true);
+      toast.success(isFil
+        ? '🧠 Bagong AI Model na sinanay sa Dev Side ang na-sync sa bukid!'
+        : '🧠 Newly trained AI Model from Dev Side synced to Farm Dashboard!',
+        { toastId: 'dev-sync-ai', autoClose: 3500 }
+      );
     } else if (
       systemStatus &&
       systemStatus?.trainingStatus?.lstm === 'Not Trained' &&
@@ -801,20 +811,22 @@ function Dashboard({
     ) {
       setLstmReady(false);
     }
-  }, [isLstmTrainedProp, systemStatus]);
+  }, [isLstmTrainedProp, systemStatus, isFil]);
 
   // Helper to compute projected yield directly from trained LSTM model records
   const computeProjectedYieldFromStorage = () => {
     try {
       // Must only produce yield if LSTM or Hybrid model is actually trained!
       const isTrained = 
-        (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained') ||
+        (systemStatus?.trainingStatus?.lstm === 'Trained' || systemStatus?.trainingStatus?.hybrid === 'Trained' || Boolean(systemStatus?.latestTraining)) ||
         (systemStatus?.trainingStatus?.lstm !== 'Not Trained' && localStorage.getItem('climayield_lstm_trained') === 'true');
       
       if (!isTrained) return null;
 
-      const allForecasts = JSON.parse(localStorage.getItem('climayield_ai_forecasts') || '{}');
-      const latestTraining = JSON.parse(localStorage.getItem('climayield_latest_training') || 'null');
+      const allForecasts = (systemStatus?.allForecasts && Object.keys(systemStatus.allForecasts).length > 0)
+        ? systemStatus.allForecasts
+        : JSON.parse(localStorage.getItem('climayield_ai_forecasts') || '{}');
+      const latestTraining = systemStatus?.latestTraining || JSON.parse(localStorage.getItem('climayield_latest_training') || 'null');
       const yieldRecord = allForecasts.Crop_Yield || allForecasts.El_Nino_Yield || allForecasts.La_Nina_Yield || 
         (latestTraining && ((latestTraining.target || '').includes('Yield') || (latestTraining.target || '').includes('Crop') || (latestTraining.modelType || '').toUpperCase().includes('LSTM') || (latestTraining.modelType || '').toUpperCase().includes('HYBRID')) ? latestTraining : null) ||
         (allForecasts._latest && (allForecasts._latest.target?.includes('Yield') || allForecasts._latest.target?.includes('Crop') || allForecasts._latest.unit === 'tons/ha') ? allForecasts._latest : null);
@@ -911,6 +923,11 @@ function Dashboard({
         return;
       }
       setLstmReady(true);
+      toast.success(isFil
+        ? '🧠 Bagong AI Model na sinanay sa Dev Side ang na-sync sa bukid!'
+        : '🧠 Newly trained AI Model from Dev Side synced to Farm Dashboard!',
+        { toastId: 'dev-sync-ai', autoClose: 3500 }
+      );
       const avg = payload?.averageProjected || payload?.statistics?.mean || payload?.statisticalDecomposition?.mean;
       if (typeof avg === 'number' && !isNaN(avg)) {
         let diffPct = null;
@@ -989,6 +1006,7 @@ function Dashboard({
     return () => {
       window.removeEventListener('lstmTrainingUpdated', syncYield);
       window.removeEventListener('aiTrainingCompleted', syncYield);
+      window.removeEventListener('storage', handleStorageChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [systemStatus]);
@@ -1031,11 +1049,6 @@ function Dashboard({
     };
   }, []);
 
-  // Crops loaded from inputted dataset (empty initially; automatically populated from Dev Side Data Management)
-  const [datasetCrops, setDatasetCrops] = useState(() => {
-    return getSavedDatasetCrops();
-  });
-
   // Custom added vegetables from farmer
   const [customCrops, setCustomCrops] = useState(() => {
     try {
@@ -1049,12 +1062,21 @@ function Dashboard({
   // Sync automatically whenever the Developer Side uploads or updates a crop dataset
   useEffect(() => {
     const handleCropDatasetUpdate = (e) => {
-      setDatasetCrops(e.detail || []);
+      const incoming = e.detail || [];
+      setDatasetCrops(incoming);
+      if (incoming.length > 0) {
+        toast.info(isFil 
+          ? `🌾 Na-update ang datos mula sa Dev Side: ${incoming.length} pananim ang na-sync!` 
+          : `🌾 Updated from Developer Side: ${incoming.length} crops synced to farm dashboard!`,
+          { toastId: 'dev-sync-crops', autoClose: 3000 }
+        );
+      }
     };
     const handleStorageUpdate = (e) => {
       if (e.key === 'climayield_dataset_crops') {
         try {
-          setDatasetCrops(e.newValue ? JSON.parse(e.newValue) : []);
+          const parsed = e.newValue ? JSON.parse(e.newValue) : [];
+          setDatasetCrops(parsed);
         } catch {}
       }
     };
@@ -1064,17 +1086,12 @@ function Dashboard({
       window.removeEventListener('cropDatasetUpdated', handleCropDatasetUpdate);
       window.removeEventListener('storage', handleStorageUpdate);
     };
-  }, []);
+  }, [isFil]);
 
   // Sync if backend reports detected crops, or automatically wipe if dataset was removed
   useEffect(() => {
-    if (!hasCrops) {
-      if (datasetCrops.length > 0) {
-        setDatasetCrops([]);
-      }
-      return;
-    }
-    if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
+    // If backend reports detected crops from Developer side, apply them immediately
+    if (Array.isArray(systemStatus?.detectedCrops) && systemStatus.detectedCrops.length > 0) {
       const currentIds = datasetCrops.map(c => c.id || c.name).join(',');
       const incomingIds = systemStatus.detectedCrops.map(c => c.id || c.name).join(',');
       if (datasetCrops.length === 0 || currentIds !== incomingIds) {
@@ -1084,23 +1101,34 @@ function Dashboard({
           localStorage.setItem('climayield_dataset_crops', JSON.stringify(systemStatus.detectedCrops));
         } catch {}
       }
+      return;
     }
-  }, [hasCrops, systemStatus, datasetCrops.length]);
 
-  // When crop AI model is trained, restore crops from the uploaded dataset only (no built-in defaults)
-  useEffect(() => {
-    if (!hasCrops) return;
-    if (isCropModelTrained) {
-      if (systemStatus?.detectedCrops && systemStatus.detectedCrops.length > 0) {
-        setDatasetCrops(systemStatus.detectedCrops);
-      } else if (datasetCrops.length === 0) {
-        const saved = getSavedDatasetCrops();
-        if (saved && saved.length > 0) {
-          setDatasetCrops(saved);
-        }
+    // Only clear if backend is confirmed loaded and both count and crops are 0
+    if (
+      systemStatus?.cropDatasetLoaded === false && 
+      (!systemStatus?.cropCount || systemStatus.cropCount === 0) && 
+      (!systemStatus?.detectedCrops || systemStatus.detectedCrops.length === 0)
+    ) {
+      if (datasetCrops.length > 0) {
+        setDatasetCrops([]);
       }
     }
-  }, [hasCrops, isCropModelTrained, datasetCrops.length, systemStatus]);
+  }, [systemStatus, datasetCrops.length]);
+
+  // When crop AI model is trained or updated, restore crops from the uploaded dataset
+  useEffect(() => {
+    if (Array.isArray(systemStatus?.detectedCrops) && systemStatus.detectedCrops.length > 0) {
+      if (datasetCrops.length === 0) {
+        setDatasetCrops(systemStatus.detectedCrops);
+      }
+    } else if (datasetCrops.length === 0 && isCropModelTrained) {
+      const saved = getSavedDatasetCrops();
+      if (saved && saved.length > 0) {
+        setDatasetCrops(saved);
+      }
+    }
+  }, [isCropModelTrained, datasetCrops.length, systemStatus]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingCropId, setEditingCropId] = useState(null);
