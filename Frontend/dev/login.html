@@ -12,7 +12,7 @@
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=3">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
-    <title>ClimaYield-X · FarmerSide / DevSide</title>
+    <title>ClimaYield-X · Developer Suite Login</title>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -225,6 +225,33 @@
             background: none;
             padding: 0;
             color: inherit;
+        }
+
+        
+        /* ---- FIXED DEDICATED PORTAL BADGE ---- */
+        .portal-badge-fixed {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 0.2rem 0 1.2rem 0;
+            padding: 0.65rem 1.1rem;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        .portal-badge-fixed.farmer-badge {
+            background: linear-gradient(135deg, rgba(235, 248, 235, 0.95), rgba(215, 240, 215, 0.95));
+            color: #1a4d1a;
+            border: 1.5px solid #68a868;
+        }
+        .portal-badge-fixed.dev-badge {
+            background: linear-gradient(135deg, rgba(225, 242, 255, 0.95), rgba(200, 230, 252, 0.95));
+            color: #0f3d5c;
+            border: 1.5px solid #4a94c7;
         }
 
         /* ---- SWITCH ---- */
@@ -965,7 +992,7 @@
         }
     </style>
 </head>
-<body class="theme-farmer" id="bodyTheme">
+<body class="theme-dev">
 <div class="login-card" id="loginCard">
     <!-- HEADER with full title at the top -->
     <div class="login-header">
@@ -985,39 +1012,36 @@
         </div>
     </div>
 
-    <!-- SWITCH -->
-    <div class="switch-wrapper">
-        <span class="switch-label active-farm" id="farmLabel" style="cursor: pointer;" onclick="updateMode(false)">🌾 FarmerSide</span>
-        <div class="toggle" id="toggleSwitch" role="button" tabindex="0" aria-label="Toggle between Farmer and Developer mode">
-            <div class="toggle-knob" id="toggleKnob">
-                <span id="knobIcon" class="knob-icon-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 10C12 6 9 4 5 4c0 4 2 7 6 7z"></path><path d="M12 10c0-4 3-6 7-6 0 4-2 7-6 7z"></path></svg></span>
-            </div>
-        </div>
-        <span class="switch-label" id="devLabel" style="cursor: pointer;" onclick="updateMode(true)">💻 DevSide</span>
+    <!-- DEDICATED DEVELOPER SUITE BADGE -->
+    <div class="portal-badge-fixed dev-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="3" y="4" width="18" height="12" rx="1"></rect><path d="M9 9l-2 2 2 2"></path><path d="M15 9l2 2-2 2"></path><path d="M2 20h20"></path></svg>
+        <span>💻 Developer &amp; Research Suite</span>
     </div>
+
+    
 
     <!-- SINGLE PANEL -->
     <div class="panel" id="panel">
         <div class="panel-title" id="panelTitle">
             <span id="panelIcon" class="icon-slot farm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="3"></circle><circle cx="18" cy="17" r="2.4"></circle><path d="M3 8h6v5H3z"></path><path d="M9 11h4l3 3h2.5"></path><path d="M13 8V6h3l2 3"></path><path d="M9 8V6"></path></svg></span>
-            <span id="panelName">FarmerSide</span>
-            <span class="account-badge" id="accountBadge">demo</span>
+            <span id="panelName">DevSide</span>
+            <span class="account-badge" id="accountBadge">dev account</span>
         </div>
         <div class="panel-sub" id="panelSub">
-            <svg id="panelSubIcon" class="icon-inline panel-sub-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg> <span id="subText">access your crops, weather & tasks</span>
+            <svg id="panelSubIcon" class="icon-inline panel-sub-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg> <span id="subText">build, deploy & monitor agri-solutions</span>
         </div>
 
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="input-group">
-                <label for="loginEmail"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> <span id="emailLabel">Email</span></label>
+                <label for="loginEmail"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> <span id="emailLabel">Dev Email</span></label>
                 <div class="input-wrapper">
                     <span id="inputIcon" class="field-icon-slot"><svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
-                    <input type="email" id="loginEmail" placeholder="farmer@agri.coop" value="" required>
+                    <input type="email" id="loginEmail" placeholder="dev@agritech.io" value="" required>
                 </div>
             </div>
 
             <div class="input-group">
-                <label for="loginPass"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span id="passLabel">Password</span></label>
+                <label for="loginPass"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span id="passLabel">Access Key</span></label>
                 <div class="input-wrapper">
                     <span id="passIcon" class="field-icon-slot"><svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-9.6 9.6"></path><path d="M15.5 7.5l3 3L22 7l-3-3"></path><circle cx="7.5" cy="15.5" r="5.5"></circle></svg></span>
                     <input type="password" id="loginPass" placeholder="••••••••" value="" required>
@@ -1025,22 +1049,20 @@
             </div>
 
             <div class="forgot-row">
-                <a href="#" id="forgotLink"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 10C12 6 9 4 5 4c0 4 2 7 6 7z"></path><path d="M12 10c0-4 3-6 7-6 0 4-2 7-6 7z"></path></svg> <span id="forgotText">forgot field pass?</span></a>
+                <a href="#" id="forgotLink"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 10C12 6 9 4 5 4c0 4 2 7 6 7z"></path><path d="M12 10c0-4 3-6 7-6 0 4-2 7-6 7z"></path></svg> <span id="forgotText">reset dev token</span></a>
             </div>
 
-            <button type="submit" class="btn-login" id="loginBtn">
-                <span id="btnIcon" class="icon-slot-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg></span> <span id="btnText">Log in · Farmer</span>
+            <button type="submit" class="btn-login btn-dev" id="loginBtn">
+                <span id="btnIcon" class="icon-slot-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg></span> <span id="btnText">Log in · Developer</span>
             </button>
 
             <div class="signup-hint">
-                <span id="signupIcon" class="icon-slot-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg></span> <span id="signupText">New? <a id="signupLink">create farm profile</a></span>
+                <span id="signupIcon" class="icon-slot-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg></span> <span id="signupText">New dev? <a id="signupLink" href="register.html">create dev profile</a></span>
             </div>
         </form>
     </div>
 
-    <div class="demo-note">
-        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> toggle · whole UI shifts green / blue
-    </div>
+    
 </div>
 
 <!-- SIGNUP MODAL -->
@@ -1509,15 +1531,15 @@
 
             // 2. toggle knob
             if (devMode) {
-                knobIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>';
+                if (knobIcon) knobIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>';
                 knobIcon.style.color = '#1f4d66';
-                farmLabel.classList.remove('active-farm');
-                devLabel.classList.add('active-dev');
+                if (farmLabel) farmLabel.classList.remove('active-farm');
+                if (devLabel) devLabel.classList.add('active-dev');
             } else {
-                knobIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 10C12 6 9 4 5 4c0 4 2 7 6 7z"></path><path d="M12 10c0-4 3-6 7-6 0 4-2 7-6 7z"></path></svg>';
+                if (knobIcon) knobIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 10C12 6 9 4 5 4c0 4 2 7 6 7z"></path><path d="M12 10c0-4 3-6 7-6 0 4-2 7-6 7z"></path></svg>';
                 knobIcon.style.color = '#2b5e2b';
-                devLabel.classList.remove('active-dev');
-                farmLabel.classList.add('active-farm');
+                if (devLabel) devLabel.classList.remove('active-dev');
+                if (farmLabel) farmLabel.classList.add('active-farm');
             }
 
             // 3. panel content + account badge
@@ -1531,7 +1553,7 @@
                 passLabel.textContent = 'Access key';
                 forgotText.textContent = 'reset dev token';
                 btnText.textContent = 'Log in · Developer';
-                signupText.innerHTML = 'New dev? <a id="signupLink">create dev profile</a>';
+                signupText.innerHTML = 'New dev? <a id="signupLink" href="register.html">create dev profile</a>';
                 loginBtn.className = 'btn-login btn-dev';
                 btnIcon.innerHTML = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"></rect><path d="M9 9l-2 2 2 2"></path><path d="M15 9l2 2-2 2"></path><path d="M2 20h20"></path></svg>';
                 inputIcon.innerHTML = loginFieldIcons.devEmail;
@@ -1558,7 +1580,7 @@
                 passLabel.textContent = 'Password';
                 forgotText.textContent = 'forgot field pass?';
                 btnText.textContent = 'Log in · Farmer';
-                signupText.innerHTML = 'New? <a id="signupLink">create farm profile</a>';
+                signupText.innerHTML = 'New? <a id="signupLink" href="register.html">create dev profile</a>';
                 loginBtn.className = 'btn-login';
                 btnIcon.innerHTML = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>';
                 inputIcon.innerHTML = loginFieldIcons.farmerEmail;
@@ -1661,12 +1683,12 @@
         }
 
         // ---- toggle click ----
-        toggle.addEventListener('click', function(e) {
+        if (toggle) toggle.addEventListener('click', function(e) {
             e.stopPropagation();
             updateMode(!isDev);
         });
 
-        toggle.addEventListener('keydown', function(e) {
+        if (toggle) toggle.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 updateMode(!isDev);
@@ -1782,7 +1804,7 @@
         }
 
         // ---- init: farmer mode ----
-        updateMode(false);
+        updateMode(true);
     })();
 </script>
 </body>
