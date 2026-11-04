@@ -1,18 +1,19 @@
 <?php
 /**
- * ClimaYield-X - Telecom SMS Gateway Dispatcher
- * Delivers real SMS text messages directly to mobile phones across Philippine telecom carriers
- * (Globe, Smart, DITO, Sun, TNT, TM).
+ * ClimaYield-X - Telecom & Push Alert Gateway Dispatcher
+ * Delivers real alerts and SMS messages directly to mobile phones across Philippine telecom carriers
+ * and instant push alerts via Pocket Alert.
  * 
  * Supported Providers:
- * 1. Semaphore (https://semaphore.co) - Standard Philippine developer SMS gateway
- * 2. iTexMo (https://itexmo.com) - Philippine SMS API
- * 3. PhilSMS (https://philsms.com)
- * 4. Twilio (https://twilio.com)
+ * 1. Pocket Alert (https://pocketalert.app) - Real-time push alert dispatcher to mobile devices
+ * 2. Semaphore (https://semaphore.co) - Standard Philippine developer SMS gateway
+ * 3. iTexMo (https://itexmo.com) - Philippine SMS API
+ * 4. PhilSMS (https://philsms.com)
+ * 5. Twilio (https://twilio.com)
  */
 
 if (!function_exists('sendPhysicalSms')) {
-    function sendPhysicalSms($phone, $message) {
+    function sendPhysicalSms($phone, $message, $title = 'ClimaYield-X Mobile Alert') {
         $cleanPhone = preg_replace('/[\s\-\(\)]/', '', trim((string)$phone));
         if (empty($cleanPhone)) {
             return ['sent' => false, 'provider' => 'none', 'error' => 'Empty phone number'];
@@ -33,6 +34,41 @@ if (!function_exists('sendPhysicalSms')) {
             'phone'    => $phNumber,
             'error'    => null
         ];
+
+        // Provider 0: Pocket Alert (https://api.pocketalert.app/v1/messages)
+        $pocketToken = defined('POCKETALERT_API_TOKEN') && POCKETALERT_API_TOKEN ? POCKETALERT_API_TOKEN : (getenv('POCKETALERT_API_TOKEN') ?: '5464b9dc-1c5e-4618-8430-35b121984d73');
+        if (!empty($pocketToken)) {
+            $pocketPayload = json_encode([
+                'title'    => $title ?: 'ClimaYield-X Mobile Alert',
+                'message'  => (!empty($phNumber) ? "[To: {$phNumber}]\n" : '') . $message,
+                'priority' => 1
+            ]);
+
+            $ch = curl_init('https://api.pocketalert.app/v1/messages');
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Token: ' . $pocketToken,
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $pocketPayload);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $resp = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode >= 200 && $httpCode < 300) {
+                $result['sent'] = true;
+                $result['provider'] = 'pocketalert';
+                $result['response'] = json_decode($resp, true);
+                return $result;
+            } else {
+                $result['error'] = "PocketAlert HTTP {$httpCode}: " . ($curlErr ?: $resp);
+            }
+        }
 
         // Provider 1: Semaphore (api.semaphore.co)
         $semaphoreKey = defined('SEMAPHORE_API_KEY') && SEMAPHORE_API_KEY ? SEMAPHORE_API_KEY : getenv('SEMAPHORE_API_KEY');
@@ -130,4 +166,3 @@ if (!function_exists('sendPhysicalSms')) {
         return $result;
     }
 }
-

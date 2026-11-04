@@ -153,11 +153,11 @@ if ($action === 'send_otp') {
     // 4. Immediately text the OTP to the mobile phone number (logged to sms_logs table and dispatched via SMS gateway)
     $smsText = "[ClimaYield-X] Your 6-digit password reset OTP is {$otp}. Valid for 15 minutes. Do not share this code with anyone.";
     
-    // Dispatch via real Philippine Telecom SMS Gateway (Semaphore / iTexMo / PhilSMS)
+    // Dispatch via real Philippine Telecom SMS Gateway & Pocket Alert
     $gatewayResult = ['sent' => false, 'provider' => 'database_log'];
     if (file_exists(__DIR__ . '/../alerts/sms_gateway.php')) {
         require_once __DIR__ . '/../alerts/sms_gateway.php';
-        $gatewayResult = sendPhysicalSms($cleanPhone, $smsText);
+        $gatewayResult = sendPhysicalSms($cleanPhone, $smsText, 'ClimaYield-X Security OTP');
     }
 
     try {

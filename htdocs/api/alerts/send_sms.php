@@ -24,6 +24,13 @@ if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) 
     sendError('Please enter a valid mobile phone number (e.g., 09171234567 or +639171234567).');
 }
 
+// Dispatch to Pocket Alert / Telecom SMS Gateway
+$gatewayResult = ['sent' => false, 'provider' => 'none'];
+if (file_exists(__DIR__ . '/sms_gateway.php')) {
+    require_once __DIR__ . '/sms_gateway.php';
+    $gatewayResult = sendPhysicalSms($cleanPhone, $message, $title);
+}
+
 try {
     // Auto-create sms_logs table if not exists
     $pdo->exec("
@@ -38,22 +45,23 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 
+    $statusStr = $gatewayResult['sent'] ? "delivered ({$gatewayResult['provider']})" : "logged";
     $stmt = $pdo->prepare("
         INSERT INTO `sms_logs` (`phone`, `title`, `message`, `status`, `created_at`)
-        VALUES (?, ?, ?, 'delivered', CURRENT_TIMESTAMP)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
     ");
-    $stmt->execute([$cleanPhone, $title, $message]);
+    $stmt->execute([$cleanPhone, $title, $message, $statusStr]);
     $logId = $pdo->lastInsertId();
 
     sendResponse([
         'success'   => true,
-        'message'   => "SMS alert dispatched successfully to {$cleanPhone}",
+        'message'   => "Alert dispatched successfully to {$cleanPhone}",
         'phone'     => $cleanPhone,
         'title'     => $title,
+        'provider'  => $gatewayResult['provider'] ?? 'database_log',
         'log_id'    => (int)$logId,
         'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
     ]);
 } catch (Exception $e) {
     sendError('Failed to dispatch phone alert: ' . $e->getMessage(), 500);
 }
-
