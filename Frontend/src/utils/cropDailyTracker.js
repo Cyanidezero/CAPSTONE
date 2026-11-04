@@ -1,10 +1,14 @@
 /**
  * ClimaYield-X Crop Daily Tracking & Automatic Maturation Engine
  * 
- * Automatically tracks and increments plant ages by +1 day every calendar day.
- * - Compares calendar dates from anchor/planting date to ensure authentic day-by-day progression.
- * - Recalculates dynamically when midnight passes or when the app is opened on a new day.
- * - Supports testing/demonstration simulation (+1 Day fast-forward / Reset to Today).
+ * Automatically tracks and increments plant ages by +1 day every agricultural growth day.
+ * - In accordance with Philippine urban agriculture schedules, the farming day completes
+ *   and increments at 6:00 AM (agricultural dawn).
+ * - From 6:00 AM today until 5:59 AM tomorrow is Day N.
+ * - At exactly 6:00 AM tomorrow, the day completes and the crops advance to Day N + 1.
+ * - Automatically checks and updates via continuous 10s watchdog timers, exact 6:00 AM alarm
+ *   timeouts, and window focus/visibility wakeups.
+ * - Supports testing simulation (+1 Day fast-forward / Reset to Today).
  * - Accurately updates growth stages, days to harvest, and target harvest dates.
  */
 
@@ -13,13 +17,24 @@ export const STORAGE_KEY_DAY_OFFSET = 'climayield_crop_day_offset';
 export const STORAGE_KEY_LAST_DATE = 'climayield_crop_last_seen_date';
 
 /**
- * Returns today's local date as "YYYY-MM-DD"
+ * Maps a real-time Date object into the agricultural growth date.
+ * The agricultural day completes and rolls over at 6:00 AM local time.
+ * (Subtracting 6 hours aligns 06:00:00 to 00:00:00 of the growth day)
+ */
+export function getFarmingDateObj(dateObj = new Date()) {
+  const d = dateObj instanceof Date ? new Date(dateObj.getTime()) : new Date(dateObj);
+  // Shift back by 6 hours: 6:00 AM today becomes 00:00 AM today; 5:59 AM today becomes 23:59 PM yesterday
+  return new Date(d.getTime() - 6 * 3600 * 1000);
+}
+
+/**
+ * Returns the current farming date string as "YYYY-MM-DD" aligned to 6:00 AM dawn rollover
  */
 export function getTodayDateString(dateObj = new Date()) {
-  const d = dateObj instanceof Date ? dateObj : new Date(dateObj);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const farmingD = getFarmingDateObj(dateObj);
+  const year = farmingD.getFullYear();
+  const month = String(farmingD.getMonth() + 1).padStart(2, '0');
+  const day = String(farmingD.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -43,6 +58,39 @@ export function getCalendarDaysDiff(startStr, endStr) {
   } catch {
     return 0;
   }
+}
+
+/**
+ * Calculates the exact next 6:00 AM Date object from a reference time
+ */
+export function getNext6AMDate(from = new Date()) {
+  const next = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 6, 0, 0, 0);
+  if (from.getTime() >= next.getTime()) {
+    next.setDate(next.getDate() + 1);
+  }
+  return next;
+}
+
+/**
+ * Returns milliseconds remaining until the upcoming 6:00 AM growth update
+ */
+export function getMillisUntilNext6AM(from = new Date()) {
+  return Math.max(1000, getNext6AMDate(from).getTime() - from.getTime());
+}
+
+/**
+ * Returns a human-friendly countdown string until the next 6:00 AM growth update
+ */
+export function formatTimeUntilNext6AM(from = new Date(), isFil = false) {
+  const ms = getMillisUntilNext6AM(from);
+  const totalSec = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+
+  if (hours > 0) {
+    return isFil ? `${hours} oras at ${minutes} minuto` : `${hours}h ${minutes}m`;
+  }
+  return isFil ? `${minutes} minuto` : `${minutes}m`;
 }
 
 /**
@@ -84,6 +132,7 @@ export function getOrInitCropTracking(cropId, defaultInitialAge = 1, totalDays =
     return records[id];
   }
 
+  // Anchor to current farming date (6:00 AM cycle)
   const todayStr = getTodayDateString();
   const newRecord = {
     cropId: id,
@@ -179,13 +228,14 @@ export function clearAllCropTracking() {
  * Calculates the current real/simulated plant age and harvest metadata for a crop
  */
 export function calculateCropDailyStatus(crop, defaultAge, totalDays, manualOffset = null) {
-  const cId = String(crop.id || crop.name || '').toLowerCase().trim();
-  const totDays = Number(totalDays || crop.stagesConfig?.totalDays || crop.totalDays || 45);
-  const fallbackAge = Math.max(1, Number(defaultAge || crop.plantAgeDays || Math.round(totDays / 2)));
+  const cId = String(crop?.id || crop?.name || crop?.filipinoName || '').toLowerCase().trim();
+  const totDays = Number(totalDays || crop?.stagesConfig?.totalDays || crop?.totalDays || 45);
+  const fallbackAge = Math.max(1, Number(defaultAge || crop?.plantAgeDays || Math.round(totDays / 2)));
 
   const tracking = getOrInitCropTracking(cId, fallbackAge, totDays);
   const activeOffset = manualOffset !== null ? manualOffset : getManualDayOffset();
 
+  // Current farming date aligned to 6:00 AM agricultural shift
   const todayStr = getTodayDateString();
   const realElapsed = getCalendarDaysDiff(tracking.startDate, todayStr);
   const totalElapsed = Math.max(0, realElapsed + activeOffset);
@@ -214,8 +264,56 @@ export function calculateCropDailyStatus(crop, defaultAge, totalDays, manualOffs
     startDate: tracking.startDate,
     cycleNumber: tracking.cycleNumber || 1,
     effectiveDate: effectiveNow,
-    harvestDate
+    harvestDate,
+    timeUntilNext6AM: formatTimeUntilNext6AM(now, false),
+    timeUntilNext6AMFil: formatTimeUntilNext6AM(now, true)
   };
+}
+
+/**
+ * Global background watcher for 6:00 AM Dawn Shift.
+ * Fires 'cropDailyTrackingUpdated' event whenever 6:00 AM arrives,
+ * on window focus/tab restore, or every 10 seconds.
+ */
+export function initAgricultural6AMWatcher() {
+  if (typeof window === 'undefined') return;
+  if (window.__climayield_6am_watcher_active) return;
+  window.__climayield_6am_watcher_active = true;
+
+  let lastFarmingDate = getTodayDateString();
+
+  const checkAndTrigger = () => {
+    const currentFarmingDate = getTodayDateString();
+    if (currentFarmingDate !== lastFarmingDate) {
+      lastFarmingDate = currentFarmingDate;
+      window.dispatchEvent(new CustomEvent('cropDailyTrackingUpdated', {
+        detail: { farmingDate: currentFarmingDate, reason: '6am_dawn_shift' }
+      }));
+    }
+  };
+
+  // Watchdog interval every 10 seconds
+  setInterval(checkAndTrigger, 10000);
+
+  // Window visibility & focus listeners (for wakeups after sleep/lock)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAndTrigger();
+      }
+    });
+  }
+  window.addEventListener('focus', checkAndTrigger);
+
+  // Schedule exact alarm for the next 6:00:01 AM
+  const scheduleAlarm = () => {
+    const ms = getMillisUntilNext6AM();
+    setTimeout(() => {
+      checkAndTrigger();
+      scheduleAlarm();
+    }, ms + 1000);
+  };
+  scheduleAlarm();
 }
 
 /**

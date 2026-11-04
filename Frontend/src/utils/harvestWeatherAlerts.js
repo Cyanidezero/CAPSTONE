@@ -6,6 +6,8 @@
  * 2. Climate Stress Warnings & Drizzle Rain Advisories
  */
 
+import { calculateCropDailyStatus } from './cropDailyTracker';
+
 // Approximate maturity and stage durations (in days) for common Quezon City vegetables
 export const VEGETABLE_GROWTH_SPECS = {
   pechay: { totalDays: 28, stageDays: [5, 10, 18, 24, 28], harvestWindow: '25–30 days' },
@@ -22,42 +24,46 @@ export const VEGETABLE_GROWTH_SPECS = {
 };
 
 /**
- * Compute the remaining days until harvest and harvest status for any vegetable
+ * Compute the real-time remaining days until harvest and harvest status for any vegetable,
+ * automatically updating each agricultural day at 6:00 AM dawn.
  */
 export function calculateCropHarvestInfo(crop, lang = 'en') {
   const isFil = lang === 'fil';
-  const rawId = String(crop.id || crop.name || crop.filipinoName || '').toLowerCase().trim();
+  const rawId = String(crop?.id || crop?.name || crop?.filipinoName || '').toLowerCase().trim();
   
   // Find key in VEGETABLE_GROWTH_SPECS
   const specKey = Object.keys(VEGETABLE_GROWTH_SPECS).find(k => rawId.includes(k)) || 'pechay';
   const spec = VEGETABLE_GROWTH_SPECS[specKey];
 
-  const stageStep = Number(crop.stageStep || 2); // 1 to 5
+  const defaultTotalDays = Number(crop?.totalDays || crop?.stagesConfig?.totalDays || spec.totalDays || 30);
+  const defaultAge = Number(crop?.plantAgeDays || spec.stageDays[1] || 10);
 
-  let daysRemaining = 0;
-  let isReady = false;
+  // Compute live growth status aligned to 6:00 AM agricultural cycle
+  const daily = calculateCropDailyStatus(crop, defaultAge, defaultTotalDays);
+  const currentDay = daily.currentDay;
+  const totalDays = daily.totalDays;
+  const daysRemaining = daily.daysLeft;
+  const isReady = daily.isReady;
+
   let status = 'growing'; // 'ready' | 'near' | 'growing' | 'seedling'
+  let stageStep = 2;
+  const progressRatio = totalDays > 0 ? (currentDay / totalDays) : 0.5;
 
-  if (stageStep >= 5) {
-    daysRemaining = 0;
-    isReady = true;
+  if (isReady || daysRemaining === 0) {
     status = 'ready';
-  } else if (stageStep === 4) {
-    // Stage 4: Maturation / nearing harvest
-    daysRemaining = Math.max(2, Math.round(spec.totalDays - spec.stageDays[3]));
+    stageStep = 5;
+  } else if (daysRemaining <= 3 || progressRatio >= 0.85) {
     status = 'near';
-  } else if (stageStep === 3) {
-    // Stage 3: Flowering / Fruiting
-    daysRemaining = Math.max(6, Math.round(spec.totalDays - spec.stageDays[2]));
+    stageStep = 4;
+  } else if (progressRatio >= 0.5) {
     status = 'growing';
-  } else if (stageStep === 2) {
-    // Stage 2: Vegetative Growth
-    daysRemaining = Math.max(12, Math.round(spec.totalDays - spec.stageDays[1]));
+    stageStep = 3;
+  } else if (progressRatio >= 0.2) {
     status = 'growing';
+    stageStep = 2;
   } else {
-    // Stage 1: Seedling
-    daysRemaining = spec.totalDays;
     status = 'seedling';
+    stageStep = 1;
   }
 
   // Display badges
@@ -67,19 +73,25 @@ export function calculateCropHarvestInfo(crop, lang = 'en') {
 
   if (status === 'ready') {
     badgeIcon = '🎉';
-    badgeText = isFil ? 'HANDA NANG ANIHIN' : 'READY TO HARVEST';
+    badgeText = isFil ? `HANDA NANG ANIHIN (Araw ${currentDay}/${totalDays})` : `READY TO HARVEST (Day ${currentDay}/${totalDays})`;
     badgeColor = '#16a34a';
   } else if (status === 'near') {
     badgeIcon = '⏳';
-    badgeText = isFil ? `${daysRemaining} ARAW NA LANG BAGO ANIHIN` : `${daysRemaining} DAYS LEFT TO HARVEST`;
+    badgeText = isFil 
+      ? `${daysRemaining} ARAW NA LANG BAGO ANIHIN (Araw ${currentDay}/${totalDays})` 
+      : `${daysRemaining} DAYS LEFT TO HARVEST (Day ${currentDay}/${totalDays})`;
     badgeColor = '#f59e0b';
   } else {
     badgeIcon = '🌱';
-    badgeText = isFil ? `${daysRemaining} ARAW BAGO ANIHIN` : `${daysRemaining} DAYS REMAINING`;
+    badgeText = isFil 
+      ? `Araw ${currentDay} ng ${totalDays} • ${daysRemaining} Araw Bago Anihin` 
+      : `Day ${currentDay} of ${totalDays} • ${daysRemaining} Days Remaining`;
     badgeColor = '#10b981';
   }
 
   return {
+    currentDay,
+    totalDays,
     daysRemaining,
     isReady,
     status,
@@ -87,7 +99,8 @@ export function calculateCropHarvestInfo(crop, lang = 'en') {
     badgeText,
     badgeIcon,
     badgeColor,
-    harvestWindow: spec.harvestWindow
+    harvestWindow: spec.harvestWindow,
+    dailyStatus: daily
   };
 }
 

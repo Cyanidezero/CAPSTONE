@@ -11,6 +11,10 @@ import { getVegetableFunFact } from '../utils/vegetableFunFacts';
 import { API_URL } from '../utils/apiConfig';
 import { calculateCropHarvestInfo } from '../utils/harvestWeatherAlerts';
 import { 
+  initAgricultural6AMWatcher, 
+  formatTimeUntilNext6AM 
+} from '../utils/cropDailyTracker';
+import { 
   dispatchHarvestAndClimateAlerts, 
   sendTestAlertToPhone 
 } from '../utils/mobileNotificationService';
@@ -1245,6 +1249,24 @@ function Dashboard({
   // All active vegetables: custom added vegetables appear on top first, followed by dataset crops
   const allCrops = useMemo(() => [...customCrops, ...datasetCrops], [customCrops, datasetCrops]);
 
+  // 🌅 6:00 AM Agricultural Dawn Growth Engine: automatically updates vegetable days
+  const [, setFarmingCycleTick] = useState(0);
+  useEffect(() => {
+    initAgricultural6AMWatcher();
+    const handleDailyUpdate = () => {
+      setFarmingCycleTick(t => t + 1);
+    };
+    window.addEventListener('cropDailyTrackingUpdated', handleDailyUpdate);
+    window.addEventListener('storage', handleDailyUpdate);
+    // 15-second interval watchdog for 6:00 AM rollover and live countdown
+    const interval = setInterval(handleDailyUpdate, 15000);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('cropDailyTrackingUpdated', handleDailyUpdate);
+      window.removeEventListener('storage', handleDailyUpdate);
+    };
+  }, []);
+
   // Automated mobile push notification dispatch for harvest & weather alerts
   useEffect(() => {
     if (allCrops && allCrops.length > 0) {
@@ -1745,6 +1767,29 @@ function Dashboard({
               <span>📱</span>
               <span>{farmerPhone ? (isFil ? 'Palitan ang No.' : 'Change Phone') : (isFil ? 'Ilagay ang No.' : 'Set Phone')}</span>
             </button>
+            <div
+              className="fd-hero-badge fd-6am-update-pill"
+              style={{
+                background: 'rgba(255, 255, 255, 0.22)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                color: '#ffffff',
+                borderRadius: '999px',
+                padding: '6px 14px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title={isFil ? 'Awtomatikong mag-a-update ang araw ng gulay tuwing 6:00 AM' : 'Vegetable growth days automatically update every day at 6:00 AM'}
+            >
+              <span>🌅</span>
+              <span>
+                {isFil 
+                  ? `Paglaki: 6:00 AM (${formatTimeUntilNext6AM(new Date(), true)})` 
+                  : `Growth Cycle: 6:00 AM (${formatTimeUntilNext6AM(new Date(), false)})`}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -2064,6 +2109,10 @@ function Dashboard({
                             )}
                             <div className="fd-crop-shortcycle-badge">
                               ⚡ {isFil ? 'Mabilis Anihin (Short-Cycle)' : 'Short-Cycle Vegetable'}
+                            </div>
+                            <div className="fd-crop-growth-day-badge" style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, background: '#ecfdf5', padding: '2px 8px', borderRadius: '6px', border: '1px solid #a7f3d0', marginTop: '3px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span>⏱️</span>
+                              <span>{isFil ? `Araw ${cropHarvest.currentDay} ng ${cropHarvest.totalDays}` : `Day ${cropHarvest.currentDay} of ${cropHarvest.totalDays}`}</span>
                             </div>
                             {crop.plotOrSeason && (
                               <div className="fd-crop-plot-badge" style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '2px 8px', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>

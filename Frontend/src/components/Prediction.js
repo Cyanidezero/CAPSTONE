@@ -15,7 +15,9 @@ import {
   getManualDayOffset,
   replantCrop,
   formatCalendarDate,
-  getTodayDateString
+  getTodayDateString,
+  initAgricultural6AMWatcher,
+  formatTimeUntilNext6AM
 } from '../utils/cropDailyTracker';
 import './Prediction.css';
 
@@ -837,18 +839,20 @@ function Predictions({
     return () => window.removeEventListener('cropDatasetUpdated', handleCropUpdate);
   }, [hasCrops]);
 
-  // Daily Tracking State: automatically increments every calendar day at midnight
+  // Daily Tracking State: automatically increments every agricultural growth day at 6:00 AM
   const [manualDayOffset, setManualDayOffset] = useState(() => getManualDayOffset());
   const [currentDateString, setCurrentDateString] = useState(() => getTodayDateString());
 
   useEffect(() => {
-    // Check every 15 seconds if real-world calendar day has flipped
+    initAgricultural6AMWatcher();
+
+    // Check every 10 seconds if real-world agricultural day has flipped at 6:00 AM
     const interval = setInterval(() => {
       const todayStr = getTodayDateString();
       if (todayStr !== currentDateString) {
         setCurrentDateString(todayStr);
       }
-    }, 15000);
+    }, 10000);
 
     const handleDailyUpdate = () => {
       setManualDayOffset(getManualDayOffset());
@@ -1118,6 +1122,12 @@ function Predictions({
           <div className="cp-header-badge">
             <div className="sub">{isFil ? 'Lugar ng Bukid' : 'Target Area'}</div>
             <div className="val">📍 Quezon City, Metro Manila</div>
+          </div>
+          <div className="cp-header-badge" style={{ background: '#ecfdf5', borderColor: '#a7f3d0' }}>
+            <div className="sub" style={{ color: '#047857', fontWeight: 700 }}>🌅 {isFil ? 'Awtomatikong Paglaki (6:00 AM)' : 'Auto Growth (6:00 AM)'}</div>
+            <div className="val" style={{ color: '#065f46', fontSize: '0.82rem' }}>
+              {isFil ? `Update sa ${formatTimeUntilNext6AM(new Date(), true)}` : `Update in ${formatTimeUntilNext6AM(new Date(), false)}`}
+            </div>
           </div>
         </div>
       </div>
