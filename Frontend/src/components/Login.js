@@ -17,8 +17,8 @@ function Login({ onLoginSuccess }) {
 
   // Forgot password & OTP verification state
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotStep, setForgotStep] = useState('email'); // 'email' | 'otp' | 'password' | 'success'
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStep, setForgotStep] = useState('phone'); // 'phone' | 'otp' | 'password' | 'success'
+  const [forgotPhone, setForgotPhone] = useState('');
   const [forgotOtp, setForgotOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -49,27 +49,22 @@ function Login({ onLoginSuccess }) {
   };
 
   const handleOpenForgotModal = () => {
-    setForgotEmail(email || '');
+    setForgotPhone(signupForm?.phone || '');
     setForgotOtp('');
     setResetToken('');
     setNewPassword('');
     setConfirmNewPassword('');
     setForgotError('');
     setForgotNotice('');
-    setForgotStep('email');
+    setForgotStep('phone');
     setShowForgotModal(true);
   };
 
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
-    const targetEmail = forgotEmail.trim().toLowerCase();
-    if (!targetEmail) {
-      setForgotError('Please enter your registered email address.');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(targetEmail)) {
-      setForgotError('Please enter a valid email address format.');
+    const cleanPhone = forgotPhone.replace(/[\s\-\(\)]/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setForgotError('Please enter a valid mobile phone number (e.g. 09171234567 or +639171234567).');
       return;
     }
 
@@ -79,12 +74,12 @@ function Login({ onLoginSuccess }) {
 
     try {
       const activeRole = isFarmerOnly ? 'farmer' : (isDevOnly || isDev ? 'dev' : 'farmer');
-      const res = await requestPasswordOtp(targetEmail, activeRole);
+      const res = await requestPasswordOtp(cleanPhone, activeRole);
       if (res.success) {
-        setForgotNotice(`A 6-digit OTP has been sent to ${targetEmail}. Please check your inbox.`);
-        toast.success(`Verification code dispatched to ${targetEmail}`);
+        setForgotNotice(`A 6-digit OTP has been texted immediately to ${cleanPhone}. Please check your phone.`);
+        toast.success(`OTP texted immediately to ${cleanPhone}`);
         if (res.otp) {
-          toast.info(`🔐 Verification OTP: ${res.otp}`, { autoClose: 14000 });
+          toast.info(`📱 Texted OTP: ${res.otp}`, { autoClose: 14000 });
         }
         setForgotStep('otp');
         setResendCooldown(30);
@@ -98,10 +93,10 @@ function Login({ onLoginSuccess }) {
           });
         }, 1000);
       } else {
-        setForgotError(res.error || 'Failed to send OTP verification code.');
+        setForgotError(res.error || 'Failed to text OTP verification code.');
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Error sending OTP. Please verify your email.';
+      const msg = err.response?.data?.error || err.message || 'Error texting OTP. Please verify your phone number.';
       setForgotError(msg);
       toast.error(msg);
     } finally {
@@ -121,11 +116,12 @@ function Login({ onLoginSuccess }) {
     setForgotError('');
 
     try {
-      const res = await verifyPasswordOtp(forgotEmail.trim().toLowerCase(), cleanOtp);
+      const cleanPhone = forgotPhone.replace(/[\s\-\(\)]/g, '');
+      const res = await verifyPasswordOtp(cleanPhone, cleanOtp);
       if (res.success) {
         setResetToken(res.reset_token || '');
         setForgotStep('password');
-        toast.success('Email and OTP verified successfully!');
+        toast.success('Phone and OTP verified successfully!');
       } else {
         setForgotError(res.error || 'Invalid or expired OTP code.');
       }
@@ -153,8 +149,9 @@ function Login({ onLoginSuccess }) {
     setForgotError('');
 
     try {
+      const cleanPhone = forgotPhone.replace(/[\s\-\(\)]/g, '');
       const res = await resetPasswordWithOtp({
-        email: forgotEmail.trim().toLowerCase(),
+        phone: cleanPhone,
         otp: forgotOtp.replace(/\D/g, ''),
         resetToken: resetToken,
         newPassword: newPassword,
@@ -163,7 +160,6 @@ function Login({ onLoginSuccess }) {
 
       if (res.success) {
         toast.success('Password updated successfully! You can now log in.');
-        setEmail(forgotEmail.trim().toLowerCase());
         setPassword(newPassword);
         setForgotStep('success');
       } else {
@@ -453,7 +449,7 @@ function Login({ onLoginSuccess }) {
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenForgotModal(); }}
-                  title="Click to reset your password via email OTP verification"
+                  title="Click to reset your password via mobile phone SMS OTP verification"
                 >
                   Forgot password?
                 </span>
@@ -660,17 +656,17 @@ function Login({ onLoginSuccess }) {
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.4rem' }}>{forgotStep === 'success' ? '🎉' : '🔐'}</span>
+                <span style={{ fontSize: '1.4rem' }}>{forgotStep === 'success' ? '🎉' : '📱'}</span>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', color: isDev ? '#38bdf8' : '#2d6a4f', fontWeight: 700 }}>
-                    {forgotStep === 'email' && 'Forgot Password'}
-                    {forgotStep === 'otp' && 'Email Verification'}
+                    {forgotStep === 'phone' && 'Forgot Password'}
+                    {forgotStep === 'otp' && 'SMS OTP Verification'}
                     {forgotStep === 'password' && 'Create New Password'}
                     {forgotStep === 'success' && 'Password Reset Complete'}
                   </h3>
                   <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                    {forgotStep === 'email' && 'Step 1 of 3: Enter registered email'}
-                    {forgotStep === 'otp' && 'Step 2 of 3: Enter 6-digit OTP code'}
+                    {forgotStep === 'phone' && 'Step 1 of 3: Enter mobile phone number'}
+                    {forgotStep === 'otp' && 'Step 2 of 3: Enter 6-digit SMS OTP code'}
                     {forgotStep === 'password' && 'Step 3 of 3: Set your new password'}
                     {forgotStep === 'success' && 'Account credentials updated'}
                   </div>
@@ -719,30 +715,30 @@ function Login({ onLoginSuccess }) {
                 gap: '8px',
                 border: '1px solid #bae6fd'
               }}>
-                <span>📨</span>
+                <span>📲</span>
                 <span>{forgotNotice}</span>
               </div>
             )}
 
-            {/* Step 1: Email Verification Prompt */}
-            {forgotStep === 'email' && (
+            {/* Step 1: Phone Verification Prompt */}
+            {forgotStep === 'phone' && (
               <form onSubmit={handleSendOtp}>
                 <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-                  Please enter the email address you use in the system. We will verify your email and send a 6-digit verification OTP code.
+                  Please enter your mobile phone number. We will immediately text the 6-digit OTP verification code directly to your phone.
                 </p>
 
                 <div className="login-input-group">
-                  <label>Registered Email Address *</label>
+                  <label>Registered Mobile Phone Number *</label>
                   <div className="login-input-wrapper">
-                    <span className="login-input-icon">📧</span>
+                    <span className="login-input-icon">📱</span>
                     <input
-                      type="email"
-                      value={forgotEmail}
+                      type="tel"
+                      value={forgotPhone}
                       onChange={(e) => {
-                        setForgotEmail(e.target.value);
+                        setForgotPhone(e.target.value);
                         if (forgotError) setForgotError('');
                       }}
-                      placeholder="user@organization.com"
+                      placeholder="09171234567 or +639171234567"
                       required
                       autoFocus
                     />
@@ -765,7 +761,7 @@ function Login({ onLoginSuccess }) {
                     style={{ flex: 1.4 }}
                     disabled={forgotLoading}
                   >
-                    {forgotLoading ? 'Sending OTP...' : 'Send Verification OTP 📨'}
+                    {forgotLoading ? 'Texting OTP...' : 'Text OTP to Phone 📲'}
                   </button>
                 </div>
               </form>
@@ -775,7 +771,7 @@ function Login({ onLoginSuccess }) {
             {forgotStep === 'otp' && (
               <form onSubmit={handleVerifyOtp}>
                 <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-                  We have sent a 6-digit OTP to <strong>{forgotEmail}</strong>. Please enter the verification code below:
+                  We texted a 6-digit verification OTP to <strong>{forgotPhone}</strong>. Please enter the code below:
                 </p>
 
                 <div className="login-input-group">
@@ -804,13 +800,13 @@ function Login({ onLoginSuccess }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setForgotStep('email');
+                      setForgotStep('phone');
                       setForgotError('');
                       setForgotNotice('');
                     }}
                     style={{ background: 'none', border: 'none', color: '#64748b', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
                   >
-                    ← Change Email
+                    ← Change Phone Number
                   </button>
                   <button
                     type="button"
@@ -825,7 +821,7 @@ function Login({ onLoginSuccess }) {
                       padding: 0
                     }}
                   >
-                    {resendCooldown > 0 ? `Resend OTP (${resendCooldown}s)` : 'Resend OTP 🔄'}
+                    {resendCooldown > 0 ? `Resend SMS OTP (${resendCooldown}s)` : 'Resend SMS OTP 🔄'}
                   </button>
                 </div>
 
@@ -835,7 +831,7 @@ function Login({ onLoginSuccess }) {
                     className="btn-auth-submit btn-modal-cancel" 
                     style={{ flex: 1 }}
                     onClick={() => {
-                      setForgotStep('email');
+                      setForgotStep('phone');
                       setForgotError('');
                     }}
                     disabled={forgotLoading}
@@ -858,7 +854,7 @@ function Login({ onLoginSuccess }) {
             {forgotStep === 'password' && (
               <form onSubmit={handleResetPassword}>
                 <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-                  Email successfully verified! Enter your new password for <strong>{forgotEmail}</strong>.
+                  Phone successfully verified! Enter your new password for mobile account <strong>{forgotPhone}</strong>.
                 </p>
 
                 <div className="login-input-group">

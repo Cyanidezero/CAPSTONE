@@ -86,20 +86,20 @@ export const signup = async (userData) => {
   return res.data;
 };
 
-export const requestPasswordOtp = async (email, role) => {
-  const res = await api.post('/auth/forgot-password', { action: 'send_otp', email, role });
+export const requestPasswordOtp = async (phone, role) => {
+  const res = await api.post('/auth/forgot-password', { action: 'send_otp', phone, role });
   return res.data;
 };
 
-export const verifyPasswordOtp = async (email, otp) => {
-  const res = await api.post('/auth/forgot-password', { action: 'verify_otp', email, otp });
+export const verifyPasswordOtp = async (phone, otp) => {
+  const res = await api.post('/auth/forgot-password', { action: 'verify_otp', phone, otp });
   return res.data;
 };
 
 export const resetPasswordWithOtp = async (params) => {
   const res = await api.post('/auth/forgot-password', {
     action: 'reset_password',
-    email: params.email,
+    phone: params.phone,
     otp: params.otp,
     resetToken: params.resetToken,
     newPassword: params.newPassword,
