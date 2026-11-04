@@ -1703,8 +1703,19 @@
                 if (data.success && data.user) {
                     try {
                         const userJson = JSON.stringify(data.user);
-                        sessionStorage.setItem('climayield_user', userJson);
-                        localStorage.setItem('climayield_user', userJson);
+                        if (data.user.role === 'dev') {
+                            sessionStorage.setItem('climayield_dev_user', userJson);
+                            localStorage.setItem('climayield_dev_user', userJson);
+                            localStorage.removeItem('climayield_farmer_user');
+                            sessionStorage.removeItem('climayield_farmer_user');
+                            localStorage.setItem('climayield_user', userJson);
+                        } else {
+                            sessionStorage.setItem('climayield_farmer_user', userJson);
+                            localStorage.setItem('climayield_farmer_user', userJson);
+                            localStorage.removeItem('climayield_dev_user');
+                            sessionStorage.removeItem('climayield_dev_user');
+                            localStorage.removeItem('climayield_user');
+                        }
                     } catch (e) {}
 
                     const dest = data.user.role === 'dev' ? '/dev/' : '/farmer/';
@@ -1719,15 +1730,32 @@
                 const normalized = email.toLowerCase();
                 const matched = accounts[normalized] || accounts[role];
                 if (matched && (password === 'password123' || password === 'farm123' || password === 'dev456' || password === 'matipo1234' || password === matched.password)) {
+                    const accRole = matched.role || role;
+                    if (role === 'dev' && accRole !== 'dev') {
+                        alert(`❌ Access Denied: This account is registered as a Farmer. Farmer profiles do NOT have access to the Developer Suite.`);
+                        return;
+                    }
+                    if (role === 'farmer' && accRole !== 'farmer') {
+                        alert(`❌ Access Denied: This account is registered as a Developer. Please access the Developer Portal.`);
+                        return;
+                    }
                     const fallbackUser = {
                         id: role === 'dev' ? 2 : 1,
                         name: matched.name || 'User',
                         email: email,
-                        role: matched.role || role
+                        role: accRole
                     };
-                    sessionStorage.setItem('climayield_user', JSON.stringify(fallbackUser));
-                    localStorage.setItem('climayield_user', JSON.stringify(fallbackUser));
-                    window.location.href = (matched.role === 'dev' || role === 'dev') ? '/dev/' : '/farmer/';
+                    const fbJson = JSON.stringify(fallbackUser);
+                    if (accRole === 'dev') {
+                        sessionStorage.setItem('climayield_dev_user', fbJson);
+                        localStorage.setItem('climayield_dev_user', fbJson);
+                        localStorage.removeItem('climayield_farmer_user');
+                    } else {
+                        sessionStorage.setItem('climayield_farmer_user', fbJson);
+                        localStorage.setItem('climayield_farmer_user', fbJson);
+                        localStorage.removeItem('climayield_dev_user');
+                    }
+                    window.location.href = accRole === 'dev' ? '/dev/' : '/farmer/';
                     return;
                 }
                 alert(`❌ ${panelNameStr} login failed!\n\nInvalid username or password. Please try again.`);

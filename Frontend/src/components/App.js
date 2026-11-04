@@ -42,43 +42,76 @@ ChartJS.register(
 );
 
 function App() {
+  const isFarmerOnly = isFarmerOnlyMode();
+  const isDevOnly = isDevOnlyMode();
+  const portalStorageKey = isFarmerOnly ? 'climayield_farmer_user' : (isDevOnly ? 'climayield_dev_user' : 'climayield_user');
+
   const [user, setUser] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         if (params.get('autologin') === '1') {
-          const savedRaw = localStorage.getItem('climayield_user') || sessionStorage.getItem('climayield_user');
+          const savedRaw = localStorage.getItem(portalStorageKey) || sessionStorage.getItem(portalStorageKey);
           let autoUser = savedRaw ? JSON.parse(savedRaw) : null;
           if (!autoUser || !autoUser.name) {
             autoUser = {
               id: Date.now(),
-              name: params.get('name') || 'Farmer',
-              email: params.get('email') || 'farmer@agri.coop',
-              role: params.get('role') || 'farmer',
-              age: parseInt(params.get('age') || '25', 10) || 25
+              name: params.get('name') || (isDevOnly ? 'Developer' : 'Farmer'),
+              email: params.get('email') || (isDevOnly ? 'dev@agri.coop' : 'farmer@agri.coop'),
+              role: isDevOnly ? 'dev' : 'farmer',
+              age: parseInt(params.get('age') || (isDevOnly ? '28' : '25'), 10) || 25
             };
           }
           try {
-            localStorage.setItem('climayield_user', JSON.stringify(autoUser));
+            localStorage.setItem(portalStorageKey, JSON.stringify(autoUser));
             window.history.replaceState({}, document.title, window.location.pathname);
           } catch {}
           return autoUser;
         }
         if (window.location.search.includes('login') || window.location.search.includes('logout')) {
+          localStorage.removeItem(portalStorageKey);
           localStorage.removeItem('climayield_user');
+          sessionStorage.removeItem(portalStorageKey);
           sessionStorage.removeItem('climayield_user');
           return null;
         }
       }
-      const saved = localStorage.getItem('climayield_user') || sessionStorage.getItem('climayield_user');
-      return saved ? JSON.parse(saved) : null;
+
+      // 1. Strict Isolation: Check portal-dedicated storage key first
+      const saved = localStorage.getItem(portalStorageKey) || sessionStorage.getItem(portalStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (isDevOnly && parsed.role !== 'dev') {
+          return null;
+        }
+        if (isFarmerOnly && parsed.role !== 'farmer') {
+          return null;
+        }
+        return parsed;
+      }
+
+      // 2. Fallback to generic climayield_user ONLY if role strictly matches the portal
+      const legacyRaw = localStorage.getItem('climayield_user') || sessionStorage.getItem('climayield_user');
+      if (legacyRaw) {
+        const legacyParsed = JSON.parse(legacyRaw);
+        // STRICT ROLE ENFORCEMENT: Never load a farmer account into Dev Suite or vice versa!
+        if (isDevOnly) {
+          if (legacyParsed.role === 'dev') return legacyParsed;
+          return null;
+        }
+        if (isFarmerOnly) {
+          if (legacyParsed.role === 'farmer') return legacyParsed;
+          return null;
+        }
+        return legacyParsed;
+      }
+
+      return null;
     } catch {
       return null;
     }
   });
 
-  const isFarmerOnly = isFarmerOnlyMode();
-  const isDevOnly = isDevOnlyMode();
   const [activeTab, setActiveTab] = useState('dashboard');
   const userRole = isFarmerOnly ? 'farmer' : (isDevOnly ? 'dev' : (user?.role === 'dev' ? 'dev' : 'farmer'));
   const [lang, setLang] = useState(() => {
@@ -546,7 +579,14 @@ function App() {
           onLoginSuccess={(loggedUser) => {
             setUser(loggedUser);
             try {
-              localStorage.setItem('climayield_user', JSON.stringify(loggedUser));
+              localStorage.setItem(portalStorageKey, JSON.stringify(loggedUser));
+              if (loggedUser.role === 'dev') {
+                localStorage.setItem('climayield_dev_user', JSON.stringify(loggedUser));
+                localStorage.removeItem('climayield_farmer_user');
+              } else {
+                localStorage.setItem('climayield_farmer_user', JSON.stringify(loggedUser));
+                localStorage.removeItem('climayield_dev_user');
+              }
             } catch {}
           }} 
         />
@@ -730,7 +770,14 @@ function App() {
             <button 
               onClick={() => {
                 setUser(null);
-                try { localStorage.removeItem('climayield_user'); } catch {}
+                try { 
+                  localStorage.removeItem(portalStorageKey); 
+                  localStorage.removeItem('climayield_user');
+                  if (isDevOnly) localStorage.removeItem('climayield_dev_user');
+                  if (isFarmerOnly) localStorage.removeItem('climayield_farmer_user');
+                  sessionStorage.removeItem(portalStorageKey);
+                  sessionStorage.removeItem('climayield_user');
+                } catch {}
                 toast.info('Signed out. Returned to Front Page.');
               }}
               className="btn-header-signout"
@@ -977,7 +1024,14 @@ function App() {
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setUser(null);
-                  try { localStorage.removeItem('climayield_user'); } catch {}
+                  try { 
+                    localStorage.removeItem(portalStorageKey); 
+                    localStorage.removeItem('climayield_user');
+                    if (isDevOnly) localStorage.removeItem('climayield_dev_user');
+                    if (isFarmerOnly) localStorage.removeItem('climayield_farmer_user');
+                    sessionStorage.removeItem(portalStorageKey);
+                    sessionStorage.removeItem('climayield_user');
+                  } catch {}
                   toast.info('Signed out. Returned to Front Page.');
                 }}
               >

@@ -50,23 +50,22 @@ function Upload-FtpFile($localFile, $remoteUrl) {
     }
 }
 
-Ensure-FtpDir "$ftpHost/api/alerts"
-
 $files = @(
-    "config.php",
     "version.json",
-    "api/alerts/sms_gateway.php",
-    "api/auth/forgot-password.php",
+    "api/auth/login.php",
+    "register.html",
     "farmer/login.html",
     "dev/login.html",
+    "farmer/register.html",
+    "dev/register.html",
     "farmer/asset-manifest.json",
     "dev/asset-manifest.json",
     "farmer/version.json",
     "dev/version.json",
-    "farmer/static/js/main.fb99a9a1.js",
-    "farmer/static/js/main.fb99a9a1.js.LICENSE.txt",
-    "dev/static/js/main.2a2c0ab3.js",
-    "dev/static/js/main.2a2c0ab3.js.LICENSE.txt"
+    "farmer/static/js/main.9a1136c5.js",
+    "farmer/static/js/main.9a1136c5.js.LICENSE.txt",
+    "dev/static/js/main.a81b49cc.js",
+    "dev/static/js/main.a81b49cc.js.LICENSE.txt"
 )
 
 foreach ($rel in $files) {
@@ -76,4 +75,4 @@ foreach ($rel in $files) {
         Upload-FtpFile $local $rem
     }
 }
-Write-Host "Targeted upload complete!"
+Write-Host "Targeted role isolation upload complete!"

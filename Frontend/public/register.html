@@ -618,16 +618,26 @@
 
     function redirectToDashboard(userObj) {
       try {
-        localStorage.setItem('climayield_user', JSON.stringify(userObj));
-        if (!isDev && userObj.phone) {
-          localStorage.setItem('climayield_farmer_phone', userObj.phone);
+        if (isDev) {
+          localStorage.setItem('climayield_dev_user', JSON.stringify(userObj));
+          sessionStorage.setItem('climayield_dev_user', JSON.stringify(userObj));
+          localStorage.removeItem('climayield_farmer_user');
+          sessionStorage.removeItem('climayield_farmer_user');
+          localStorage.setItem('climayield_user', JSON.stringify(userObj));
+        } else {
+          localStorage.setItem('climayield_farmer_user', JSON.stringify(userObj));
+          sessionStorage.setItem('climayield_farmer_user', JSON.stringify(userObj));
+          // Strictly prevent farmer profile from leaking into developer suite
+          localStorage.removeItem('climayield_dev_user');
+          sessionStorage.removeItem('climayield_dev_user');
+          localStorage.removeItem('climayield_user');
+          if (userObj.phone) {
+            localStorage.setItem('climayield_farmer_phone', userObj.phone);
+          }
+          if (userObj.profile && userObj.profile.location) {
+            localStorage.setItem('climayield_farm_location', userObj.profile.location);
+          }
         }
-        if (!isDev && userObj.profile && userObj.profile.location) {
-          localStorage.setItem('climayield_farm_location', userObj.profile.location);
-        }
-      } catch (e) {}
-      try {
-        sessionStorage.setItem('climayield_user', JSON.stringify(userObj));
       } catch (e) {}
 
       window.location.replace(portalBase);

@@ -53,18 +53,22 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 
-    // 1. Check primary table with PDO prepared statement
+    // 1. Check primary table with PDO prepared statement (strictly match selected portal role)
     $stmt = $pdo->prepare("SELECT * FROM `{$primaryTable}` WHERE LOWER(email) = ?");
     $stmt->execute([$email]);
     $userRow = $stmt->fetch();
 
-    // 2. Fallback to other table if account registered under alternate role
+    // 2. Strict Role Isolation: If account exists in the other role table, explicitly block cross-role access
     if (!$userRow) {
-        $stmt2 = $pdo->prepare("SELECT * FROM `{$secondaryTable}` WHERE LOWER(email) = ?");
-        $stmt2->execute([$email]);
-        $userRow = $stmt2->fetch();
-        if ($userRow) {
-            $actualRole = ($selectedRole === 'farmer') ? 'dev' : 'farmer';
+        $stmtOther = $pdo->prepare("SELECT id, name FROM `{$secondaryTable}` WHERE LOWER(email) = ?");
+        $stmtOther->execute([$email]);
+        $otherRow = $stmtOther->fetch();
+        if ($otherRow) {
+            if ($selectedRole === 'dev') {
+                sendError("The account for '{$email}' is a Farmer profile. Farmers do NOT have developer access. Please log into the Farmer Portal.", 403);
+            } else {
+                sendError("The account for '{$email}' is a Developer profile. Please log into the Developer Suite.", 403);
+            }
         }
     }
 
