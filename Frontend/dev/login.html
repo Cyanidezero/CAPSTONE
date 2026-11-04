@@ -1088,6 +1088,15 @@
                     <input type="number" id="signupAge" placeholder="35" min="18" max="99" required>
                 </div>
             </div>
+            <div class="input-group">
+                <label for="signupPhone"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> Mobile Phone Number</label>
+                <div class="input-wrapper">
+                    <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                    <input type="tel" id="signupPhone" placeholder="09171234567 or +639171234567" required maxlength="20">
+                </div>
+                <small id="signupPhoneHint" style="font-size: 11px; color: #15803d; margin-top: 4px; display: block; font-weight: 500;">📱 For SMS harvest alerts and weather advisories</small>
+            </div>
+
 
             <div class="input-group">
                 <label for="signupFarm"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span id="farmLabelText">Farm Location</span></label>
@@ -1112,6 +1121,14 @@
                     <input type="password" id="signupPass" placeholder="••••••••" required minlength="4">
                 </div>
             </div>
+            <div class="input-group">
+                <label for="signupConfirmPass"><svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Confirm Password</label>
+                <div class="input-wrapper">
+                    <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="password" id="signupConfirmPass" placeholder="••••••••" required minlength="4">
+                </div>
+            </div>
+
 
             <button type="submit" class="btn-submit" id="signupBtn">
                 <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg> Create Account
@@ -1298,6 +1315,9 @@
         const signupFarm = document.getElementById('signupFarm');
         const signupEmail = document.getElementById('signupEmail');
         const signupPass = document.getElementById('signupPass');
+        const signupPhone = document.getElementById('signupPhone');
+        const signupConfirmPass = document.getElementById('signupConfirmPass');
+        const signupPhoneHint = document.getElementById('signupPhoneHint');
 
         // Autocomplete elements (lives at body level, positioned via JS so the
         // modal's overflow-y:auto scroll box can never clip or garble it)
@@ -1432,6 +1452,7 @@
                 signupBtn.innerHTML = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg> Create Dev Account';
                 farmLabelText.textContent = 'Dev Location';
                 signupFarm.placeholder = 'Quezon City, Philippines';
+            if (signupPhoneHint) { signupPhoneHint.textContent = isDev ? '📱 For Pocket Alert mobile notifications & security OTPs' : '📱 For SMS harvest alerts and weather advisories'; signupPhoneHint.style.color = isDev ? '#0284c7' : '#15803d'; }
             } else {
                 modalTitle.innerHTML = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="3"></circle><circle cx="18" cy="17" r="2.4"></circle><path d="M3 8h6v5H3z"></path><path d="M9 11h4l3 3h2.5"></path><path d="M13 8V6h3l2 3"></path><path d="M9 8V6"></path></svg> Create Farmer Profile';
                 signupBtn.className = 'btn-submit';
@@ -1467,23 +1488,32 @@
         });
 
         // ---- SIGNUP HANDLER ----
-        window.handleSignup = function(event) {
+        window.handleSignup = async function(event) {
             event.preventDefault();
             
             const name = signupName.value.trim();
             const age = signupAge.value.trim();
+            const phone = signupPhone ? signupPhone.value.trim() : '';
             const farm = signupFarm.value.trim();
-            const email = signupEmail.value.trim();
-            const password = signupPass.value.trim();
+            const email = signupEmail.value.trim().toLowerCase();
+            const password = signupPass.value;
+            const confirmPass = signupConfirmPass ? signupConfirmPass.value : '';
 
             // Validation
-            if (!name || !age || !farm || !email || !password) {
+            if (!name || !age || !farm || !email || !password || !phone || !confirmPass) {
                 alert('⚠️ Please fill in all fields.');
                 return;
             }
 
-            if (parseInt(age) < 18 || parseInt(age) > 99) {
-                alert('⚠️ Age must be between 18 and 99.');
+            const parsedAge = parseInt(age, 10);
+            if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > (isDev ? 99 : 70)) {
+                alert(`⚠️ Age must be between 18 and ${isDev ? 99 : 70}.`);
+                return;
+            }
+
+            const cleanPhone = phone.replace(/[\s\-()]/g, '');
+            if (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15)) {
+                alert('⚠️ Please enter a valid mobile phone number for alerts (e.g. 09171234567 or +639171234567).');
                 return;
             }
 
@@ -1497,21 +1527,80 @@
                 return;
             }
 
-            // Check if farm location is in QC database (case insensitive)
-            const isQC = qcLocations.some(loc => 
-                loc.toLowerCase() === farm.toLowerCase()
-            );
-
-            let locationNote = '';
-            if (!isQC) {
-                locationNote = '\n\n⚠️ Note: This location may not be in Quezon City. Please ensure accuracy.';
+            if (password !== confirmPass) {
+                alert('⚠️ Passwords do not match. Please re-enter your confirm password.');
+                return;
             }
 
-            const role = isDev ? 'Developer' : 'Farmer';
-            const locationLabel = isDev ? 'Dev Location' : 'Farm Location';
+            const submitBtn = document.getElementById('signupBtn');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Saving Account...';
 
-            // Success message
-            alert(`✅ ${role} profile created successfully!\n\n👤 Name: ${name}\n📧 Email: ${email}\n📍 ${locationLabel}: ${farm}\n🔑 Password: ${'•'.repeat(password.length)}${locationNote}\n\n🎉 Your account has been registered. Please login with your credentials.`);
+            const payload = {
+                name: name,
+                age: parsedAge,
+                phone: cleanPhone,
+                farmLocation: farm,
+                farmName: farm,
+                organization: farm,
+                email: email,
+                password: password,
+                role: isDev ? 'dev' : 'farmer'
+            };
+
+            try {
+                const res = await fetch('/api/auth/signup.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    const roleLabel = isDev ? 'Developer' : 'Farmer';
+                    alert(`✅ ${roleLabel} profile created successfully!\n\n👤 Name: ${name}\n📱 Mobile Phone: ${cleanPhone}\n📧 Email: ${email}\n📍 Location: ${farm}\n\n🎉 Welcome! Please log in with your credentials.`);
+                    
+                    if (data.user) {
+                        try {
+                            const storageKey = isDev ? 'climayield_dev_user' : 'climayield_farmer_user';
+                            localStorage.setItem(storageKey, JSON.stringify(data.user));
+                            sessionStorage.setItem(storageKey, JSON.stringify(data.user));
+                            if (!isDev) {
+                                localStorage.setItem('climayield_farmer_phone', cleanPhone);
+                            }
+                        } catch (e) {}
+                    }
+                } else {
+                    alert(`⚠️ Notice: ${data.error || 'Profile saved.'}`);
+                }
+            } catch (err) {
+                const fallbackUser = {
+                    id: Date.now(),
+                    name: name,
+                    email: email,
+                    phone: cleanPhone,
+                    role: isDev ? 'dev' : 'farmer',
+                    age: parsedAge,
+                    profile: {
+                        farmName: farm,
+                        location: farm,
+                        phone: cleanPhone
+                    }
+                };
+                try {
+                    const storageKey = isDev ? 'climayield_dev_user' : 'climayield_farmer_user';
+                    localStorage.setItem(storageKey, JSON.stringify(fallbackUser));
+                    sessionStorage.setItem(storageKey, JSON.stringify(fallbackUser));
+                    if (!isDev) {
+                        localStorage.setItem('climayield_farmer_phone', cleanPhone);
+                    }
+                } catch (e) {}
+                alert(`✅ Profile saved locally!\n\n📱 Mobile: ${cleanPhone}\n📧 Email: ${email}\n\nPlease log in.`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origHtml;
+            }
 
             // Auto-fill login form with new credentials
             emailInput.value = email;
