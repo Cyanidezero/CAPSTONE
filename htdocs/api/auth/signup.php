@@ -51,16 +51,13 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 $targetRole = ($role === 'dev' || $role === 'developer') ? 'dev' : 'farmer';
 
-if ($targetRole === 'farmer') {
-    if (empty($phone)) {
-        sendError('Mobile phone number is required for farmer accounts.');
-    }
-    $cleanPhone = preg_replace('/[\s\-\(\)]/', '', $phone);
-    if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15)) {
-        sendError('Please enter a valid mobile phone number (09171234567 or +639171234567).');
-    }
-} else {
-    $cleanPhone = !empty($phone) ? preg_replace('/[\s\-\(\)]/', '', $phone) : '';
+// Mobile phone number is required for both roles for Pocket Alert SMS & OTP delivery
+if (empty($phone)) {
+    sendError('Mobile phone number is required for alert notifications and OTP security.');
+}
+$cleanPhone = preg_replace('/[\s\-\(\)]/', '', $phone);
+if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15)) {
+    sendError('Please enter a valid mobile phone number (09171234567 or +639171234567).');
 }
 if ($targetRole === 'farmer' && ($rawAge < 18 || $rawAge > 70)) {
     sendError('Farmer age must be between 18 and 70 years old.');
@@ -163,15 +160,11 @@ try {
         } else {
             $org = $organization ?: "{$name}'s Lab";
             try {
+                $stmt = $pdo->prepare("INSERT INTO developers (name, age, phone, organization, email, password) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $age, $cleanPhone, $org, $email, $hashedPassword]);
+            } catch (PDOException $e) {
                 $stmt = $pdo->prepare("INSERT INTO developers (name, age, organization, email, password) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$name, $age, $org, $email, $hashedPassword]);
-            } catch (PDOException $e) {
-                if (stripos($e->getMessage(), 'phone') !== false) {
-                    $stmt = $pdo->prepare("INSERT INTO developers (name, age, phone, organization, email, password) VALUES (?, ?, ?, ?, ?, ?)");
-                    $stmt->execute([$name, $age, '', $org, $email, $hashedPassword]);
-                } else {
-                    throw $e;
-                }
             }
             $insertedId = (int)$pdo->lastInsertId();
         }
@@ -211,13 +204,13 @@ try {
         'id'      => time(),
         'name'    => $name,
         'email'   => $email,
-        'phone'   => ($targetRole === 'farmer') ? $phone : null,
+        'phone'   => $cleanPhone,
         'role'    => $targetRole,
         'age'     => $age,
         'profile' => [
             'farmName' => ($targetRole === 'farmer') ? ($farmLocation ?: ($farmName ?: "{$name}'s Farm")) : null,
-            'phone'    => ($targetRole === 'farmer') ? $phone : null,
-            'location' => ($targetRole === 'farmer') ? ($farmLocation ?: 'Quezon City, PH') : null
+            'phone'    => $cleanPhone,
+            'location' => ($targetRole === 'farmer') ? ($farmLocation ?: 'Quezon City, PH') : 'Quezon City Lab'
         ]
     ];
     sendResponse([

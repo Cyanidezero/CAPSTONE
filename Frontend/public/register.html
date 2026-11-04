@@ -432,7 +432,7 @@
 
     <div id="resultBox"></div>
 
-    <a href="/farmer/" class="back-link" id="backLink">← Back to Farmer Login</a>
+    <a href="login.html" class="back-link" id="backLink">← Back to Farmer Login</a>
   </div>
 
   <script>
@@ -446,7 +446,7 @@
       currentRole = 'dev';
     }
     const isDev = currentRole === 'dev';
-    const portalBase = isDev ? '/dev/' : '/farmer/';
+    const portalBase = isDev ? '/dev/index.html' : '/farmer/index.html';
 
     // Keep URL clean if any legacy query string was present
     if (window.location.search) {
@@ -502,17 +502,19 @@
       ageInput.placeholder = 'Enter your age';
       pillAge.textContent = '✓ Valid Age';
       farmGroup.style.display = 'none';
-      if (phoneGroup) phoneGroup.style.display = 'none';
+      if (phoneGroup) phoneGroup.style.display = 'block';
       if (phoneInput) {
-        phoneInput.required = false;
-        phoneInput.value = '';
+        phoneInput.required = true;
+        phoneInput.placeholder = '09171234567 or +639171234567';
       }
-      if (pillPhone) pillPhone.style.display = 'none';
+      if (pillPhone) pillPhone.style.display = 'inline-block';
+      const devPhoneHint = document.getElementById('phoneHint');
+      if (devPhoneHint) devPhoneHint.textContent = '📱 For Pocket Alert mobile notifications & security OTPs';
       emailLabel.textContent = 'Email Address *';
       emailInput.placeholder = 'alex@climayield.com';
       submitBtn.textContent = '💻 Create Dev Account';
       backLink.textContent = '← Back to Developer Login';
-      backLink.href = '/dev/';
+      backLink.href = 'login.html';
     } else {
       document.body.classList.add('farmer-theme');
       pageTitle.textContent = 'Create Farm Profile — ClimaYield-X';
@@ -539,7 +541,7 @@
       emailInput.placeholder = 'farmer@agri.coop';
       submitBtn.textContent = '🌾 Create Farm Profile';
       backLink.textContent = '← Back to Farmer Login';
-      backLink.href = '/farmer/';
+      backLink.href = 'login.html';
     }
 
     // Location preset chip click
@@ -569,7 +571,7 @@
         pillAge.classList.remove('valid');
       }
 
-      if (!isDev && pillPhone && phoneInput) {
+      if (pillPhone && phoneInput) {
         const cleanP = phoneInput.value.replace(/[\s\-()]/g, '');
         if (/^(09|\+639|639)\d{9}$/.test(cleanP) || (/^\d{10,12}$/.test(cleanP) && cleanP.length >= 10)) {
           pillPhone.classList.add('valid');
@@ -669,16 +671,13 @@
         return;
       }
 
-      let cleanPhone = '';
-      if (!isDev) {
-        const enteredPhone = phoneInput ? sanitizeText(phoneInput.value) : '';
-        cleanPhone = enteredPhone.replace(/[\s\-()]/g, '');
-        if (!cleanPhone || (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
-          resultBox.style.display = 'block';
-          resultBox.className = 'error';
-          resultBox.innerHTML = '<strong>⚠️ Invalid Mobile Number.</strong> Please enter a valid mobile number (09171234567 or +639171234567).';
-          return;
-        }
+      const enteredPhone = phoneInput ? sanitizeText(phoneInput.value) : '';
+      const cleanPhone = enteredPhone.replace(/[\s\-()]/g, '');
+      if (!cleanPhone || (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
+        resultBox.style.display = 'block';
+        resultBox.className = 'error';
+        resultBox.innerHTML = '<strong>⚠️ Invalid Mobile Number.</strong> Please enter a valid mobile number for alert notifications and OTPs (09171234567 or +639171234567).';
+        return;
       }
 
       const enteredEmail = sanitizeText(emailInput.value).toLowerCase();
@@ -723,7 +722,7 @@
       const payload = {
         name: enteredName,
         age: rawAge,
-        phone: !isDev ? cleanPhone : undefined,
+        phone: cleanPhone,
         email: enteredEmail,
         password: enteredPassword,
         role: currentRole,
@@ -735,7 +734,7 @@
         id: Date.now(),
         name: enteredName,
         email: enteredEmail,
-        phone: !isDev ? cleanPhone : null,
+        phone: cleanPhone,
         role: currentRole,
         age: rawAge,
         profile: {
