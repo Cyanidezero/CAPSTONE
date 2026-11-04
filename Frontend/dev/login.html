@@ -1603,10 +1603,7 @@
                             return;
                         }
 
-                        let otpPromptMsg = '📲 Verification OTP texted to ' + cleanPhone + '!\n\nEnter the 6-digit code:';
-                        if (sendData.otp) {
-                            otpPromptMsg = '📲 Verification OTP texted to ' + cleanPhone + '!\n(Texted OTP: ' + sendData.otp + ')\n\nEnter the 6-digit code:';
-                        }
+                        let otpPromptMsg = '📲 Verification OTP sent via SMS to ' + cleanPhone + '!\n\nPlease check your mobile Messages app and enter the 6-digit code:';
                         const otp = prompt(otpPromptMsg);
                         if (!otp) return;
 

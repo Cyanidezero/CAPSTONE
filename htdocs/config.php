@@ -34,3 +34,11 @@ $ALLOWED_ORIGINS = [
     'http://localhost:3001'
 ];
 
+// 3. Real Mobile SMS Gateway Settings (For physical text messages to mobile phones)
+// Supports Semaphore (Philippine standard: https://semaphore.co), iTexMo, and PhilSMS.
+if (!defined('SEMAPHORE_API_KEY')) define('SEMAPHORE_API_KEY', getenv('SEMAPHORE_API_KEY') ?: '');
+if (!defined('SEMAPHORE_SENDER_NAME')) define('SEMAPHORE_SENDER_NAME', getenv('SEMAPHORE_SENDER_NAME') ?: '');
+if (!defined('ITEXMO_API_CODE')) define('ITEXMO_API_CODE', getenv('ITEXMO_API_CODE') ?: '');
+if (!defined('ITEXMO_PASSWORD')) define('ITEXMO_PASSWORD', getenv('ITEXMO_PASSWORD') ?: '');
+if (!defined('PHILSMS_API_TOKEN')) define('PHILSMS_API_TOKEN', getenv('PHILSMS_API_TOKEN') ?: '');
+

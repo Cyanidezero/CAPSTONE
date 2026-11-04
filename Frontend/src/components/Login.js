@@ -76,11 +76,8 @@ function Login({ onLoginSuccess }) {
       const activeRole = isFarmerOnly ? 'farmer' : (isDevOnly || isDev ? 'dev' : 'farmer');
       const res = await requestPasswordOtp(cleanPhone, activeRole);
       if (res.success) {
-        setForgotNotice(`A 6-digit OTP has been texted immediately to ${cleanPhone}. Please check your phone.`);
-        toast.success(`OTP texted immediately to ${cleanPhone}`);
-        if (res.otp) {
-          toast.info(`📱 Texted OTP: ${res.otp}`, { autoClose: 14000 });
-        }
+        setForgotNotice(`A 6-digit OTP has been sent via SMS to ${cleanPhone}. Please check your mobile Messages.`);
+        toast.success(`SMS OTP sent to ${cleanPhone}. Check your phone Messages.`);
         setForgotStep('otp');
         setResendCooldown(30);
         const timer = setInterval(() => {

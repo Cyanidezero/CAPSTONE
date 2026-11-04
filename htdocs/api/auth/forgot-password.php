@@ -150,8 +150,16 @@ if ($action === 'send_otp') {
         sendError('Failed to record OTP verification session: ' . $e->getMessage(), 500);
     }
 
-    // 4. Immediately text the OTP to the mobile phone number (logged to sms_logs table)
+    // 4. Immediately text the OTP to the mobile phone number (logged to sms_logs table and dispatched via SMS gateway)
     $smsText = "[ClimaYield-X] Your 6-digit password reset OTP is {$otp}. Valid for 15 minutes. Do not share this code with anyone.";
+    
+    // Dispatch via real Philippine Telecom SMS Gateway (Semaphore / iTexMo / PhilSMS)
+    $gatewayResult = ['sent' => false, 'provider' => 'database_log'];
+    if (file_exists(__DIR__ . '/../alerts/sms_gateway.php')) {
+        require_once __DIR__ . '/../alerts/sms_gateway.php';
+        $gatewayResult = sendPhysicalSms($cleanPhone, $smsText);
+    }
+
     try {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `sms_logs` (
@@ -165,25 +173,26 @@ if ($action === 'send_otp') {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
+        $statusStr = $gatewayResult['sent'] ? "delivered ({$gatewayResult['provider']})" : "queued (sms_logs)";
         $stmtSMS = $pdo->prepare("
             INSERT INTO `sms_logs` (`phone`, `title`, `message`, `status`, `created_at`)
-            VALUES (?, 'ClimaYield-X Password Reset OTP', ?, 'delivered', CURRENT_TIMESTAMP)
+            VALUES (?, 'ClimaYield-X Password Reset OTP', ?, ?, CURRENT_TIMESTAMP)
         ");
-        $stmtSMS->execute([$cleanPhone, $smsText]);
+        $stmtSMS->execute([$cleanPhone, $smsText, $statusStr]);
     } catch (Exception $e) {
         error_log("[ClimaYield OTP] SMS logging error: " . $e->getMessage());
     }
 
     // 5. Response
     sendResponse([
-        'success'    => true,
-        'message'    => "A 6-digit OTP verification code has been texted immediately to {$cleanPhone}.",
-        'phone'      => $cleanPhone,
-        'role'       => $userRole,
-        'userName'   => $userName,
-        'otp'        => $otp, // Prompt & alert display for instant verification
-        'sms_status' => 'delivered',
-        'expires_in' => 900
+        'success'      => true,
+        'message'      => "A 6-digit OTP verification code has been texted to {$cleanPhone}.",
+        'phone'        => $cleanPhone,
+        'role'         => $userRole,
+        'userName'     => $userName,
+        'sms_status'   => $gatewayResult['sent'] ? 'delivered_to_phone' : 'logged',
+        'sms_provider' => $gatewayResult['provider'] ?? 'sms_logs',
+        'expires_in'   => 900
     ]);
 }
 
