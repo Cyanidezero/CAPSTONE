@@ -1,11 +1,11 @@
 <?php
 /**
- * ClimaYield-X - Telecom & Push Alert Gateway Dispatcher
- * Delivers real alerts and SMS messages directly to mobile phones across Philippine telecom carriers
- * and instant push alerts via Pocket Alert.
+ * ClimaYield-X - Telecom SMS Gateway Dispatcher
+ * Delivers real SMS alert notifications and security OTPs directly to mobile phone Messages
+ * via Infobip (https://infobip.com) and fallback Philippine telecom carriers.
  * 
  * Supported Providers:
- * 1. Pocket Alert (https://pocketalert.app) - Real-time push alert dispatcher to mobile devices
+ * 1. Infobip (https://api.infobip.com) - Direct carrier delivery to phone Messages app
  * 2. Semaphore (https://semaphore.co) - Standard Philippine developer SMS gateway
  * 3. iTexMo (https://itexmo.com) - Philippine SMS API
  * 4. PhilSMS (https://philsms.com)
@@ -22,51 +22,69 @@ if (!function_exists('sendPhysicalSms')) {
         // Format to standard 11-digit Philippine mobile format (09XXXXXXXXX)
         if (preg_match('/^\+?63(9\d{9})$/', $cleanPhone, $m)) {
             $phNumber = '0' . $m[1];
+            $intlPhone = '63' . $m[1];
         } elseif (preg_match('/^(0?9\d{9})$/', $cleanPhone, $m)) {
             $phNumber = strlen($m[1]) === 10 ? '0' . $m[1] : $m[1];
+            $intlPhone = '63' . (strlen($m[1]) === 10 ? substr($m[1], 1) : $m[1]);
         } else {
             $phNumber = $cleanPhone;
+            $intlPhone = ltrim($cleanPhone, '+');
         }
 
         $result = [
             'sent'     => false,
             'provider' => 'none',
             'phone'    => $phNumber,
+            'intlPhone'=> $intlPhone,
             'error'    => null
         ];
 
-        // Provider 0: Pocket Alert (https://api.pocketalert.app/v1/messages)
-        $pocketToken = defined('POCKETALERT_API_TOKEN') && POCKETALERT_API_TOKEN ? POCKETALERT_API_TOKEN : (getenv('POCKETALERT_API_TOKEN') ?: '6e99cb70-1c6a-47c7-9582-fae4ab3c1481');
-        if (!empty($pocketToken)) {
-            $pocketPayload = json_encode([
-                'title'    => $title ?: 'ClimaYield-X Mobile Alert',
-                'message'  => (!empty($phNumber) ? "[To: {$phNumber}]\n" : '') . $message,
-                'priority' => 1
+        // Provider 0: Infobip (https://api.infobip.com/sms/3/messages)
+        // Delivers physical SMS directly to the recipient's phone Messages app
+        $infobipKey = defined('INFOBIP_API_KEY') && INFOBIP_API_KEY ? INFOBIP_API_KEY : (getenv('INFOBIP_API_KEY') ?: '08d165ab955ad8f77052004bde267653-c500206b-4324-4f84-bad6-9b184efaff68');
+        $infobipBase = defined('INFOBIP_BASE_URL') && INFOBIP_BASE_URL ? INFOBIP_BASE_URL : (getenv('INFOBIP_BASE_URL') ?: 'api.infobip.com');
+        $infobipSender = defined('INFOBIP_SENDER') && INFOBIP_SENDER ? INFOBIP_SENDER : (getenv('INFOBIP_SENDER') ?: 'ClimaYield');
+
+        if (!empty($infobipKey)) {
+            $infobipPayload = json_encode([
+                'messages' => [
+                    [
+                        'sender' => $infobipSender,
+                        'destinations' => [
+                            ['to' => $intlPhone]
+                        ],
+                        'content' => [
+                            'text' => $message
+                        ]
+                    ]
+                ]
             ]);
 
-            $ch = curl_init('https://api.pocketalert.app/v1/messages');
+            $ch = curl_init("https://{$infobipBase}/sms/3/messages");
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Token: ' . $pocketToken,
+                'Authorization: App ' . $infobipKey,
                 'Content-Type: application/json',
                 'Accept: application/json'
             ]);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $pocketPayload);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $infobipPayload);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             $resp = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlErr = curl_error($ch);
             curl_close($ch);
 
-            if ($httpCode >= 200 && $httpCode < 300) {
+            $decoded = json_decode($resp, true);
+            if ($httpCode >= 200 && $httpCode < 300 && !empty($decoded['messages'])) {
                 $result['sent'] = true;
-                $result['provider'] = 'pocketalert';
-                $result['response'] = json_decode($resp, true);
+                $result['provider'] = 'infobip';
+                $result['phone'] = $intlPhone;
+                $result['response'] = $decoded;
                 return $result;
             } else {
-                $result['error'] = "PocketAlert HTTP {$httpCode}: " . ($curlErr ?: $resp);
+                $result['error'] = "Infobip HTTP {$httpCode}: " . ($curlErr ?: $resp);
             }
         }
 

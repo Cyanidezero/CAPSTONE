@@ -24,7 +24,7 @@ if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) 
     sendError('Please enter a valid mobile phone number (e.g., 09171234567 or +639171234567).');
 }
 
-// Dispatch to Pocket Alert / Telecom SMS Gateway
+// Dispatch to Infobip / Telecom SMS Gateway (delivers directly to phone Messages)
 $gatewayResult = ['sent' => false, 'provider' => 'none'];
 if (file_exists(__DIR__ . '/sms_gateway.php')) {
     require_once __DIR__ . '/sms_gateway.php';

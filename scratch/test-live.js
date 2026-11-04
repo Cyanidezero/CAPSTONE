@@ -43,3 +43,4 @@ function check(url) {
   await check('https://climayieldx.infinityfree.me/farmer/login.html');
   await check('https://climayieldx.infinityfree.me/api/crops');
 })();
+
