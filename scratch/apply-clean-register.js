@@ -1,0 +1,759 @@
+const fs = require('fs');
+
+const farmerRegisterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>if(window.location.protocol==='http:'&&window.location.hostname.indexOf('infinityfree.me')!==-1){window.location.replace('https://'+window.location.host+window.location.pathname+window.location.search+window.location.hash);}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Farm Profile — ClimaYield-X</title>
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=3">
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=3">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #064e3b 0%, #022c22 100%);
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #064e3b;
+      border: 1px solid #047857;
+      border-radius: 14px;
+      padding: 32px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    h2 {
+      margin: 0 0 6px 0;
+      color: #34d399;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    p.subtitle {
+      color: #a7f3d0;
+      font-size: 13px;
+      margin: 0 0 20px 0;
+      opacity: 0.9;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #a7f3d0;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #022c22;
+      border: 1px solid #047857;
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #34d399;
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25);
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap input {
+      padding-right: 42px;
+    }
+    .eye-btn {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      opacity: 0.7;
+      color: #a7f3d0;
+    }
+    .eye-btn:hover {
+      opacity: 1;
+    }
+    .field-hint {
+      display: block;
+      margin-top: 5px;
+      font-size: 11px;
+      color: #6ee7b7;
+      opacity: 0.85;
+    }
+    button.submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button.submit-btn:hover {
+      opacity: 0.95;
+    }
+    button.submit-btn:active {
+      transform: scale(0.99);
+    }
+    #resultBox {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      line-height: 1.5;
+    }
+    .success {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #a7f3d0;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: #34d399;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">🌾 Field &amp; Farmer Portal</span>
+    <h2>Register Farm Profile</h2>
+    <p class="subtitle">Join ClimaYield-X for AI harvest predictions and weather advisories</p>
+    
+    <form id="farmerRegisterForm">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Farmer Name *</label>
+          <input type="text" id="name" placeholder="Juan Dela Cruz" required />
+        </div>
+
+        <div class="form-group">
+          <label>Age *</label>
+          <input type="number" id="age" value="35" min="18" max="70" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Mobile Phone Number *</label>
+        <input type="tel" id="phone" placeholder="09171234567 or +639171234567" maxlength="20" required />
+        <small class="field-hint">📱 For SMS harvest alerts and weather advisories</small>
+      </div>
+
+      <div class="form-group">
+        <label>Farm Location / Farm Name *</label>
+        <input type="text" id="farmLocation" placeholder="Green Valley Farm, Nueva Ecija" required />
+      </div>
+
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" id="email" placeholder="juan@agri.coop" required />
+      </div>
+
+      <div class="form-group">
+        <label>Password *</label>
+        <div class="input-wrap">
+          <input type="password" id="password" placeholder="farm123" required minlength="4" />
+          <button type="button" class="eye-btn" id="togglePass" title="Show/Hide Password">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password *</label>
+        <div class="input-wrap">
+          <input type="password" id="confirmPassword" placeholder="Re-enter password" required minlength="4" />
+          <button type="button" class="eye-btn" id="toggleConfirm" title="Show/Hide Password">👁️</button>
+        </div>
+      </div>
+      
+      <button type="submit" class="submit-btn" id="submitBtn">🌾 Register Farm Profile</button>
+    </form>
+
+    <div id="resultBox"></div>
+
+    <a href="login.html" class="back-link">← Back to Farmer Login</a>
+  </div>
+
+  <script>
+    const form = document.getElementById('farmerRegisterForm');
+    const resultBox = document.getElementById('resultBox');
+    const submitBtn = document.getElementById('submitBtn');
+    const passInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+
+    // Show/hide eye toggles
+    document.getElementById('togglePass').addEventListener('click', () => {
+      passInput.type = passInput.type === 'password' ? 'text' : 'password';
+    });
+    document.getElementById('toggleConfirm').addEventListener('click', () => {
+      confirmInput.type = confirmInput.type === 'password' ? 'text' : 'password';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultBox.style.display = 'none';
+
+      const enteredName = document.getElementById('name').value.trim();
+      const enteredAge = parseInt(document.getElementById('age').value, 10);
+      const rawPhone = document.getElementById('phone').value.trim();
+      const enteredFarm = document.getElementById('farmLocation').value.trim();
+      const enteredEmail = document.getElementById('email').value.trim().toLowerCase();
+      const enteredPass = passInput.value;
+      const enteredConfirm = confirmInput.value;
+
+      // Validate required fields
+      if (!enteredName) {
+        showError('Please enter your full name.');
+        return;
+      }
+      if (isNaN(enteredAge) || enteredAge < 18 || enteredAge > 70) {
+        showError('Farmer age must be between 18 and 70.');
+        return;
+      }
+
+      // Validate Phone Number
+      const cleanPhone = rawPhone.replace(/[\\s\\-()]/g, '');
+      if (!cleanPhone || (!/^(09|\\+639|639)\\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
+        showError('Please enter a valid mobile phone number for alerts (e.g. 09171234567 or +639171234567).');
+        return;
+      }
+
+      if (!enteredFarm) {
+        showError('Please enter your farm location or farm name.');
+        return;
+      }
+      if (!enteredEmail || !enteredEmail.includes('@')) {
+        showError('Please enter a valid email address.');
+        return;
+      }
+      if (enteredPass.length < 4) {
+        showError('Password must be at least 4 characters long.');
+        return;
+      }
+      if (enteredPass !== enteredConfirm) {
+        showError('Passwords do not match. Please re-enter your confirm password.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Saving Farm Profile...';
+
+      const payload = {
+        name: enteredName,
+        age: enteredAge,
+        phone: cleanPhone,
+        farmLocation: enteredFarm,
+        farmName: enteredFarm,
+        email: enteredEmail,
+        password: enteredPass,
+        role: 'farmer'
+      };
+
+      try {
+        const res = await fetch('/api/auth/signup.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        resultBox.style.display = 'block';
+
+        if (res.ok && data.success) {
+          resultBox.className = 'success';
+          resultBox.innerHTML = \`<strong>🎉 Profile Created!</strong><br>Welcome, \${data.user.name}. Your farm profile has been registered.<br><br><em>Redirecting to Farmer Portal in 2 seconds...</em>\`;
+          
+          if (data.user) {
+            try {
+              localStorage.setItem('climayield_farmer_user', JSON.stringify(data.user));
+              sessionStorage.setItem('climayield_farmer_user', JSON.stringify(data.user));
+              localStorage.setItem('climayield_farmer_phone', cleanPhone);
+              localStorage.removeItem('climayield_dev_user');
+              sessionStorage.removeItem('climayield_dev_user');
+              localStorage.setItem('climayield_user', JSON.stringify(data.user));
+            } catch (err) {}
+          }
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1800);
+        } else {
+          showError(data.error || 'Could not register farm profile.');
+        }
+      } catch (err) {
+        // Fallback offline / local demo account creation if server unreachable
+        const fallbackUser = {
+          id: Date.now(),
+          name: enteredName,
+          email: enteredEmail,
+          phone: cleanPhone,
+          role: 'farmer',
+          age: enteredAge,
+          profile: {
+            farmName: enteredFarm,
+            location: enteredFarm,
+            phone: cleanPhone
+          }
+        };
+        try {
+          localStorage.setItem('climayield_farmer_user', JSON.stringify(fallbackUser));
+          sessionStorage.setItem('climayield_farmer_user', JSON.stringify(fallbackUser));
+          localStorage.setItem('climayield_farmer_phone', cleanPhone);
+        } catch (e) {}
+
+        resultBox.style.display = 'block';
+        resultBox.className = 'success';
+        resultBox.innerHTML = \`<strong>🎉 Farm Profile Saved!</strong><br>Welcome, \${enteredName}. Your mobile phone (\${cleanPhone}) has been registered for alerts.<br><br><em>Redirecting to Farmer Portal...</em>\`;
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1800);
+      }
+    });
+
+    function showError(msg) {
+      resultBox.style.display = 'block';
+      resultBox.className = 'error';
+      resultBox.innerHTML = \`<strong>⚠️ Notice:</strong> \${msg}\`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '🌾 Register Farm Profile';
+    }
+  </script>
+</body>
+</html>
+`;
+
+const devRegisterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>if(window.location.protocol==='http:'&&window.location.hostname.indexOf('infinityfree.me')!==-1){window.location.replace('https://'+window.location.host+window.location.pathname+window.location.search+window.location.hash);}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Dev Profile — ClimaYield-X</title>
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=3">
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=3">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 32px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    h2 {
+      margin: 0 0 6px 0;
+      color: #38bdf8;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 13px;
+      margin: 0 0 20px 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap input {
+      padding-right: 42px;
+    }
+    .eye-btn {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      opacity: 0.7;
+      color: #94a3b8;
+    }
+    .eye-btn:hover {
+      opacity: 1;
+    }
+    .field-hint {
+      display: block;
+      margin-top: 5px;
+      font-size: 11px;
+      color: #38bdf8;
+      opacity: 0.85;
+    }
+    button.submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button.submit-btn:hover {
+      opacity: 0.95;
+    }
+    button.submit-btn:active {
+      transform: scale(0.99);
+    }
+    #resultBox {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      line-height: 1.5;
+    }
+    .success {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid #ef4444;
+      color: #f87171;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #94a3b8;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: #38bdf8;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">💻 Developer &amp; Research Suite</span>
+    <h2>Create Developer Account</h2>
+    <p class="subtitle">Register to access AI models, datasets, and pipeline tools</p>
+    
+    <form id="devRegisterForm">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="name" placeholder="Alex Chen" required />
+        </div>
+
+        <div class="form-group">
+          <label>Age *</label>
+          <input type="number" id="age" value="26" min="18" max="99" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Mobile Phone Number *</label>
+        <input type="tel" id="phone" placeholder="09171234567 or +639171234567" maxlength="20" required />
+        <small class="field-hint">📱 For Pocket Alert mobile notifications & security OTPs</small>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" id="email" placeholder="alex@climayield.com" required />
+      </div>
+
+      <div class="form-group">
+        <label>Password *</label>
+        <div class="input-wrap">
+          <input type="password" id="password" placeholder="dev2026" required minlength="4" />
+          <button type="button" class="eye-btn" id="togglePass" title="Show/Hide Password">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password *</label>
+        <div class="input-wrap">
+          <input type="password" id="confirmPassword" placeholder="Re-enter password" required minlength="4" />
+          <button type="button" class="eye-btn" id="toggleConfirm" title="Show/Hide Password">👁️</button>
+        </div>
+      </div>
+      
+      <button type="submit" class="submit-btn" id="submitBtn">💻 Create Dev Account</button>
+    </form>
+
+    <div id="resultBox"></div>
+
+    <a href="login.html" class="back-link">← Back to Developer Login</a>
+  </div>
+
+  <script>
+    const form = document.getElementById('devRegisterForm');
+    const resultBox = document.getElementById('resultBox');
+    const submitBtn = document.getElementById('submitBtn');
+    const passInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+
+    // Show/hide eye toggles
+    document.getElementById('togglePass').addEventListener('click', () => {
+      passInput.type = passInput.type === 'password' ? 'text' : 'password';
+    });
+    document.getElementById('toggleConfirm').addEventListener('click', () => {
+      confirmInput.type = confirmInput.type === 'password' ? 'text' : 'password';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultBox.style.display = 'none';
+
+      const enteredName = document.getElementById('name').value.trim();
+      const enteredAge = parseInt(document.getElementById('age').value, 10);
+      const rawPhone = document.getElementById('phone').value.trim();
+      const enteredEmail = document.getElementById('email').value.trim().toLowerCase();
+      const enteredPass = passInput.value;
+      const enteredConfirm = confirmInput.value;
+
+      // Validate required fields
+      if (!enteredName) {
+        showError('Please enter your full name.');
+        return;
+      }
+      if (isNaN(enteredAge) || enteredAge < 18 || enteredAge > 99) {
+        showError('Age must be 18 or above.');
+        return;
+      }
+
+      // Validate Phone Number
+      const cleanPhone = rawPhone.replace(/[\\s\\-()]/g, '');
+      if (!cleanPhone || (!/^(09|\\+639|639)\\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
+        showError('Please enter a valid mobile phone number for alerts & OTP (e.g. 09171234567 or +639171234567).');
+        return;
+      }
+
+      if (!enteredEmail || !enteredEmail.includes('@')) {
+        showError('Please enter a valid email address.');
+        return;
+      }
+      if (enteredPass.length < 4) {
+        showError('Password must be at least 4 characters long.');
+        return;
+      }
+      if (enteredPass !== enteredConfirm) {
+        showError('Passwords do not match. Please re-enter your confirm password.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Saving Dev Account...';
+
+      const payload = {
+        name: enteredName,
+        age: enteredAge,
+        phone: cleanPhone,
+        email: enteredEmail,
+        password: enteredPass,
+        role: 'dev'
+      };
+
+      try {
+        const res = await fetch('/api/auth/signup.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        resultBox.style.display = 'block';
+
+        if (res.ok && data.success) {
+          resultBox.className = 'success';
+          resultBox.innerHTML = \`<strong>🎉 Dev Account Created!</strong><br>Welcome, \${data.user.name}. Your developer account has been registered.<br><br><em>Redirecting to Dev Dashboard in 2 seconds...</em>\`;
+          
+          if (data.user) {
+            try {
+              localStorage.setItem('climayield_dev_user', JSON.stringify(data.user));
+              sessionStorage.setItem('climayield_dev_user', JSON.stringify(data.user));
+              localStorage.removeItem('climayield_farmer_user');
+              sessionStorage.removeItem('climayield_farmer_user');
+              localStorage.setItem('climayield_user', JSON.stringify(data.user));
+            } catch (err) {}
+          }
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1800);
+        } else {
+          showError(data.error || 'Could not register dev account.');
+        }
+      } catch (err) {
+        // Fallback offline / local demo account creation if server unreachable
+        const fallbackUser = {
+          id: Date.now(),
+          name: enteredName,
+          email: enteredEmail,
+          phone: cleanPhone,
+          role: 'dev',
+          age: enteredAge,
+          profile: {
+            location: 'Quezon City Lab',
+            phone: cleanPhone
+          }
+        };
+        try {
+          localStorage.setItem('climayield_dev_user', JSON.stringify(fallbackUser));
+          sessionStorage.setItem('climayield_dev_user', JSON.stringify(fallbackUser));
+          localStorage.setItem('climayield_user', JSON.stringify(fallbackUser));
+        } catch (e) {}
+
+        resultBox.style.display = 'block';
+        resultBox.className = 'success';
+        resultBox.innerHTML = \`<strong>🎉 Dev Account Saved!</strong><br>Welcome, \${enteredName}. Mobile alerts set for \${cleanPhone}.<br><br><em>Redirecting to Dev Dashboard...</em>\`;
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1800);
+      }
+    });
+
+    function showError(msg) {
+      resultBox.style.display = 'block';
+      resultBox.className = 'error';
+      resultBox.innerHTML = \`<strong>⚠️ Notice:</strong> \${msg}\`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💻 Create Dev Account';
+    }
+  </script>
+</body>
+</html>
+`;
+
+// Write farmer register files
+[
+  'htdocs/farmer/register.html',
+  'farmer/register.html',
+  'Frontend/farmer/register.html',
+  'htdocs/register.html'
+].forEach(p => {
+  fs.writeFileSync(p, farmerRegisterHtml, 'utf8');
+  console.log('Updated farmer register.html:', p);
+});
+
+// Write dev register files
+[
+  'htdocs/dev/register.html',
+  'dev/register.html',
+  'Frontend/dev/register.html',
+  'Frontend/public/register.html'
+].forEach(p => {
+  fs.writeFileSync(p, devRegisterHtml, 'utf8');
+  console.log('Updated dev register.html:', p);
+});
+
+console.log('All register pages written successfully with Mobile Phone and Confirm Password!');
+

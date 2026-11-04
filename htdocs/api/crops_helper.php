@@ -225,7 +225,84 @@ function detectRichCrops(array $rawCropNames): array {
         }
     }
 
-    return array_values($found);
+    // Enrich each vegetable with automatic 6:00 AM agricultural dawn growth tracking
+    $enriched = [];
+    foreach ($found as $crop) {
+        $enriched[] = enrichCropWithAgriculturalGrowth($crop);
+    }
+    return $enriched;
+}
+
+/**
+ * Calculates dynamic vegetable growth day based on the 6:00 AM agricultural dawn cycle.
+ * In Philippine urban/field agriculture, the growth day increments at 6:00 AM.
+ * From 06:00 AM today until 05:59:59 AM tomorrow is Day N.
+ * At exactly 06:00:00 AM tomorrow, it increments to Day N + 1.
+ */
+function enrichCropWithAgriculturalGrowth(array $crop, ?PDO $pdo = null): array {
+    // 1. Determine total maturation days from daysToGrowEn (e.g. "25–30 days" -> 30)
+    $totalDays = 45;
+    if (isset($crop['totalDays']) && is_numeric($crop['totalDays'])) {
+        $totalDays = (int)$crop['totalDays'];
+    } elseif (!empty($crop['daysToGrowEn']) && preg_match('/(\d+)(?:\s*[–\-]\s*(\d+))?/', $crop['daysToGrowEn'], $m)) {
+        $totalDays = !empty($m[2]) ? (int)$m[2] : (int)$m[1];
+    }
+
+    // 2. Agricultural dawn timestamp calculation:
+    // Subtracting 6 hours (21600 seconds) aligns 06:00:00 AM to 00:00:00 of the growth day.
+    $now = time();
+    $currentFarmingDateStr = date('Y-m-d', $now - 21600);
+    $currentFarmingTime = strtotime($currentFarmingDateStr);
+
+    $cropId = $crop['id'] ?? (preg_replace('/[^a-z0-9]+/', '_', strtolower($crop['name'] ?? 'crop')));
+    $anchorKey = 'crop_anchor_' . $cropId;
+    $anchorDateStr = null;
+
+    if ($pdo !== null) {
+        $anchorDateStr = getStateValue($pdo, $anchorKey);
+    }
+    if (empty($anchorDateStr) && !empty($crop['plantingDate'])) {
+        $anchorDateStr = $crop['plantingDate'];
+    }
+
+    // Initialize anchor date if not set, anchored to a realistic mid-development or day 1
+    if (empty($anchorDateStr)) {
+        $progressPct = isset($crop['progressPercent']) ? (int)$crop['progressPercent'] : 45;
+        $initialAge = max(1, (int)round(($progressPct / 100) * $totalDays));
+        // Backtrack anchor date by ($initialAge - 1) days from current farming date
+        $anchorTimestamp = $currentFarmingTime - (($initialAge - 1) * 86400);
+        $anchorDateStr = date('Y-m-d', $anchorTimestamp);
+        if ($pdo !== null) {
+            setStateValue($pdo, $anchorKey, $anchorDateStr);
+        }
+    }
+
+    $anchorTime = strtotime($anchorDateStr);
+    $daysElapsed = max(0, (int)round(($currentFarmingTime - $anchorTime) / 86400));
+    $currentDay = min($totalDays, max(1, 1 + $daysElapsed));
+    $daysRemaining = max(0, $totalDays - $currentDay);
+    $isReady = ($currentDay >= $totalDays);
+
+    $next6AM = strtotime('tomorrow 06:00:00');
+    if ((int)date('H') < 6) {
+        $next6AM = strtotime('today 06:00:00');
+    }
+    $targetHarvestTimestamp = $now + ($daysRemaining * 86400);
+
+    $crop['id'] = $cropId;
+    $crop['totalDays'] = $totalDays;
+    $crop['plantAgeDays'] = $currentDay;
+    $crop['currentGrowthDay'] = $currentDay;
+    $crop['daysRemaining'] = $daysRemaining;
+    $crop['isReady'] = $isReady;
+    $crop['plantingDate'] = $anchorDateStr;
+    $crop['farmingDate'] = $currentFarmingDateStr;
+    $crop['targetHarvestDate'] = date('Y-m-d', $targetHarvestTimestamp);
+    $crop['nextGrowthRollover'] = date('c', $next6AM);
+    $crop['growthDayBadgeEn'] = "Day {$currentDay} of {$totalDays}" . ($isReady ? " (Ready to harvest)" : " ({$daysRemaining} days remaining)");
+    $crop['growthDayBadgeFil'] = "Araw {$currentDay} ng {$totalDays}" . ($isReady ? " (Handa nang anihin)" : " ({$daysRemaining} araw bago anihin)");
+
+    return $crop;
 }
 
 function getDetectedCropsFromDatabase(PDO $pdo): array {
@@ -238,20 +315,36 @@ function getDetectedCropsFromDatabase(PDO $pdo): array {
         $names = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
         $rich = detectRichCrops($names);
         if (!empty($rich)) {
-            setStateValue($pdo, 'detected_crops', $rich);
-            return $rich;
+            // Apply live growth calculations
+            $enriched = [];
+            foreach ($rich as $c) {
+                $enriched[] = enrichCropWithAgriculturalGrowth($c, $pdo);
+            }
+            setStateValue($pdo, 'detected_crops', $enriched);
+            return $enriched;
         }
     }
 
     // 2. Check if crops are stored in ai_model_state
     $savedState = getStateValue($pdo, 'detected_crops');
     if (!empty($savedState)) {
+        $cropsList = [];
         if (is_array($savedState) && count($savedState) > 0) {
-            return $savedState;
+            $cropsList = $savedState;
+        } else {
+            $decoded = json_decode((string)$savedState, true);
+            if (is_array($decoded) && count($decoded) > 0) {
+                $cropsList = $decoded;
+            }
         }
-        $decoded = json_decode((string)$savedState, true);
-        if (is_array($decoded) && count($decoded) > 0) {
-            return $decoded;
+        if (!empty($cropsList)) {
+            $enriched = [];
+            foreach ($cropsList as $c) {
+                if (is_array($c)) {
+                    $enriched[] = enrichCropWithAgriculturalGrowth($c, $pdo);
+                }
+            }
+            return $enriched;
         }
     }
 

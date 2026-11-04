@@ -27,7 +27,11 @@ if ($method === 'GET') {
     if (!is_array($crops)) $crops = [];
 
     $richCrops = detectRichCrops($crops);
-    setStateValue($pdo, 'detected_crops', $richCrops);
+    $enrichedCrops = [];
+    foreach ($richCrops as $c) {
+        $enrichedCrops[] = enrichCropWithAgriculturalGrowth($c, $pdo);
+    }
+    setStateValue($pdo, 'detected_crops', $enrichedCrops);
 
     // Ensure crop_yield_data has at least placeholder rows if Developer uploaded via client parser
     $cCount = (int)$pdo->query("SELECT COUNT(*) FROM crop_yield_data")->fetchColumn();

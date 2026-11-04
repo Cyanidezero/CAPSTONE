@@ -36,7 +36,7 @@ if (!function_exists('sendPhysicalSms')) {
         ];
 
         // Provider 0: Pocket Alert (https://api.pocketalert.app/v1/messages)
-        $pocketToken = defined('POCKETALERT_API_TOKEN') && POCKETALERT_API_TOKEN ? POCKETALERT_API_TOKEN : (getenv('POCKETALERT_API_TOKEN') ?: '5464b9dc-1c5e-4618-8430-35b121984d73');
+        $pocketToken = defined('POCKETALERT_API_TOKEN') && POCKETALERT_API_TOKEN ? POCKETALERT_API_TOKEN : (getenv('POCKETALERT_API_TOKEN') ?: '6e99cb70-1c6a-47c7-9582-fae4ab3c1481');
         if (!empty($pocketToken)) {
             $pocketPayload = json_encode([
                 'title'    => $title ?: 'ClimaYield-X Mobile Alert',

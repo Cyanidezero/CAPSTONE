@@ -2562,7 +2562,9 @@ function Dashboard({
                         </button>
                       </div>
                       <div className="fd-modal-custom-crop-list">
-                        {allCrops.map((c) => (
+                        {allCrops.map((c) => {
+                          const cHarvest = calculateCropHarvestInfo(c, lang);
+                          return (
                           <div key={c.id} className="fd-modal-custom-crop-row">
                             <div className="crop-meta">
                               <span className="crop-emoji">{c.icon}</span>
@@ -2571,7 +2573,9 @@ function Dashboard({
                                   {isFil ? (c.filipinoName || c.name) : (c.name || c.filipinoName)}
                                 </span>
                                 <span className="crop-sub">
-                                  ⏱️ {isFil ? (c.daysToGrowFil || c.daysToGrowEn) : (c.daysToGrowEn || c.daysToGrowFil)} • 🌱 {isFil ? c.stageFil : c.stageEn}
+                                  ⏱️ {isFil 
+                                    ? `Araw ${cHarvest.currentDay} ng ${cHarvest.totalDays} (${cHarvest.isReady ? 'Puwede nang anihin' : `${cHarvest.daysRemaining} araw bago anihin`})` 
+                                    : `Day ${cHarvest.currentDay} of ${cHarvest.totalDays} (${cHarvest.isReady ? 'Ready to harvest' : `${cHarvest.daysRemaining} days remaining`})`} • 🌱 {isFil ? c.stageFil : c.stageEn}
                                 </span>
                               </div>
                             </div>
@@ -2604,7 +2608,7 @@ function Dashboard({
                               </button>
                             </div>
                           </div>
-                        ))}
+                        ); })}
                       </div>
                     </div>
                   )}

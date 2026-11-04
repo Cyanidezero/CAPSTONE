@@ -36,7 +36,7 @@ $ALLOWED_ORIGINS = [
 
 // 3. Real Mobile SMS Gateway Settings (For physical text messages to mobile phones)
 // Supports Pocket Alert, Semaphore (Philippine standard: https://semaphore.co), iTexMo, and PhilSMS.
-if (!defined('POCKETALERT_API_TOKEN')) define('POCKETALERT_API_TOKEN', getenv('POCKETALERT_API_TOKEN') ?: '5464b9dc-1c5e-4618-8430-35b121984d73');
+if (!defined('POCKETALERT_API_TOKEN')) define('POCKETALERT_API_TOKEN', getenv('POCKETALERT_API_TOKEN') ?: '6e99cb70-1c6a-47c7-9582-fae4ab3c1481');
 if (!defined('SEMAPHORE_API_KEY')) define('SEMAPHORE_API_KEY', getenv('SEMAPHORE_API_KEY') ?: '');
 if (!defined('SEMAPHORE_SENDER_NAME')) define('SEMAPHORE_SENDER_NAME', getenv('SEMAPHORE_SENDER_NAME') ?: '');
 if (!defined('ITEXMO_API_CODE')) define('ITEXMO_API_CODE', getenv('ITEXMO_API_CODE') ?: '');

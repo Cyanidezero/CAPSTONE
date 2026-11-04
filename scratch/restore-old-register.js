@@ -1,0 +1,501 @@
+const fs = require('fs');
+
+const farmerRegisterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>if(window.location.protocol==='http:'&&window.location.hostname.indexOf('infinityfree.me')!==-1){window.location.replace('https://'+window.location.host+window.location.pathname+window.location.search+window.location.hash);}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Farm Profile — ClimaYield-X</title>
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=3">
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=3">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #064e3b 0%, #022c22 100%);
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #064e3b;
+      border: 1px solid #047857;
+      border-radius: 14px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    h2 {
+      margin: 0 0 6px 0;
+      color: #34d399;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    p.subtitle {
+      color: #a7f3d0;
+      font-size: 13px;
+      margin: 0 0 20px 0;
+      opacity: 0.9;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #a7f3d0;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #022c22;
+      border: 1px solid #047857;
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #34d399;
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25);
+    }
+    button.submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button.submit-btn:hover {
+      opacity: 0.95;
+    }
+    button.submit-btn:active {
+      transform: scale(0.99);
+    }
+    #resultBox {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      line-height: 1.5;
+    }
+    .success {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #a7f3d0;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: #34d399;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">🌾 Field &amp; Farmer Portal</span>
+    <h2>Register Farm Profile</h2>
+    <p class="subtitle">Join ClimaYield-X for AI harvest predictions and weather advisories</p>
+    
+    <form id="farmerRegisterForm">
+      <div class="form-group">
+        <label>Farmer Name</label>
+        <input type="text" id="name" placeholder="e.g. Juan Dela Cruz" required />
+      </div>
+
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="age" value="35" min="18" max="99" required />
+      </div>
+
+      <div class="form-group">
+        <label>Mobile Phone Number</label>
+        <input type="tel" id="phone" placeholder="e.g. 09171234567" required />
+      </div>
+
+      <div class="form-group">
+        <label>Farm Location / Farm Name</label>
+        <input type="text" id="farmLocation" placeholder="e.g. Green Valley Farm, Nueva Ecija" required />
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="e.g. juan@agri.coop" required />
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="e.g. farm123" required minlength="4" />
+      </div>
+      
+      <button type="submit" class="submit-btn" id="submitBtn">Register Farm Profile</button>
+    </form>
+
+    <div id="resultBox"></div>
+
+    <a href="./login.html" class="back-link">← Back to Farmer Login</a>
+  </div>
+
+  <script>
+    const form = document.getElementById('farmerRegisterForm');
+    const resultBox = document.getElementById('resultBox');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Saving to Database...';
+      resultBox.style.display = 'none';
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        age: parseInt(document.getElementById('age').value, 10),
+        phone: document.getElementById('phone').value.trim(),
+        farmLocation: document.getElementById('farmLocation').value.trim(),
+        farmName: document.getElementById('farmLocation').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        role: 'farmer'
+      };
+
+      try {
+        const res = await fetch('/api/auth/signup.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        resultBox.style.display = 'block';
+
+        if (res.ok && data.success) {
+          resultBox.className = 'success';
+          resultBox.innerHTML = \`<strong>🎉 Profile Created!</strong><br>Welcome, \${data.user.name}. Your farm profile has been registered in the database.<br><br><em>Redirecting to Farmer Dashboard in 2 seconds...</em>\`;
+          
+          if (data.user) {
+            try {
+              localStorage.setItem('climayield_farmer_user', JSON.stringify(data.user));
+              sessionStorage.setItem('climayield_farmer_user', JSON.stringify(data.user));
+              localStorage.removeItem('climayield_dev_user');
+              sessionStorage.removeItem('climayield_dev_user');
+              localStorage.removeItem('climayield_user');
+            } catch (err) {}
+          }
+
+          setTimeout(() => {
+            window.location.href = './index.html';
+          }, 1800);
+        } else {
+          resultBox.className = 'error';
+          resultBox.innerHTML = \`<strong>❌ Registration Failed:</strong> \${data.error || 'Could not register profile.'}\`;
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Register Farm Profile';
+        }
+      } catch (err) {
+        resultBox.style.display = 'block';
+        resultBox.className = 'error';
+        resultBox.innerHTML = \`<strong>❌ Network Error:</strong> Could not connect to API (\${err.message}).\`;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register Farm Profile';
+      }
+    });
+  </script>
+</body>
+</html>
+`;
+
+const devRegisterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>if(window.location.protocol==='http:'&&window.location.hostname.indexOf('infinityfree.me')!==-1){window.location.replace('https://'+window.location.host+window.location.pathname+window.location.search+window.location.hash);}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Dev Profile — ClimaYield-X</title>
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=3">
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=3">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    h2 {
+      margin: 0 0 6px 0;
+      color: #38bdf8;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 13px;
+      margin: 0 0 20px 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+    button.submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button.submit-btn:hover {
+      opacity: 0.95;
+    }
+    button.submit-btn:active {
+      transform: scale(0.99);
+    }
+    #resultBox {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      line-height: 1.5;
+    }
+    .success {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid #ef4444;
+      color: #f87171;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #94a3b8;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">💻 Developer &amp; Research Suite</span>
+    <h2>Create Developer Account</h2>
+    <p class="subtitle">Register to access AI models, datasets, and pipeline tools</p>
+    
+    <form id="devRegisterForm">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="e.g. Alex Chen" required />
+      </div>
+
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="age" value="26" min="18" max="99" required />
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="e.g. alex@climayield.com" required />
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="e.g. dev123" required minlength="4" />
+      </div>
+      
+      <button type="submit" class="submit-btn" id="submitBtn">Create Dev Account</button>
+    </form>
+
+    <div id="resultBox"></div>
+
+    <a href="./login.html" class="back-link">← Back to Developer Login</a>
+  </div>
+
+  <script>
+    const form = document.getElementById('devRegisterForm');
+    const resultBox = document.getElementById('resultBox');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Saving to Database...';
+      resultBox.style.display = 'none';
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        age: parseInt(document.getElementById('age').value, 10),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        role: 'dev'
+      };
+
+      try {
+        const res = await fetch('/api/auth/signup.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        resultBox.style.display = 'block';
+
+        if (res.ok && data.success) {
+          resultBox.className = 'success';
+          resultBox.innerHTML = \`<strong>🎉 Dev Account Created!</strong><br>Welcome, \${data.user.name}. Your developer account has been registered.<br><br><em>Redirecting to Dev Dashboard in 2 seconds...</em>\`;
+          
+          if (data.user) {
+            try {
+              localStorage.setItem('climayield_dev_user', JSON.stringify(data.user));
+              sessionStorage.setItem('climayield_dev_user', JSON.stringify(data.user));
+              localStorage.removeItem('climayield_farmer_user');
+              sessionStorage.removeItem('climayield_farmer_user');
+              localStorage.setItem('climayield_user', JSON.stringify(data.user));
+            } catch (err) {}
+          }
+
+          setTimeout(() => {
+            window.location.href = './index.html';
+          }, 1800);
+        } else {
+          resultBox.className = 'error';
+          resultBox.innerHTML = \`<strong>❌ Registration Failed:</strong> \${data.error || 'Could not register dev account.'}\`;
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Dev Account';
+        }
+      } catch (err) {
+        resultBox.style.display = 'block';
+        resultBox.className = 'error';
+        resultBox.innerHTML = \`<strong>❌ Network Error:</strong> Could not connect to API (\${err.message}).\`;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Dev Account';
+      }
+    });
+  </script>
+</body>
+</html>
+`;
+
+// Write farmer register.html
+[
+    'htdocs/farmer/register.html',
+    'farmer/register.html',
+    'Frontend/farmer/register.html',
+    'htdocs/register.html'
+].forEach(p => {
+    fs.writeFileSync(p, farmerRegisterHtml, 'utf8');
+    console.log('Restored old farmer register.html:', p);
+});
+
+// Write dev register.html
+[
+    'htdocs/dev/register.html',
+    'dev/register.html',
+    'Frontend/dev/register.html'
+].forEach(p => {
+    fs.writeFileSync(p, devRegisterHtml, 'utf8');
+    console.log('Restored old dev register.html:', p);
+});
+
+console.log('Done restoring old register.html for farmer and dev sides!');
+
