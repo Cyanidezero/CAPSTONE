@@ -1419,6 +1419,20 @@
 
         // ---- MODAL CONTROLS ----
         function openModal() {
+            // DEV_MODAL_FIELDS_VISIBILITY
+            const farmGroupEl = signupFarm ? signupFarm.closest('.input-group') : null;
+            const phoneGroupEl = signupPhone ? signupPhone.closest('.input-group') : null;
+            if (isDev) {
+                if (farmGroupEl) farmGroupEl.style.display = 'none';
+                if (phoneGroupEl) phoneGroupEl.style.display = 'none';
+                if (signupFarm) signupFarm.required = false;
+                if (signupPhone) signupPhone.required = false;
+            } else {
+                if (farmGroupEl) farmGroupEl.style.display = 'block';
+                if (phoneGroupEl) phoneGroupEl.style.display = 'block';
+                if (signupFarm) signupFarm.required = true;
+                if (signupPhone) signupPhone.required = true;
+            }
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             document.getElementById('signupForm').reset();
@@ -1478,7 +1492,18 @@
             const confirmPass = signupConfirmPass ? signupConfirmPass.value : '';
 
             // Validation
-            if (!name || !age || !farm || !email || !password || !phone || !confirmPass) {
+            // Validation: Farmer requires phone and farm location; Dev requires name, age, email, password, confirmPass
+            if (isDev) {
+                if (!name || !age || !email || !password || !confirmPass) {
+                    alert('⚠️ Please fill in all fields (Full Name, Age, Email, Password, and Confirm Password).');
+                    return;
+                }
+            } else {
+                if (!name || !age || !farm || !email || !password || !phone || !confirmPass) {
+                    alert('⚠️ Please fill in all fields including Mobile Phone Number and Confirm Password.');
+                    return;
+                }
+            }
                 alert('⚠️ Please fill in all fields.');
                 return;
             }
@@ -1490,7 +1515,12 @@
             }
 
             const cleanPhone = phone.replace(/[\s\-()]/g, '');
-            if (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15)) {
+            if (!isDev || cleanPhone) {
+                if (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15)) {
+                    alert('⚠️ Please enter a valid mobile phone number for alerts (e.g. 09171234567 or +639171234567).');
+                    return;
+                }
+            }
                 alert('⚠️ Please enter a valid mobile phone number for alerts (e.g. 09171234567 or +639171234567).');
                 return;
             }
