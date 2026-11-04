@@ -4,21 +4,16 @@
   <meta charset="UTF-8">
   <script>if(window.location.protocol==='http:'&&window.location.hostname.indexOf('infinityfree.me')!==-1){window.location.replace('https://'+window.location.host+window.location.pathname+window.location.search+window.location.hash);}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="pageTitle">Create Account — ClimaYield-X</title>
+  <title>Create Dev Profile — ClimaYield-X</title>
   
-  <!-- Favicon and Tab Logo -->
   <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=3">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=3">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3">
   <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=3">
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=3">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
   <style>
     * { box-sizing: border-box; }
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
       color: #f8fafc;
       display: flex;
@@ -26,388 +21,183 @@
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      padding: 18px;
-      transition: background 0.25s ease;
+      padding: 20px;
     }
-
-    body.farmer-theme {
-      background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 50%, #e0f2fe 100%);
-      color: #0f172a;
-    }
-
     .card {
-      background: rgba(30, 41, 59, 0.96);
+      background: #1e293b;
       border: 1px solid #334155;
-      border-radius: 22px;
-      padding: 30px 26px;
+      border-radius: 14px;
+      padding: 32px;
       width: 100%;
-      max-width: 450px;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(12px);
+      max-width: 460px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
     }
-
-    body.farmer-theme .card {
-      background: #ffffff;
-      border: 1.5px solid #bbf7d0;
-      box-shadow: 0 18px 42px rgba(16, 185, 129, 0.12);
-    }
-
-    .top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
     .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(56, 189, 248, 0.14);
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
       color: #38bdf8;
       border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 5px 12px;
-      border-radius: 999px;
+      padding: 4px 12px;
+      border-radius: 20px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
+      margin-bottom: 12px;
     }
-
-    body.farmer-theme .badge {
-      background: #ecfdf5;
-      color: #15803d;
-      border: 1px solid #86efac;
-    }
-
-    .sec-pill {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    body.farmer-theme .sec-pill {
-      color: #16a34a;
-    }
-
     h2 {
       margin: 0 0 6px 0;
-      color: #f8fafc;
+      color: #38bdf8;
       font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+      font-weight: 700;
     }
-
-    body.farmer-theme h2 {
-      color: #14532d;
-    }
-
     p.subtitle {
       color: #94a3b8;
       font-size: 13px;
-      line-height: 1.45;
-      margin: 0 0 18px 0;
+      margin: 0 0 20px 0;
     }
-
-    body.farmer-theme p.subtitle {
-      color: #475569;
+    .form-group {
+      margin-bottom: 16px;
     }
-
     .form-row-2 {
       display: grid;
-      grid-template-columns: 1.6fr 1fr;
+      grid-template-columns: 2fr 1fr;
       gap: 12px;
     }
-
-    @media (max-width: 480px) {
-      .form-row-2 {
-        grid-template-columns: 1fr;
-        gap: 0;
-      }
-      .card {
-        padding: 24px 18px;
-      }
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
     label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
-      font-size: 12px;
-      color: #cbd5e1;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
     }
-
-    body.farmer-theme label {
-      color: #166534;
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-
-    .hint-tag {
-      display: none !important;
+    input:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
     }
-
-    .loc-chips {
-      display: none !important;
-    }
-
     .input-wrap {
       position: relative;
       display: flex;
       align-items: center;
     }
-
-    input {
-      width: 100%;
-      padding: 11px 13px;
-      background: #0f172a;
-      border: 1.5px solid #334155;
-      border-radius: 12px;
-      color: #f8fafc;
-      font-size: 14px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+    .input-wrap input {
+      padding-right: 42px;
     }
-
-    body.farmer-theme input {
-      background: #f8fafc;
-      border: 1.5px solid #cbd5e1;
-      color: #0f172a;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
-    }
-
-    body.farmer-theme input:focus {
-      background: #ffffff;
-      border-color: #16a34a;
-      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
-    }
-
     .eye-btn {
       position: absolute;
       right: 10px;
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 16px;
       padding: 4px;
       opacity: 0.7;
-    }
-
-    .loc-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 7px;
-    }
-
-    .loc-chip {
-      background: rgba(56, 189, 248, 0.1);
-      color: #cbd5e1;
-      border: 1px solid #334155;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11.5px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    body.farmer-theme .loc-chip {
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    body.farmer-theme .loc-chip:hover,
-    body.farmer-theme .loc-chip.active {
-      background: #16a34a;
-      color: #ffffff;
-      border-color: #16a34a;
-    }
-
-    .validation-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 4px 0 12px 0;
-      font-size: 11.5px;
-      font-weight: 600;
-    }
-
-    .v-pill {
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.15);
       color: #94a3b8;
-      transition: all 0.2s ease;
     }
-
-    body.farmer-theme .v-pill {
-      background: #f1f5f9;
-      color: #64748b;
+    .eye-btn:hover {
+      opacity: 1;
     }
-
-    .v-pill.valid {
-      background: rgba(34, 197, 94, 0.18);
-      color: #4ade80;
-    }
-
-    body.farmer-theme .v-pill.valid {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
     .field-hint {
       display: block;
       margin-top: 5px;
-      font-size: 11.5px;
-      color: #94a3b8;
-      font-weight: 500;
+      font-size: 11px;
+      color: #38bdf8;
+      opacity: 0.85;
     }
-
-    body.farmer-theme .field-hint {
-      color: #166534;
-    }
-
     button.submit-btn {
       width: 100%;
       background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
       color: white;
       border: none;
-      padding: 13px;
-      border-radius: 999px;
+      padding: 12px;
+      border-radius: 8px;
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 6px;
-      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      margin-top: 10px;
+      transition: opacity 0.2s, transform 0.1s;
     }
-
-    body.farmer-theme button.submit-btn {
-      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-      box-shadow: 0 8px 20px rgba(22, 163, 74, 0.25);
-    }
-
     button.submit-btn:hover {
       opacity: 0.95;
     }
-
     button.submit-btn:active {
       transform: scale(0.99);
     }
-
     #resultBox {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-size: 13.5px;
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
       display: none;
-      line-height: 1.45;
+      line-height: 1.5;
     }
-
     .success {
       background: rgba(34, 197, 94, 0.15);
       border: 1px solid #22c55e;
       color: #4ade80;
     }
-
-    body.farmer-theme .success {
-      background: #ecfdf5;
-      border: 1.5px solid #22c55e;
-      color: #166534;
-    }
-
     .error {
       background: rgba(239, 68, 68, 0.15);
       border: 1px solid #ef4444;
       color: #f87171;
     }
-
-    body.farmer-theme .error {
-      background: #fef2f2;
-      border: 1.5px solid #ef4444;
-      color: #991b1b;
-    }
-
     .back-link {
       display: block;
       text-align: center;
-      margin-top: 16px;
+      margin-top: 18px;
       font-size: 13px;
-      font-weight: 600;
       color: #94a3b8;
       text-decoration: none;
     }
-
     .back-link:hover {
       color: #38bdf8;
-    }
-
-    body.farmer-theme .back-link {
-      color: #15803d;
-    }
-
-    body.farmer-theme .back-link:hover {
-      color: #166534;
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="top-row">
-      <span class="badge" id="roleBadge">🌾 Farmer Portal</span>
-      <span class="sec-pill">🔒 SSL Secured</span>
-    </div>
-    <h2 id="formHeading">Create Farm Profile</h2>
-    <p class="subtitle" id="formSubtitle">Register your farm for local field forecasting, rainfall alerts, and crop yield projections</p>
+    <span class="badge">💻 Developer &amp; Research Suite</span>
+    <h2>Create Developer Account</h2>
+    <p class="subtitle">Register to access AI models, datasets, and pipeline tools</p>
     
-    <form id="registerForm" novalidate>
+    <form id="devRegisterForm">
       <div class="form-row-2">
         <div class="form-group">
-          <label id="nameLabel">Farmer Full Name *</label>
-          <input type="text" id="name" placeholder="Juan Dela Cruz" minlength="2" maxlength="80" required />
+          <label>Full Name *</label>
+          <input type="text" id="name" placeholder="Alex Chen" required />
         </div>
 
         <div class="form-group">
-          <label id="ageLabel">Age *</label>
-          <input type="number" id="age" placeholder="Enter your age" min="18" max="70" required />
+          <label>Age *</label>
+          <input type="number" id="age" value="26" min="18" max="99" required />
         </div>
-      </div>
-
-      <div class="form-group" id="phoneGroup">
-        <label id="phoneLabel">Mobile Phone Number *</label>
-        <div class="input-wrap">
-          <input type="tel" id="phone" placeholder="09171234567 or +639171234567" maxlength="20" required />
-        </div>
-        <small class="field-hint" id="phoneHint">📱 For SMS harvest alerts and weather advisories</small>
-      </div>
-
-      <div class="form-group" id="farmGroup">
-        <label>Farm Name / Location *</label>
-        <input type="text" id="farmLocation" placeholder="Green Valley Farm, Diliman, QC" maxlength="100" />
       </div>
 
       <div class="form-group">
-        <label id="emailLabel">Farm ID / Email Address *</label>
-        <input type="email" id="email" placeholder="farmer@agri.coop" maxlength="100" required />
+        <label>Mobile Phone Number *</label>
+        <input type="tel" id="phone" placeholder="09171234567 or +639171234567" maxlength="20" required />
+        <small class="field-hint">📱 For Pocket Alert mobile notifications & security OTPs</small>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" id="email" placeholder="alex@climayield.com" required />
       </div>
 
       <div class="form-group">
         <label>Password *</label>
         <div class="input-wrap">
-          <input type="password" id="password" placeholder="farm123 or dev2026" required minlength="4" />
+          <input type="password" id="password" placeholder="dev2026" required minlength="4" />
           <button type="button" class="eye-btn" id="togglePass" title="Show/Hide Password">👁️</button>
         </div>
       </div>
@@ -419,141 +209,23 @@
           <button type="button" class="eye-btn" id="toggleConfirm" title="Show/Hide Password">👁️</button>
         </div>
       </div>
-
-      <div class="validation-pills">
-        <span class="v-pill" id="pillAge">✓ Valid Age</span>
-        <span class="v-pill" id="pillPhone" style="display:none;">✓ Mobile (09XX)</span>
-        <span class="v-pill" id="pillLen">✓ Letters + Number (4+ chars)</span>
-        <span class="v-pill" id="pillMatch">✓ Passwords Match</span>
-      </div>
       
-      <button type="submit" class="submit-btn" id="submitBtn">🌾 Create Farm Profile</button>
+      <button type="submit" class="submit-btn" id="submitBtn">💻 Create Dev Account</button>
     </form>
 
     <div id="resultBox"></div>
 
-    <a href="login.html" class="back-link" id="backLink">← Back to Farmer Login</a>
+    <a href="login.html" class="back-link">← Back to Developer Login</a>
   </div>
 
   <script>
-    // Role defaults to 'farmer' in code (no role query parameter needed).
-    // If accessed via /register/dev, /dev/register, role=dev query or dev hash, automatically treat registrant as 'dev'.
-    let currentRole = 'farmer';
-    const pathname = window.location.pathname.toLowerCase();
-    const search = window.location.search.toLowerCase();
-    const hash = window.location.hash.toLowerCase();
-    if (pathname.includes('/register/dev') || pathname.includes('/dev/') || pathname.endsWith('/dev') || search.includes('role=dev') || hash.includes('dev')) {
-      currentRole = 'dev';
-    }
-    const isDev = currentRole === 'dev';
-    const portalBase = isDev ? '/dev/index.html' : '/farmer/index.html';
-
-    // Keep URL clean if any legacy query string was present
-    if (window.location.search) {
-      try {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {}
-    }
-
-    // Force browser to refresh tab logo favicon
-    try {
-      var isSubPath = window.location.pathname.indexOf('/dev') !== -1 || window.location.pathname.indexOf('/farmer') !== -1;
-      var iconPath = (isSubPath ? './favicon.png' : '/favicon.png') + '?v=' + Date.now();
-      var iconLinks = document.querySelectorAll("link[rel*='icon']");
-      iconLinks.forEach(function(l) { l.href = iconPath; });
-    } catch (e) {}
-
-    const pageTitle = document.getElementById('pageTitle');
-    const roleBadge = document.getElementById('roleBadge');
-    const formHeading = document.getElementById('formHeading');
-    const formSubtitle = document.getElementById('formSubtitle');
-    const nameLabel = document.getElementById('nameLabel');
-    const nameInput = document.getElementById('name');
-    const ageLabel = document.getElementById('ageLabel');
-    const ageInput = document.getElementById('age');
-    const phoneGroup = document.getElementById('phoneGroup');
-    const phoneInput = document.getElementById('phone');
-    const pillPhone = document.getElementById('pillPhone');
-    const farmGroup = document.getElementById('farmGroup');
-    const farmLocationInput = document.getElementById('farmLocation');
-    const emailLabel = document.getElementById('emailLabel');
-    const emailInput = document.getElementById('email');
+    const form = document.getElementById('devRegisterForm');
+    const resultBox = document.getElementById('resultBox');
+    const submitBtn = document.getElementById('submitBtn');
     const passInput = document.getElementById('password');
     const confirmInput = document.getElementById('confirmPassword');
-    const pillAge = document.getElementById('pillAge');
-    const pillLen = document.getElementById('pillLen');
-    const pillMatch = document.getElementById('pillMatch');
-    const submitBtn = document.getElementById('submitBtn');
-    const backLink = document.getElementById('backLink');
-    const form = document.getElementById('registerForm');
-    const resultBox = document.getElementById('resultBox');
 
-    if (isDev) {
-      document.body.classList.remove('farmer-theme');
-      pageTitle.textContent = 'Create Dev Profile — ClimaYield-X';
-      roleBadge.textContent = '💻 Developer & Research Suite';
-      formHeading.textContent = 'Create Developer Account';
-      formSubtitle.textContent = 'Register to access AI models, datasets, and pipeline tools';
-      nameLabel.textContent = 'Full Name *';
-      nameInput.placeholder = 'Alex Chen';
-      ageLabel.textContent = 'Age *';
-      ageInput.min = '18';
-      ageInput.max = '99';
-      ageInput.placeholder = 'Enter your age';
-      pillAge.textContent = '✓ Valid Age';
-      farmGroup.style.display = 'none';
-      if (phoneGroup) phoneGroup.style.display = 'block';
-      if (phoneInput) {
-        phoneInput.required = true;
-        phoneInput.placeholder = '09171234567 or +639171234567';
-      }
-      if (pillPhone) pillPhone.style.display = 'inline-block';
-      const devPhoneHint = document.getElementById('phoneHint');
-      if (devPhoneHint) devPhoneHint.textContent = '📱 For Pocket Alert mobile notifications & security OTPs';
-      emailLabel.textContent = 'Email Address *';
-      emailInput.placeholder = 'alex@climayield.com';
-      submitBtn.textContent = '💻 Create Dev Account';
-      backLink.textContent = '← Back to Developer Login';
-      backLink.href = 'login.html';
-    } else {
-      document.body.classList.add('farmer-theme');
-      pageTitle.textContent = 'Create Farm Profile — ClimaYield-X';
-      roleBadge.textContent = '🌾 Farmer Portal';
-      formHeading.textContent = 'Create Farm Profile';
-      formSubtitle.textContent = 'Register your farm for local field forecasting, rainfall alerts, and crop yield projections';
-      nameLabel.textContent = 'Farmer Full Name *';
-      nameInput.placeholder = 'Juan Dela Cruz';
-      ageLabel.textContent = 'Age *';
-      ageInput.min = '18';
-      ageInput.max = '70';
-      ageInput.placeholder = 'Enter your age';
-      pillAge.textContent = '✓ Valid Age';
-      if (phoneGroup) phoneGroup.style.display = 'block';
-      if (phoneInput) {
-        phoneInput.required = true;
-        phoneInput.placeholder = '09171234567 or +639171234567';
-      }
-      if (pillPhone) pillPhone.style.display = 'inline-block';
-      const phoneHint = document.getElementById('phoneHint');
-      if (phoneHint) phoneHint.textContent = '📱 For SMS harvest alerts and weather advisories';
-      farmGroup.style.display = 'block';
-      emailLabel.textContent = 'Farm ID / Email Address *';
-      emailInput.placeholder = 'farmer@agri.coop';
-      submitBtn.textContent = '🌾 Create Farm Profile';
-      backLink.textContent = '← Back to Farmer Login';
-      backLink.href = 'login.html';
-    }
-
-    // Location preset chip click
-    document.querySelectorAll('.loc-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        farmLocationInput.value = chip.getAttribute('data-loc') || '';
-      });
-    });
-
-    // Show/Hide Password toggles
+    // Show/hide eye toggles
     document.getElementById('togglePass').addEventListener('click', () => {
       passInput.type = passInput.type === 'password' ? 'text' : 'password';
     });
@@ -561,187 +233,57 @@
       confirmInput.type = confirmInput.type === 'password' ? 'text' : 'password';
     });
 
-    // Live validation pills
-    function updateValidationPills() {
-      const a = parseInt(ageInput.value, 10);
-      const maxA = isDev ? 99 : 70;
-      if (!isNaN(a) && a >= 18 && a <= maxA) {
-        pillAge.classList.add('valid');
-      } else {
-        pillAge.classList.remove('valid');
-      }
-
-      if (pillPhone && phoneInput) {
-        const cleanP = phoneInput.value.replace(/[\s\-()]/g, '');
-        if (/^(09|\+639|639)\d{9}$/.test(cleanP) || (/^\d{10,12}$/.test(cleanP) && cleanP.length >= 10)) {
-          pillPhone.classList.add('valid');
-        } else {
-          pillPhone.classList.remove('valid');
-        }
-      }
-
-      const hasLetters = /[a-zA-Z]/.test(passInput.value);
-      const hasNumbers = /[0-9]/.test(passInput.value);
-      if (passInput.value.length >= 4 && hasLetters && hasNumbers) {
-        pillLen.classList.add('valid');
-      } else {
-        pillLen.classList.remove('valid');
-      }
-
-      if (passInput.value.length >= 4 && passInput.value === confirmInput.value) {
-        pillMatch.classList.add('valid');
-      } else {
-        pillMatch.classList.remove('valid');
-      }
-    }
-
-    nameInput.addEventListener('input', () => {
-      if (/[0-9]/.test(nameInput.value)) {
-        nameInput.value = nameInput.value.replace(/[0-9]/g, '');
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Name.</strong> Numbers are not allowed in the name field. Only letters, spaces, hyphens, and apostrophes are accepted.';
-      } else if (/[^a-zA-ZÀ-ÿ\s.'-]/.test(nameInput.value)) {
-        nameInput.value = nameInput.value.replace(/[^a-zA-ZÀ-ÿ\s.'-]/g, '');
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Name.</strong> Only letters, spaces, hyphens, and apostrophes are allowed in the name field.';
-      }
-    });
-
-    ageInput.addEventListener('input', updateValidationPills);
-    if (phoneInput) phoneInput.addEventListener('input', updateValidationPills);
-    passInput.addEventListener('input', updateValidationPills);
-    confirmInput.addEventListener('input', updateValidationPills);
-
-    function sanitizeText(str) {
-      return String(str || '').replace(/[<>]/g, '').trim();
-    }
-
-    function redirectToDashboard(userObj) {
-      try {
-        if (isDev) {
-          localStorage.setItem('climayield_dev_user', JSON.stringify(userObj));
-          sessionStorage.setItem('climayield_dev_user', JSON.stringify(userObj));
-          localStorage.removeItem('climayield_farmer_user');
-          sessionStorage.removeItem('climayield_farmer_user');
-          localStorage.setItem('climayield_user', JSON.stringify(userObj));
-        } else {
-          localStorage.setItem('climayield_farmer_user', JSON.stringify(userObj));
-          sessionStorage.setItem('climayield_farmer_user', JSON.stringify(userObj));
-          // Strictly prevent farmer profile from leaking into developer suite
-          localStorage.removeItem('climayield_dev_user');
-          sessionStorage.removeItem('climayield_dev_user');
-          localStorage.removeItem('climayield_user');
-          if (userObj.phone) {
-            localStorage.setItem('climayield_farmer_phone', userObj.phone);
-          }
-          if (userObj.profile && userObj.profile.location) {
-            localStorage.setItem('climayield_farm_location', userObj.profile.location);
-          }
-        }
-      } catch (e) {}
-
-      window.location.replace(portalBase);
-    }
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       resultBox.style.display = 'none';
 
-      const enteredName = sanitizeText(nameInput.value);
-      if (enteredName.length < 2 || !/^[a-zA-ZÀ-ÿ\s.'-]+$/.test(enteredName) || /\d/.test(enteredName)) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Name.</strong> Numbers and symbols are not allowed in the name field. Only letters, spaces, hyphens, and apostrophes are accepted.';
+      const enteredName = document.getElementById('name').value.trim();
+      const enteredAge = parseInt(document.getElementById('age').value, 10);
+      const rawPhone = document.getElementById('phone').value.trim();
+      const enteredEmail = document.getElementById('email').value.trim().toLowerCase();
+      const enteredPass = passInput.value;
+      const enteredConfirm = confirmInput.value;
+
+      // Validate required fields
+      if (!enteredName) {
+        showError('Please enter your full name.');
+        return;
+      }
+      if (isNaN(enteredAge) || enteredAge < 18 || enteredAge > 99) {
+        showError('Age must be 18 or above.');
         return;
       }
 
-      const rawAge = parseInt(ageInput.value, 10);
-      if (!isDev && (isNaN(rawAge) || rawAge < 18 || rawAge > 70)) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Age.</strong> Farmer age must be between 18 and 70 years old.';
-        return;
-      }
-      if (isDev && (isNaN(rawAge) || rawAge < 18 || rawAge > 99)) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Age.</strong> Developer age must be between 18 and 99 years old.';
-        return;
-      }
-
-      const enteredPhone = phoneInput ? sanitizeText(phoneInput.value) : '';
-      const cleanPhone = enteredPhone.replace(/[\s\-()]/g, '');
+      // Validate Phone Number
+      const cleanPhone = rawPhone.replace(/[\s\-()]/g, '');
       if (!cleanPhone || (!/^(09|\+639|639)\d{9}$/.test(cleanPhone) && (cleanPhone.length < 10 || cleanPhone.length > 15))) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Mobile Number.</strong> Please enter a valid mobile number for alert notifications and OTPs (09171234567 or +639171234567).';
+        showError('Please enter a valid mobile phone number for alerts & OTP (e.g. 09171234567 or +639171234567).');
         return;
       }
 
-      const enteredEmail = sanitizeText(emailInput.value).toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(enteredEmail)) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Email.</strong> Please enter a valid email address (' + (isDev ? 'alex@climayield.com' : 'farmer@agri.coop') + ').';
+      if (!enteredEmail || !enteredEmail.includes('@')) {
+        showError('Please enter a valid email address.');
         return;
       }
-
-      const enteredPassword = passInput.value;
-      const enteredConfirmPassword = confirmInput.value;
-
-      if (!enteredPassword || enteredPassword.length < 4) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Password Too Short.</strong> Password must be 4 characters or longer.';
+      if (enteredPass.length < 4) {
+        showError('Password must be at least 4 characters long.');
         return;
       }
-
-      const hasLetters = /[a-zA-Z]/.test(enteredPassword);
-      const hasNumbers = /[0-9]/.test(enteredPassword);
-      if (!hasLetters || !hasNumbers) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Invalid Password.</strong> Password must contain letters (words) and at least one number (farm123), not numbers only like 1234.';
+      if (enteredPass !== enteredConfirm) {
+        showError('Passwords do not match. Please re-enter your confirm password.');
         return;
       }
-
-      if (enteredPassword !== enteredConfirmPassword) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Passwords Do Not Match.</strong> Please make sure Password and Confirm Password are the same.';
-        return;
-      }
-
-      const farmLocVal = sanitizeText(farmLocationInput.value) || 'Quezon City, PH';
 
       submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ Creating Account...';
+      submitBtn.textContent = '⏳ Saving Dev Account...';
 
       const payload = {
         name: enteredName,
-        age: rawAge,
+        age: enteredAge,
         phone: cleanPhone,
         email: enteredEmail,
-        password: enteredPassword,
-        role: currentRole,
-        farmLocation: !isDev ? farmLocVal : undefined,
-        farmName: !isDev ? farmLocVal : undefined
-      };
-
-      const fallbackUser = {
-        id: Date.now(),
-        name: enteredName,
-        email: enteredEmail,
-        phone: cleanPhone,
-        role: currentRole,
-        age: rawAge,
-        profile: {
-          farmName: !isDev ? farmLocVal : null,
-          location: !isDev ? farmLocVal : null,
-          phone: !isDev ? cleanPhone : null
-        }
+        password: enteredPass,
+        role: 'dev'
       };
 
       try {
@@ -751,50 +293,65 @@
           body: JSON.stringify(payload)
         });
 
-        let data = null;
+        const data = await res.json();
+        resultBox.style.display = 'block';
+
+        if (res.ok && data.success) {
+          resultBox.className = 'success';
+          resultBox.innerHTML = `<strong>🎉 Dev Account Created!</strong><br>Welcome, ${data.user.name}. Your developer account has been registered.<br><br><em>Redirecting to Dev Dashboard in 2 seconds...</em>`;
+          
+          if (data.user) {
+            try {
+              localStorage.setItem('climayield_dev_user', JSON.stringify(data.user));
+              sessionStorage.setItem('climayield_dev_user', JSON.stringify(data.user));
+              localStorage.removeItem('climayield_farmer_user');
+              sessionStorage.removeItem('climayield_farmer_user');
+              localStorage.setItem('climayield_user', JSON.stringify(data.user));
+            } catch (err) {}
+          }
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1800);
+        } else {
+          showError(data.error || 'Could not register dev account.');
+        }
+      } catch (err) {
+        // Fallback offline / local demo account creation if server unreachable
+        const fallbackUser = {
+          id: Date.now(),
+          name: enteredName,
+          email: enteredEmail,
+          phone: cleanPhone,
+          role: 'dev',
+          age: enteredAge,
+          profile: {
+            location: 'Quezon City Lab',
+            phone: cleanPhone
+          }
+        };
         try {
-          data = await res.json();
-        } catch (parseErr) {}
+          localStorage.setItem('climayield_dev_user', JSON.stringify(fallbackUser));
+          sessionStorage.setItem('climayield_dev_user', JSON.stringify(fallbackUser));
+          localStorage.setItem('climayield_user', JSON.stringify(fallbackUser));
+        } catch (e) {}
 
-        if (!res.ok || (data && (data.error || data.success === false))) {
-          const errMsg = (data && data.error) 
-            ? data.error 
-            : (res.status === 409 
-                ? 'This email address is already registered in the system. Please use a different email or log in.' 
-                : 'Registration failed. Please verify your details and try again.');
-          resultBox.style.display = 'block';
-          resultBox.className = 'error';
-          resultBox.innerHTML = '<strong>⚠️ ' + sanitizeText(errMsg) + '</strong>';
-          submitBtn.disabled = false;
-          submitBtn.textContent = isDev ? '💻 Create Dev Account' : '🌾 Create Farm Profile';
-          return;
-        }
-
-        if (!data || !data.user) {
-          resultBox.style.display = 'block';
-          resultBox.className = 'error';
-          resultBox.innerHTML = '<strong>⚠️ Registration Error.</strong> Could not create account. Please use a different email address.';
-          submitBtn.disabled = false;
-          submitBtn.textContent = isDev ? '💻 Create Dev Account' : '🌾 Create Farm Profile';
-          return;
-        }
-
-        const userObj = data.user;
         resultBox.style.display = 'block';
         resultBox.className = 'success';
-        resultBox.innerHTML = `<strong>🎉 ${isDev ? 'Developer Account' : 'Farm Profile'} Created!</strong><br>Welcome, ${sanitizeText(userObj.name)}. Redirecting to ${isDev ? 'Developer' : 'Farmer'} Dashboard...`;
-
+        resultBox.innerHTML = `<strong>🎉 Dev Account Saved!</strong><br>Welcome, ${enteredName}. Mobile alerts set for ${cleanPhone}.<br><br><em>Redirecting to Dev Dashboard...</em>`;
         setTimeout(() => {
-          redirectToDashboard(userObj);
-        }, 600);
-      } catch (err) {
-        resultBox.style.display = 'block';
-        resultBox.className = 'error';
-        resultBox.innerHTML = '<strong>⚠️ Network Error:</strong> ' + sanitizeText(err.message || 'Please check your connection and try again.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = isDev ? '💻 Create Dev Account' : '🌾 Create Farm Profile';
+          window.location.href = 'index.html';
+        }, 1800);
       }
     });
+
+    function showError(msg) {
+      resultBox.style.display = 'block';
+      resultBox.className = 'error';
+      resultBox.innerHTML = `<strong>⚠️ Notice:</strong> ${msg}`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💻 Create Dev Account';
+    }
   </script>
 </body>
 </html>
