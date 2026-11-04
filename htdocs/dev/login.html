@@ -30,7 +30,7 @@
             justify-content: flex-end; /* Places login form securely docked on the side */
             padding: 2rem 4vw 2rem 2rem;
             transition: background 0.45s ease, box-shadow 0.45s ease;
-            background: linear-gradient(to right, rgba(10, 25, 12, 0.12) 0%, rgba(10, 25, 12, 0.28) 55%, rgba(10, 25, 12, 0.50) 100%), url('assets/farmer.jpg') no-repeat left 28% fixed;
+            background: linear-gradient(to right, rgba(8, 20, 35, 0.12) 0%, rgba(8, 20, 35, 0.28) 55%, rgba(8, 20, 35, 0.55) 100%), url('assets/developer.jpg') no-repeat left center fixed;
             background-size: cover;
         }
 
@@ -998,7 +998,7 @@
     <div class="login-header">
         <div class="header-top">
             <div class="header-brand">
-                <span id="headerIcon" class="header-icon-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="3"></circle><circle cx="18" cy="17" r="2.4"></circle><path d="M3 8h6v5H3z"></path><path d="M9 11h4l3 3h2.5"></path><path d="M13 8V6h3l2 3"></path><path d="M9 8V6"></path></svg></span>
+                <span id="headerIcon" class="header-icon-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"></rect><path d="M9 9l-2 2 2 2"></path><path d="M15 9l2 2-2 2"></path><path d="M2 20h20"></path></svg></span>
                 <h1 id="headerTitle">ClimaYield-X</h1>
             </div>
             <button type="button" class="btn-peek-bg" id="peekBgBtn" title="Toggle background view" aria-label="Peek background">
@@ -1023,12 +1023,12 @@
     <!-- SINGLE PANEL -->
     <div class="panel" id="panel">
         <div class="panel-title" id="panelTitle">
-            <span id="panelIcon" class="icon-slot farm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="3"></circle><circle cx="18" cy="17" r="2.4"></circle><path d="M3 8h6v5H3z"></path><path d="M9 11h4l3 3h2.5"></path><path d="M13 8V6h3l2 3"></path><path d="M9 8V6"></path></svg></span>
+            <span id="panelIcon" class="icon-slot dev-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"></rect><path d="M9 9l-2 2 2 2"></path><path d="M15 9l2 2-2 2"></path><path d="M2 20h20"></path></svg></span>
             <span id="panelName">DevSide</span>
             <span class="account-badge" id="accountBadge">dev account</span>
         </div>
         <div class="panel-sub" id="panelSub">
-            <svg id="panelSubIcon" class="icon-inline panel-sub-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg> <span id="subText">build, deploy & monitor agri-solutions</span>
+            <svg id="panelSubIcon" class="icon-inline panel-sub-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 13 14 20 7"></polyline><polyline points="14 7 20 7 20 13"></polyline></svg> <span id="subText">build, deploy & monitor agri-solutions</span>
         </div>
 
         <form id="loginForm" onsubmit="handleLogin(event)">
@@ -1049,7 +1049,7 @@
             </div>
 
             <div class="forgot-row">
-                <a href="#" id="forgotLink"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 10C12 6 9 4 5 4c0 4 2 7 6 7z"></path><path d="M12 10c0-4 3-6 7-6 0 4-2 7-6 7z"></path></svg> <span id="forgotText">reset dev token</span></a>
+                <a href="#" id="forgotLink"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M9 9h.01"></path><path d="M15 9h.01"></path><path d="M9 15h6"></path></svg> <span id="forgotText">reset dev token</span></a>
             </div>
 
             <button type="submit" class="btn-login btn-dev" id="loginBtn">
@@ -1069,7 +1069,7 @@
 <div class="modal-overlay" id="signupModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modalTitle"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="3"></circle><circle cx="18" cy="17" r="2.4"></circle><path d="M3 8h6v5H3z"></path><path d="M9 11h4l3 3h2.5"></path><path d="M13 8V6h3l2 3"></path><path d="M9 8V6"></path></svg> Create Farmer Profile</h2>
+            <h2 id="modalTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"></rect><path d="M9 9l-2 2 2 2"></path><path d="M15 9l2 2-2 2"></path><path d="M2 20h20"></path></svg> Create Developer Profile</h2>
             <button class="modal-close" id="modalClose">&times;</button>
         </div>
         <form id="signupForm" onsubmit="handleSignup(event)">
@@ -1700,7 +1700,7 @@
             event.preventDefault();
             const email = emailInput.value.trim();
             const password = passInput.value.trim();
-            const role = isDev ? 'dev' : 'farmer';
+            const role = 'dev';
             const panelNameStr = isDev ? '💻 DevSide' : '🌾 FarmerSide';
 
             if (!email || !password) {
@@ -1740,7 +1740,7 @@
                         }
                     } catch (e) {}
 
-                    const dest = data.user.role === 'dev' ? '/dev/' : '/farmer/';
+                    const dest = '/dev/index.html';
                     window.location.href = dest;
                     return;
                 } else {
@@ -1777,7 +1777,7 @@
                         localStorage.setItem('climayield_farmer_user', fbJson);
                         localStorage.removeItem('climayield_dev_user');
                     }
-                    window.location.href = accRole === 'dev' ? '/dev/' : '/farmer/';
+                    window.location.href = '/dev/index.html';
                     return;
                 }
                 alert(`❌ ${panelNameStr} login failed!\n\nInvalid username or password. Please try again.`);

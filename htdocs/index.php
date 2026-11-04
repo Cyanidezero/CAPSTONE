@@ -173,7 +173,7 @@ if ($wantsJson) {
     </p>
 
     <div class="portals-grid">
-      <a href="/farmer/" class="portal-card farmer">
+      <a href="/farmer/login.html" class="portal-card farmer">
         <div class="portal-icon">🌾</div>
         <div class="portal-title">Farmer Portal</div>
         <div class="portal-desc">
@@ -182,7 +182,7 @@ if ($wantsJson) {
         <span class="portal-btn">Launch Farmer Portal →</span>
       </a>
 
-      <a href="/dev/" class="portal-card dev">
+      <a href="/dev/login.html" class="portal-card dev">
         <div class="portal-icon">💻</div>
         <div class="portal-title">Developer &amp; Research Portal</div>
         <div class="portal-desc">

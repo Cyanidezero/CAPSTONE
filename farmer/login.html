@@ -1740,7 +1740,7 @@
                         }
                     } catch (e) {}
 
-                    const dest = data.user.role === 'dev' ? '/dev/' : '/farmer/';
+                    const dest = '/farmer/index.html';
                     window.location.href = dest;
                     return;
                 } else {
@@ -1777,7 +1777,7 @@
                         localStorage.setItem('climayield_farmer_user', fbJson);
                         localStorage.removeItem('climayield_dev_user');
                     }
-                    window.location.href = accRole === 'dev' ? '/dev/' : '/farmer/';
+                    window.location.href = '/farmer/index.html';
                     return;
                 }
                 alert(`❌ ${panelNameStr} login failed!\n\nInvalid username or password. Please try again.`);

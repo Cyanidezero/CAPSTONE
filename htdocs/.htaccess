@@ -1,11 +1,16 @@
 # ClimaYield-X - Apache .htaccess for InfinityFree
 # Handles CORS preflight headers, asset routing, and REST API rewrites
 
-DirectoryIndex index.php index.html
+DirectoryIndex index.php login.html index.html
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # Auto-redirect .htm typos to .html
+    RewriteRule ^(farmer|dev)/login\.htm$ /$1/login.html [R=301,L]
+    RewriteRule ^login\.htm$ /login.html [R=301,L]
+
 
     # Automatically redirect HTTP to HTTPS on InfinityFree
     RewriteCond %{HTTP_HOST} \.infinityfree\.me$ [NC]
