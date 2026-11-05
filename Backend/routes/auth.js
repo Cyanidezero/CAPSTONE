@@ -317,9 +317,49 @@ function getPhoneVariants(rawPhone) {
     return Array.from(new Set(variants));
 }
 
-// Helper: Send SMS via Infobip API
+// Helper: Send mobile notification via Pocket Alert
 const https = require('https');
+async function sendPocketAlert(phone, message) {
+    const token = process.env.POCKETALERT_API_TOKEN || '6e99cb70-1c6a-47c7-9582-fae4ab3c1481';
+    return new Promise((resolve) => {
+        const payload = JSON.stringify({
+            title: 'ClimaYield-X Security OTP',
+            message: `[To: ${phone}]\n${message}`,
+            priority: 1
+        });
+        const req = https.request({
+            hostname: 'api.pocketalert.app',
+            path: '/v1/messages',
+            method: 'POST',
+            headers: {
+                'Token': token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            timeout: 10000
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve({ sent: true, provider: 'pocketalert' });
+                } else {
+                    resolve({ sent: false, provider: 'pocketalert', error: `HTTP ${res.statusCode}` });
+                }
+            });
+        });
+        req.on('error', (err) => resolve({ sent: false, provider: 'pocketalert', error: err.message }));
+        req.on('timeout', () => { req.destroy(); resolve({ sent: false, provider: 'pocketalert', error: 'Timeout' }); });
+        req.write(payload);
+        req.end();
+    });
+}
+
+// Helper: Send SMS via Infobip API (optional if user configures key)
 async function sendInfobipSms(rawPhone, message) {
+    const apiKey = process.env.INFOBIP_API_KEY || '';
+    if (!apiKey) return { sent: false, provider: 'infobip', error: 'No Infobip API key configured' };
+
     const cleanPhone = String(rawPhone || '').replace(/[\s\-\(\)]/g, '');
     let intlPhone = cleanPhone;
     if (/^\+?63(9\d{9})$/.test(cleanPhone)) {
@@ -332,7 +372,6 @@ async function sendInfobipSms(rawPhone, message) {
         intlPhone = cleanPhone.replace(/^\+/, '');
     }
 
-    const apiKey = process.env.INFOBIP_API_KEY || '08d165ab955ad8f77052004bde267653-c500206b-4324-4f84-bad6-9b184efaff68';
     const baseUrl = process.env.INFOBIP_BASE_URL || 'api.infobip.com';
     const sender = process.env.INFOBIP_SENDER || 'ClimaYield';
 
@@ -471,12 +510,15 @@ router.post('/forgot-password', async (req, res) => {
                 console.warn('[DB insert OTP error]:', err.message);
             }
 
-            // Dispatch SMS via Infobip
+            // Dispatch alert via Pocket Alert / SMS
             const smsText = `[ClimaYield-X] Your 6-digit password reset OTP is ${generatedOtp}. Valid for 15 minutes.`;
             let smsResult = { sent: false };
             if (cleanPhone) {
-                smsResult = await sendInfobipSms(cleanPhone, smsText);
-                console.log(`[Infobip SMS] Dispatched to ${cleanPhone}:`, smsResult);
+                smsResult = await sendPocketAlert(cleanPhone, smsText);
+                if (!smsResult.sent && process.env.INFOBIP_API_KEY) {
+                    smsResult = await sendInfobipSms(cleanPhone, smsText);
+                }
+                console.log(`[Alert SMS] Dispatched to ${cleanPhone}:`, smsResult);
             }
 
             return res.json({

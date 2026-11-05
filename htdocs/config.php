@@ -34,12 +34,13 @@ $ALLOWED_ORIGINS = [
     'http://localhost:3001'
 ];
 
-// 3. Real Mobile SMS Gateway Settings (For physical text messages to mobile phones)
-// Primary Provider: Infobip (https://infobip.com) - Direct carrier delivery to phone Messages app
+// 3. Real Mobile SMS & Alert Gateway Settings (For physical text messages & phone notifications)
+// Primary Provider: Pocket Alert (https://pocketalert.app)
 // Fallback Providers: Semaphore (Philippine standard: https://semaphore.co), iTexMo, and PhilSMS.
-if (!defined('INFOBIP_API_KEY')) define('INFOBIP_API_KEY', getenv('INFOBIP_API_KEY') ?: '08d165ab955ad8f77052004bde267653-c500206b-4324-4f84-bad6-9b184efaff68');
-if (!defined('INFOBIP_BASE_URL')) define('INFOBIP_BASE_URL', getenv('INFOBIP_BASE_URL') ?: 'api.infobip.com');
-if (!defined('INFOBIP_SENDER')) define('INFOBIP_SENDER', getenv('INFOBIP_SENDER') ?: 'ClimaYield');
+if (!defined('POCKETALERT_API_TOKEN')) define('POCKETALERT_API_TOKEN', getenv('POCKETALERT_API_TOKEN') ?: '6e99cb70-1c6a-47c7-9582-fae4ab3c1481');
+if (!defined('INFOBIP_API_KEY')) define('INFOBIP_API_KEY', '');
+if (!defined('INFOBIP_BASE_URL')) define('INFOBIP_BASE_URL', '');
+if (!defined('INFOBIP_SENDER')) define('INFOBIP_SENDER', '');
 if (!defined('SEMAPHORE_API_KEY')) define('SEMAPHORE_API_KEY', getenv('SEMAPHORE_API_KEY') ?: '');
 if (!defined('SEMAPHORE_SENDER_NAME')) define('SEMAPHORE_SENDER_NAME', getenv('SEMAPHORE_SENDER_NAME') ?: '');
 if (!defined('ITEXMO_API_CODE')) define('ITEXMO_API_CODE', getenv('ITEXMO_API_CODE') ?: '');

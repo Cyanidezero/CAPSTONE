@@ -39,9 +39,44 @@ if (!function_exists('sendPhysicalSms')) {
             'error'    => null
         ];
 
-        // Provider 0: Infobip (https://api.infobip.com/sms/3/messages)
-        // Delivers physical SMS directly to the recipient's phone Messages app
-        $infobipKey = defined('INFOBIP_API_KEY') && INFOBIP_API_KEY ? INFOBIP_API_KEY : (getenv('INFOBIP_API_KEY') ?: '08d165ab955ad8f77052004bde267653-c500206b-4324-4f84-bad6-9b184efaff68');
+        // Provider 0: Pocket Alert (https://pocketalert.app)
+        // Delivers push notifications and phone alerts directly to mobile devices
+        $pocketToken = defined('POCKETALERT_API_TOKEN') && POCKETALERT_API_TOKEN ? POCKETALERT_API_TOKEN : (getenv('POCKETALERT_API_TOKEN') ?: '6e99cb70-1c6a-47c7-9582-fae4ab3c1481');
+        if (!empty($pocketToken)) {
+            $pocketPayload = json_encode([
+                'title'    => $title ?: 'ClimaYield-X Mobile Alert',
+                'message'  => (!empty($phNumber) ? "[To: {$phNumber}]\n" : '') . $message,
+                'priority' => 1
+            ]);
+
+            $ch = curl_init('https://api.pocketalert.app/v1/messages');
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Token: ' . $pocketToken,
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $pocketPayload);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $resp = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode >= 200 && $httpCode < 300) {
+                $result['sent'] = true;
+                $result['provider'] = 'pocketalert';
+                $result['response'] = json_decode($resp, true);
+                return $result;
+            } else {
+                $result['error'] = "PocketAlert HTTP {$httpCode}: " . ($curlErr ?: $resp);
+            }
+        }
+
+        // Provider 1: Infobip (https://api.infobip.com/sms/3/messages) - Optional
+        $infobipKey = defined('INFOBIP_API_KEY') && INFOBIP_API_KEY ? INFOBIP_API_KEY : getenv('INFOBIP_API_KEY');
         $infobipBase = defined('INFOBIP_BASE_URL') && INFOBIP_BASE_URL ? INFOBIP_BASE_URL : (getenv('INFOBIP_BASE_URL') ?: 'api.infobip.com');
         $infobipSender = defined('INFOBIP_SENDER') && INFOBIP_SENDER ? INFOBIP_SENDER : (getenv('INFOBIP_SENDER') ?: 'ClimaYield');
 
