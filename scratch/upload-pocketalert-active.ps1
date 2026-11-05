@@ -53,3 +53,4 @@ foreach ($rel in $files) {
 }
 
 Write-Host "Config and SMS gateway uploaded successfully!"
+

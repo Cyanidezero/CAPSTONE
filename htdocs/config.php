@@ -41,6 +41,11 @@ if (!defined('POCKETALERT_API_TOKEN')) define('POCKETALERT_API_TOKEN', getenv('P
 if (!defined('INFOBIP_API_KEY')) define('INFOBIP_API_KEY', '');
 if (!defined('INFOBIP_BASE_URL')) define('INFOBIP_BASE_URL', '');
 if (!defined('INFOBIP_SENDER')) define('INFOBIP_SENDER', '');
+
+// 4. Transactional Email API (Resend.com HTTPS API) - 3,000 Free Emails / Month
+// Compatible with InfinityFree (Sends over HTTPS port 443, never blocked by SMTP firewalls)
+if (!defined('RESEND_API_KEY')) define('RESEND_API_KEY', getenv('RESEND_API_KEY') ?: '');
+if (!defined('RESEND_FROM_EMAIL')) define('RESEND_FROM_EMAIL', getenv('RESEND_FROM_EMAIL') ?: 'ClimaYield-X <onboarding@resend.dev>');
 if (!defined('SEMAPHORE_API_KEY')) define('SEMAPHORE_API_KEY', getenv('SEMAPHORE_API_KEY') ?: '');
 if (!defined('SEMAPHORE_SENDER_NAME')) define('SEMAPHORE_SENDER_NAME', getenv('SEMAPHORE_SENDER_NAME') ?: '');
 if (!defined('ITEXMO_API_CODE')) define('ITEXMO_API_CODE', getenv('ITEXMO_API_CODE') ?: '');

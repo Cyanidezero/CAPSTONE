@@ -86,25 +86,35 @@ export const signup = async (userData) => {
   return res.data;
 };
 
-export const requestPasswordOtp = async (phone, role) => {
-  const res = await api.post('/auth/forgot-password', { action: 'send_otp', phone, role });
+export const requestPasswordOtp = async (params, role) => {
+  const payload = typeof params === 'object' 
+    ? { action: 'send_otp', ...params } 
+    : { action: 'send_otp', phone: params, role };
+  const res = await api.post('/auth/forgot-password', payload);
   return res.data;
 };
 
-export const verifyPasswordOtp = async (phone, otp) => {
-  const res = await api.post('/auth/forgot-password', { action: 'verify_otp', phone, otp });
+export const verifyPasswordOtp = async (identifier, otp) => {
+  const isEmail = String(identifier || '').includes('@');
+  const payload = isEmail
+    ? { action: 'verify_otp', email: identifier, otp }
+    : { action: 'verify_otp', phone: identifier, otp };
+  const res = await api.post('/auth/forgot-password', payload);
   return res.data;
 };
 
 export const resetPasswordWithOtp = async (params) => {
-  const res = await api.post('/auth/forgot-password', {
+  const rawId = String(params.phone || params.email || '').trim();
+  const isEmail = rawId.includes('@');
+  const payload = {
     action: 'reset_password',
-    phone: params.phone,
     otp: params.otp,
     resetToken: params.resetToken,
     newPassword: params.newPassword,
     confirmPassword: params.confirmPassword,
-  });
+    ...(isEmail ? { email: rawId } : { phone: rawId })
+  };
+  const res = await api.post('/auth/forgot-password', payload);
   return res.data;
 };
 

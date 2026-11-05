@@ -355,6 +355,49 @@ async function sendPocketAlert(phone, message) {
     });
 }
 
+// Helper: Send Transactional Email via Resend.com HTTPS API
+async function sendResendEmail(toEmail, subject, htmlContent) {
+    const apiKey = process.env.RESEND_API_KEY || '';
+    return new Promise((resolve) => {
+        const payload = JSON.stringify({
+            from: 'ClimaYield-X <onboarding@resend.dev>',
+            to: [toEmail],
+            subject: subject,
+            html: htmlContent
+        });
+        const req = https.request({
+            hostname: 'api.resend.com',
+            path: '/emails',
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            },
+            timeout: 10000
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve({ sent: true, provider: 'resend', id: parsed.id });
+                    } else {
+                        resolve({ sent: false, provider: 'resend', error: parsed.message || `HTTP ${res.statusCode}` });
+                    }
+                } catch {
+                    resolve({ sent: false, provider: 'resend', error: `HTTP ${res.statusCode}` });
+                }
+            });
+        });
+        req.on('error', err => resolve({ sent: false, provider: 'resend', error: err.message }));
+        req.on('timeout', () => { req.destroy(); resolve({ sent: false, provider: 'resend', error: 'Timeout' }); });
+        req.write(payload);
+        req.end();
+    });
+}
+
 // Helper: Send SMS via Infobip API (optional if user configures key)
 async function sendInfobipSms(rawPhone, message) {
     const apiKey = process.env.INFOBIP_API_KEY || '';
@@ -510,6 +553,26 @@ router.post('/forgot-password', async (req, res) => {
                 console.warn('[DB insert OTP error]:', err.message);
             }
 
+            // Dispatch email via Resend if email is available
+            const targetEmail = normalizedEmail || (userRow && userRow.email ? userRow.email : '');
+            let emailResult = { sent: false };
+            if (targetEmail) {
+                const emailSubject = `ClimaYield-X - Password Reset OTP Code: ${generatedOtp}`;
+                const emailHtml = `
+                    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
+                        <h2 style="color:#15803d;margin-top:0;">🌾 ClimaYield-X Security Verification</h2>
+                        <p style="font-size:15px;color:#1e293b;">Hello <strong>${userRow.name || 'User'}</strong>,</p>
+                        <p style="font-size:14px;color:#334155;">Here is your 6-digit OTP verification code to reset your password:</p>
+                        <div style="text-align:center;margin:20px 0;">
+                            <span style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#166534;background:#ffffff;padding:14px 28px;display:inline-block;border-radius:8px;border:2px solid #86efac;">${generatedOtp}</span>
+                        </div>
+                        <p style="color:#64748b;font-size:13px;">This code is valid for 15 minutes. If you did not request this, please disregard this email.</p>
+                    </div>
+                `;
+                emailResult = await sendResendEmail(targetEmail, emailSubject, emailHtml);
+                console.log(`[Resend Email] Dispatched to ${targetEmail}:`, emailResult);
+            }
+
             // Dispatch alert via Pocket Alert / SMS
             const smsText = `[ClimaYield-X] Your 6-digit password reset OTP is ${generatedOtp}. Valid for 15 minutes.`;
             let smsResult = { sent: false };
@@ -521,15 +584,17 @@ router.post('/forgot-password', async (req, res) => {
                 console.log(`[Alert SMS] Dispatched to ${cleanPhone}:`, smsResult);
             }
 
+            const deliveredTo = targetEmail || cleanPhone;
+
             return res.json({
                 success: true,
-                message: `A 6-digit verification OTP has been texted to ${cleanPhone || normalizedEmail}.`,
+                message: `A 6-digit verification OTP has been sent to ${deliveredTo}.`,
                 phone: cleanPhone,
-                email: normalizedEmail,
+                email: targetEmail,
                 role: userRole,
                 userName: userRow.name || 'User',
+                email_status: emailResult.sent ? 'delivered' : 'queued',
                 sms_status: smsResult.sent ? 'delivered_to_phone' : 'logged',
-                sms_provider: 'infobip',
                 otp: generatedOtp,
                 expires_in: 900
             });

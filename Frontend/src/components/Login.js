@@ -62,9 +62,17 @@ function Login({ onLoginSuccess }) {
 
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
-    const cleanPhone = forgotPhone.replace(/[\s\-\(\)]/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setForgotError('Please enter a valid mobile phone number (e.g. 09171234567 or +639171234567).');
+    const rawInput = forgotPhone.trim();
+    if (!rawInput) {
+      setForgotError('Please enter your registered email address or mobile phone number.');
+      return;
+    }
+
+    const isEmail = rawInput.includes('@');
+    const cleanPhone = isEmail ? '' : rawInput.replace(/[\s\-\(\)]/g, '');
+
+    if (!isEmail && cleanPhone.length < 10) {
+      setForgotError('Please enter a valid mobile phone number or email address.');
       return;
     }
 
@@ -74,11 +82,18 @@ function Login({ onLoginSuccess }) {
 
     try {
       const activeRole = isFarmerOnly ? 'farmer' : (isDevOnly || isDev ? 'dev' : 'farmer');
-      const res = await requestPasswordOtp(cleanPhone, activeRole);
+      const payload = isEmail
+        ? { action: 'send_otp', email: rawInput.toLowerCase(), role: activeRole }
+        : { action: 'send_otp', phone: cleanPhone, role: activeRole };
+
+      const res = await requestPasswordOtp(payload);
       if (res && (res.success || res.status === 'success')) {
-        const noticeText = `A 6-digit OTP verification code has been texted to ${cleanPhone}. Please check your phone Messages.`;
+        const targetStr = res.email || res.phone || rawInput;
+        const noticeText = isEmail
+          ? `A 6-digit verification OTP has been emailed to ${targetStr}. Please check your Inbox!`
+          : `A 6-digit verification OTP has been sent to ${targetStr}.`;
         setForgotNotice(noticeText);
-        toast.success(`SMS OTP sent to ${cleanPhone}. Check your phone Messages.`);
+        toast.success(noticeText);
         if (res.otp) {
           console.log(`[ClimaYield OTP Debug]: Your 6-digit OTP is ${res.otp}`);
         }
@@ -94,12 +109,12 @@ function Login({ onLoginSuccess }) {
           });
         }, 1000);
       } else {
-        const errorMsg = res?.error || res?.message || 'Failed to text OTP verification code. Please check your phone number.';
+        const errorMsg = res?.error || res?.message || 'Failed to send OTP verification code.';
         setForgotError(errorMsg);
         toast.error(errorMsg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Error texting OTP. Please verify your phone number.';
+      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Error sending OTP.';
       setForgotError(msg);
       toast.error(msg);
     } finally {
@@ -119,12 +134,12 @@ function Login({ onLoginSuccess }) {
     setForgotError('');
 
     try {
-      const cleanPhone = forgotPhone.replace(/[\s\-\(\)]/g, '');
-      const res = await verifyPasswordOtp(cleanPhone, cleanOtp);
+      const rawInput = forgotPhone.trim();
+      const res = await verifyPasswordOtp(rawInput, cleanOtp);
       if (res.success) {
         setResetToken(res.reset_token || '');
         setForgotStep('password');
-        toast.success('Phone and OTP verified successfully!');
+        toast.success('Identity and OTP verified successfully!');
       } else {
         setForgotError(res.error || 'Invalid or expired OTP code.');
       }
@@ -668,8 +683,8 @@ function Login({ onLoginSuccess }) {
                     {forgotStep === 'success' && 'Password Reset Complete'}
                   </h3>
                   <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                    {forgotStep === 'phone' && 'Step 1 of 3: Enter mobile phone number'}
-                    {forgotStep === 'otp' && 'Step 2 of 3: Enter 6-digit SMS OTP code'}
+                    {forgotStep === 'phone' && 'Step 1 of 3: Enter email or phone number'}
+                    {forgotStep === 'otp' && 'Step 2 of 3: Enter 6-digit OTP code'}
                     {forgotStep === 'password' && 'Step 3 of 3: Set your new password'}
                     {forgotStep === 'success' && 'Account credentials updated'}
                   </div>
@@ -723,25 +738,25 @@ function Login({ onLoginSuccess }) {
               </div>
             )}
 
-            {/* Step 1: Phone Verification Prompt */}
+            {/* Step 1: Email or Phone Verification Prompt */}
             {forgotStep === 'phone' && (
               <form onSubmit={handleSendOtp}>
                 <p style={{ fontSize: '0.92rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-                  Please enter your mobile phone number. We will immediately text the 6-digit OTP verification code directly to your phone.
+                  Please enter your registered email address or mobile phone number. We will send a 6-digit OTP verification code to reset your password.
                 </p>
 
                 <div className="login-input-group">
-                  <label>Registered Mobile Phone Number *</label>
+                  <label>Registered Email or Mobile Phone Number *</label>
                   <div className="login-input-wrapper">
-                    <span className="login-input-icon">📱</span>
+                    <span className="login-input-icon">📩</span>
                     <input
-                      type="tel"
+                      type="text"
                       value={forgotPhone}
                       onChange={(e) => {
                         setForgotPhone(e.target.value);
                         if (forgotError) setForgotError('');
                       }}
-                      placeholder="09171234567 or +639171234567"
+                      placeholder="e.g. rhenzmatipo4@gmail.com or 09171234567"
                       required
                       autoFocus
                     />
@@ -764,7 +779,7 @@ function Login({ onLoginSuccess }) {
                     style={{ flex: 1.4 }}
                     disabled={forgotLoading}
                   >
-                    {forgotLoading ? 'Texting OTP...' : 'Text OTP to Phone 📲'}
+                    {forgotLoading ? 'Sending OTP...' : 'Send Verification OTP 📩'}
                   </button>
                 </div>
               </form>

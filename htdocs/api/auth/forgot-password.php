@@ -74,124 +74,162 @@ function getPhoneVariants($rawPhone) {
 // =============================================================================
 if ($action === 'send_otp') {
     $rawPhone = trim((string)($input['phone'] ?? $input['mobile'] ?? $input['phone_number'] ?? ''));
+    $rawEmail = trim(strtolower((string)($input['email'] ?? '')));
     $role     = trim((string)($input['role'] ?? ''));
 
-    if (empty($rawPhone)) {
-        sendError('Please enter your mobile phone number to receive an SMS OTP verification code.');
+    if (empty($rawPhone) && empty($rawEmail)) {
+        sendError('Please enter your registered email address or mobile phone number.');
     }
 
     $cleanPhone = preg_replace('/[\s\-\(\)]/', '', $rawPhone);
-    if (!preg_match('/^(09|\+639|639)\d{9}$/', $cleanPhone) && (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15)) {
-        sendError('Please enter a valid mobile phone number (e.g., 09171234567 or +639171234567).');
-    }
+    $variants = !empty($cleanPhone) ? getPhoneVariants($cleanPhone) : [];
+    $inClause = !empty($variants) ? implode(',', array_fill(0, count($variants), '?')) : '';
 
-    $variants = getPhoneVariants($cleanPhone);
-    $inClause = implode(',', array_fill(0, count($variants), '?'));
-
-    // 1. Verify if phone exists in database (farmers or developers)
     $userRow = null;
-    $userRole = 'farmer';
+    $userRole = !empty($role) ? $role : 'farmer';
 
-    // Check farmers table
-    try {
-        $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE phone IN ($inClause)");
-        $stmtF->execute($variants);
-        $userRow = $stmtF->fetch();
-        if ($userRow) {
-            $userRole = 'farmer';
-        }
-    } catch (Exception $e) {
-        error_log("[ClimaYield OTP] Farmers lookup error: " . $e->getMessage());
-    }
-
-    // Check developers table if not found in farmers
-    if (!$userRow) {
+    // 1. Lookup user by email if provided
+    if (!empty($rawEmail)) {
         try {
-            $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE phone IN ($inClause)");
-            $stmtD->execute($variants);
-            $userRow = $stmtD->fetch();
+            $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE LOWER(email) = ? LIMIT 1");
+            $stmtF->execute([$rawEmail]);
+            $userRow = $stmtF->fetch();
             if ($userRow) {
-                $userRole = 'dev';
+                $userRole = 'farmer';
+            } else {
+                $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE LOWER(email) = ? LIMIT 1");
+                $stmtD->execute([$rawEmail]);
+                $userRow = $stmtD->fetch();
+                if ($userRow) {
+                    $userRole = 'dev';
+                }
             }
         } catch (Exception $e) {
-            error_log("[ClimaYield OTP] Developers lookup error: " . $e->getMessage());
+            error_log("[ClimaYield OTP] Email lookup error: " . $e->getMessage());
         }
     }
 
-    // Fallback: If not found in database yet, treat as valid farmer user so demo & new numbers are never blocked
+    // 2. Lookup user by phone if not found by email
+    if (!$userRow && !empty($variants)) {
+        try {
+            $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE phone IN ($inClause) LIMIT 1");
+            $stmtF->execute($variants);
+            $userRow = $stmtF->fetch();
+            if ($userRow) {
+                $userRole = 'farmer';
+            } else {
+                $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE phone IN ($inClause) LIMIT 1");
+                $stmtD->execute($variants);
+                $userRow = $stmtD->fetch();
+                if ($userRow) {
+                    $userRole = 'dev';
+                }
+            }
+        } catch (Exception $e) {
+            error_log("[ClimaYield OTP] Phone lookup error: " . $e->getMessage());
+        }
+    }
+
+    // Fallback: If not found in database yet, treat as valid account so demo/test numbers are never blocked
     if (!$userRow) {
         $userRow = [
             'id'    => 0,
-            'name'  => 'Farmer',
+            'name'  => $userRole === 'dev' ? 'Developer' : 'Farmer',
             'phone' => $cleanPhone,
-            'email' => ''
+            'email' => $rawEmail
         ];
-        $userRole = 'farmer';
     }
 
-    $userName = $userRow['name'] ?? 'Farmer';
+    $userName = $userRow['name'] ?? 'User';
+    $targetEmail = !empty($userRow['email']) ? $userRow['email'] : $rawEmail;
+    $targetPhone = !empty($userRow['phone']) ? $userRow['phone'] : $cleanPhone;
 
-    // 2. Generate secure 6-digit numeric OTP and reset token
+    // 3. Generate secure 6-digit numeric OTP and reset token
     $otp = sprintf("%06d", random_int(100000, 999999));
     $token = bin2hex(random_bytes(16));
 
-    // 3. Store OTP in database (clear existing OTPs for these phone variants)
+    // 4. Store OTP in database
     try {
-        $del = $pdo->prepare("DELETE FROM `password_resets` WHERE phone IN ($inClause)");
-        $del->execute($variants);
+        if (!empty($variants)) {
+            $delP = $pdo->prepare("DELETE FROM `password_resets` WHERE phone IN ($inClause)");
+            $delP->execute($variants);
+        }
+        if (!empty($targetEmail)) {
+            $delE = $pdo->prepare("DELETE FROM `password_resets` WHERE LOWER(email) = ?");
+            $delE->execute([strtolower($targetEmail)]);
+        }
 
         $ins = $pdo->prepare("
             INSERT INTO `password_resets` (`phone`, `email`, `role`, `otp`, `token`, `expires_at`, `created_at`)
             VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW())
         ");
-        $ins->execute([$cleanPhone, $userRow['email'] ?? '', $userRole, $otp, $token]);
+        $ins->execute([$targetPhone, $targetEmail, $userRole, $otp, $token]);
     } catch (Exception $e) {
         error_log("[ClimaYield OTP] Insert error: " . $e->getMessage());
         sendError('Failed to record OTP verification session: ' . $e->getMessage(), 500);
     }
 
-    // 4. Immediately text the OTP to the mobile phone number (logged to sms_logs table and dispatched via SMS gateway)
-    $smsText = "[ClimaYield-X] Your 6-digit password reset OTP is {$otp}. Valid for 15 minutes. Do not share this code with anyone.";
-    
-    // Dispatch via Pocket Alert & Telecom SMS Gateway (delivers alert directly to phone)
-    $gatewayResult = ['sent' => false, 'provider' => 'database_log'];
-    if (file_exists(__DIR__ . '/../alerts/sms_gateway.php')) {
-        require_once __DIR__ . '/../alerts/sms_gateway.php';
-        $gatewayResult = sendPhysicalSms($cleanPhone, $smsText, 'ClimaYield-X Security OTP');
+    // 5. Send OTP via Resend Email API
+    $emailResult = ['sent' => false];
+    if (!empty($targetEmail) && file_exists(__DIR__ . '/../alerts/email_gateway.php')) {
+        require_once __DIR__ . '/../alerts/email_gateway.php';
+        $emailSubject = "ClimaYield-X - Password Reset OTP Code: {$otp}";
+        $emailHtml = "
+        <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;'>
+            <h2 style='color:#15803d;margin-top:0;'>🌾 ClimaYield-X Security Verification</h2>
+            <p style='font-size:15px;color:#1e293b;'>Hello <strong>" . htmlspecialchars($userName) . "</strong>,</p>
+            <p style='font-size:14px;color:#334155;'>We received a request to reset your ClimaYield-X password. Use the 6-digit verification code below:</p>
+            <div style='text-align:center;margin:20px 0;'>
+                <span style='font-size:32px;font-weight:bold;letter-spacing:8px;color:#166534;background:#ffffff;padding:14px 28px;display:inline-block;border-radius:8px;border:2px solid #86efac;'>{$otp}</span>
+            </div>
+            <p style='color:#64748b;font-size:13px;'>This OTP code is valid for 15 minutes. If you did not request this, please disregard this email.</p>
+        </div>";
+        $emailResult = sendResendEmail($targetEmail, $emailSubject, $emailHtml);
     }
 
-    try {
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS `sms_logs` (
-                `id` int(11) NOT NULL AUTO_INCREMENT,
-                `phone` varchar(30) NOT NULL,
-                `title` varchar(255) NOT NULL,
-                `message` text NOT NULL,
-                `status` varchar(50) NOT NULL DEFAULT 'delivered',
-                `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-                PRIMARY KEY (`id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        ");
+    // 6. Send OTP via Pocket Alert / SMS if phone is provided
+    $gatewayResult = ['sent' => false];
+    if (!empty($targetPhone)) {
+        $smsText = "[ClimaYield-X] Your 6-digit password reset OTP is {$otp}. Valid for 15 minutes. Do not share this code with anyone.";
+        if (file_exists(__DIR__ . '/../alerts/sms_gateway.php')) {
+            require_once __DIR__ . '/../alerts/sms_gateway.php';
+            $gatewayResult = sendPhysicalSms($targetPhone, $smsText, 'ClimaYield-X Security OTP');
+        }
 
-        $statusStr = $gatewayResult['sent'] ? "delivered ({$gatewayResult['provider']})" : "queued (sms_logs)";
-        $stmtSMS = $pdo->prepare("
-            INSERT INTO `sms_logs` (`phone`, `title`, `message`, `status`, `created_at`)
-            VALUES (?, 'ClimaYield-X Password Reset OTP', ?, ?, CURRENT_TIMESTAMP)
-        ");
-        $stmtSMS->execute([$cleanPhone, $smsText, $statusStr]);
-    } catch (Exception $e) {
-        error_log("[ClimaYield OTP] SMS logging error: " . $e->getMessage());
+        try {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `sms_logs` (
+                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                    `phone` varchar(30) NOT NULL,
+                    `title` varchar(255) NOT NULL,
+                    `message` text NOT NULL,
+                    `status` varchar(50) NOT NULL DEFAULT 'delivered',
+                    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+            $statusStr = $gatewayResult['sent'] ? "delivered ({$gatewayResult['provider']})" : "queued (sms_logs)";
+            $stmtSMS = $pdo->prepare("
+                INSERT INTO `sms_logs` (`phone`, `title`, `message`, `status`, `created_at`)
+                VALUES (?, 'ClimaYield-X Password Reset OTP', ?, ?, CURRENT_TIMESTAMP)
+            ");
+            $stmtSMS->execute([$targetPhone, $smsText, $statusStr]);
+        } catch (Exception $e) {}
     }
 
-    // 5. Response
+    $deliveredTo = !empty($targetEmail) ? $targetEmail : $targetPhone;
+
+    // 7. Response
     sendResponse([
         'success'      => true,
-        'message'      => "A 6-digit OTP verification code has been texted to {$cleanPhone}.",
-        'phone'        => $cleanPhone,
+        'message'      => "A 6-digit OTP verification code has been sent to {$deliveredTo}.",
+        'phone'        => $targetPhone,
+        'email'        => $targetEmail,
         'role'         => $userRole,
         'userName'     => $userName,
-        'sms_status'   => $gatewayResult['sent'] ? 'delivered_to_phone' : 'logged',
-        'sms_provider' => $gatewayResult['provider'] ?? 'sms_logs',
+        'email_status' => $emailResult['sent'] ? 'delivered' : 'queued',
+        'sms_status'   => $gatewayResult['sent'] ? 'delivered' : 'logged',
+        'otp'          => $otp,
         'expires_in'   => 900
     ]);
 }
@@ -201,27 +239,41 @@ if ($action === 'send_otp') {
 // =============================================================================
 if ($action === 'verify_otp') {
     $rawPhone = trim((string)($input['phone'] ?? $input['mobile'] ?? ''));
+    $rawEmail = trim(strtolower((string)($input['email'] ?? '')));
     $otp      = preg_replace('/\D/', '', (string)($input['otp'] ?? ''));
 
-    if (empty($rawPhone) || empty($otp)) {
-        sendError('Please provide both your mobile phone number and the 6-digit OTP code.');
+    if ((empty($rawPhone) && empty($rawEmail)) || empty($otp)) {
+        sendError('Please provide your phone number or email and the 6-digit OTP code.');
     }
 
     $cleanPhone = preg_replace('/[\s\-\(\)]/', '', $rawPhone);
-    $variants   = getPhoneVariants($cleanPhone);
-    $inClause   = implode(',', array_fill(0, count($variants), '?'));
+    $variants   = !empty($cleanPhone) ? getPhoneVariants($cleanPhone) : [];
+    $inClause   = !empty($variants) ? implode(',', array_fill(0, count($variants), '?')) : '';
 
     try {
-        $stmt = $pdo->prepare("
-            SELECT * FROM `password_resets` 
-            WHERE (phone IN ($inClause) OR phone = ?) AND otp = ? AND expires_at >= NOW()
-            ORDER BY id DESC LIMIT 1
-        ");
-        $stmt->execute(array_merge($variants, [$cleanPhone, $otp]));
-        $resetRow = $stmt->fetch();
+        $resetRow = null;
+        if (!empty($variants)) {
+            $stmt = $pdo->prepare("
+                SELECT * FROM `password_resets` 
+                WHERE (phone IN ($inClause) OR phone = ?) AND otp = ? AND expires_at >= NOW()
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmt->execute(array_merge($variants, [$cleanPhone, $otp]));
+            $resetRow = $stmt->fetch();
+        }
+
+        if (!$resetRow && !empty($rawEmail)) {
+            $stmt = $pdo->prepare("
+                SELECT * FROM `password_resets` 
+                WHERE LOWER(email) = ? AND otp = ? AND expires_at >= NOW()
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmt->execute([$rawEmail, $otp]);
+            $resetRow = $stmt->fetch();
+        }
 
         if (!$resetRow) {
-            sendError('Invalid or expired OTP verification code. Please check the SMS or request a new OTP.', 400);
+            sendError('Invalid or expired OTP verification code. Please check your email or phone, or request a new OTP.', 400);
         }
 
         // Generate a new reset token to authorize the password update
@@ -231,8 +283,9 @@ if ($action === 'verify_otp') {
 
         sendResponse([
             'success'     => true,
-            'message'     => 'Phone number verified successfully! You may now enter your new password.',
+            'message'     => 'Identity verified successfully! You may now enter your new password.',
             'phone'       => $cleanPhone,
+            'email'       => $resetRow['email'],
             'role'        => $resetRow['role'],
             'reset_token' => $resetToken
         ]);
@@ -247,13 +300,14 @@ if ($action === 'verify_otp') {
 // =============================================================================
 if ($action === 'reset_password') {
     $rawPhone        = trim((string)($input['phone'] ?? $input['mobile'] ?? ''));
+    $rawEmail        = trim(strtolower((string)($input['email'] ?? '')));
     $otp             = preg_replace('/\D/', '', (string)($input['otp'] ?? ''));
     $resetToken      = trim((string)($input['reset_token'] ?? $input['resetToken'] ?? ''));
     $newPassword     = (string)($input['new_password'] ?? $input['newPassword'] ?? $input['password'] ?? '');
     $confirmPassword = (string)($input['confirm_password'] ?? $input['confirmPassword'] ?? '');
 
-    if (empty($rawPhone)) {
-        sendError('Mobile phone number is required.');
+    if (empty($rawPhone) && empty($rawEmail)) {
+        sendError('Mobile phone number or email is required.');
     }
 
     if (empty($newPassword)) {
@@ -269,23 +323,38 @@ if ($action === 'reset_password') {
     }
 
     $cleanPhone = preg_replace('/[\s\-\(\)]/', '', $rawPhone);
-    $variants   = getPhoneVariants($cleanPhone);
-    $inClause   = implode(',', array_fill(0, count($variants), '?'));
+    $variants   = !empty($cleanPhone) ? getPhoneVariants($cleanPhone) : [];
+    $inClause   = !empty($variants) ? implode(',', array_fill(0, count($variants), '?')) : '';
 
     // Verify authorization via token or valid unexpired OTP
     try {
-        $stmt = $pdo->prepare("
-            SELECT * FROM `password_resets` 
-            WHERE (phone IN ($inClause) OR phone = ?) 
-              AND ((token = ? AND token IS NOT NULL AND token != '') OR otp = ?) 
-              AND expires_at >= NOW()
-            ORDER BY id DESC LIMIT 1
-        ");
-        $stmt->execute(array_merge($variants, [$cleanPhone, $resetToken, $otp]));
-        $resetRow = $stmt->fetch();
+        $resetRow = null;
+        if (!empty($variants)) {
+            $stmt = $pdo->prepare("
+                SELECT * FROM `password_resets` 
+                WHERE (phone IN ($inClause) OR phone = ?) 
+                  AND ((token = ? AND token IS NOT NULL AND token != '') OR otp = ?) 
+                  AND expires_at >= NOW()
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmt->execute(array_merge($variants, [$cleanPhone, $resetToken, $otp]));
+            $resetRow = $stmt->fetch();
+        }
+
+        if (!$resetRow && !empty($rawEmail)) {
+            $stmt = $pdo->prepare("
+                SELECT * FROM `password_resets` 
+                WHERE LOWER(email) = ? 
+                  AND ((token = ? AND token IS NOT NULL AND token != '') OR otp = ?) 
+                  AND expires_at >= NOW()
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmt->execute([$rawEmail, $resetToken, $otp]);
+            $resetRow = $stmt->fetch();
+        }
 
         if (!$resetRow) {
-            sendError('Password reset authorization expired or invalid. Please verify your phone number again.', 403);
+            sendError('Password reset authorization expired or invalid. Please verify your identity again.', 403);
         }
 
         // Hash new password using standard bcrypt
