@@ -75,9 +75,13 @@ function Login({ onLoginSuccess }) {
     try {
       const activeRole = isFarmerOnly ? 'farmer' : (isDevOnly || isDev ? 'dev' : 'farmer');
       const res = await requestPasswordOtp(cleanPhone, activeRole);
-      if (res.success) {
-        setForgotNotice(`A 6-digit OTP has been sent via SMS to ${cleanPhone}. Please check your mobile Messages.`);
+      if (res && (res.success || res.status === 'success')) {
+        const noticeText = `A 6-digit OTP verification code has been texted to ${cleanPhone}. Please check your phone Messages.`;
+        setForgotNotice(noticeText);
         toast.success(`SMS OTP sent to ${cleanPhone}. Check your phone Messages.`);
+        if (res.otp) {
+          console.log(`[ClimaYield OTP Debug]: Your 6-digit OTP is ${res.otp}`);
+        }
         setForgotStep('otp');
         setResendCooldown(30);
         const timer = setInterval(() => {
@@ -90,10 +94,12 @@ function Login({ onLoginSuccess }) {
           });
         }, 1000);
       } else {
-        setForgotError(res.error || 'Failed to text OTP verification code.');
+        const errorMsg = res?.error || res?.message || 'Failed to text OTP verification code. Please check your phone number.';
+        setForgotError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Error texting OTP. Please verify your phone number.';
+      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Error texting OTP. Please verify your phone number.';
       setForgotError(msg);
       toast.error(msg);
     } finally {

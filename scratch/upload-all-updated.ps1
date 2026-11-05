@@ -1,0 +1,65 @@
+$ftpHost = "ftp://ftpupload.net/htdocs"
+$ftpUser = "if0_43286056"
+$ftpPass = "vWSxrmUFLhwHcO"
+$localRoot = "c:\Users\User\Desktop\Climayield\htdocs"
+
+$cred = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
+
+function Upload-FtpFile($localFile, $remoteUrl) {
+    $retry = 0
+    $success = $false
+    while (-not $success -and $retry -lt 3) {
+        try {
+            $req = [System.Net.FtpWebRequest]::Create($remoteUrl)
+            $req.Credentials = $cred
+            $req.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
+            $req.UseBinary = $true
+            $req.UsePassive = $true
+            $req.KeepAlive = $false
+            $req.Timeout = 30000
+
+            $fileBytes = [System.IO.File]::ReadAllBytes($localFile)
+            $req.ContentLength = $fileBytes.Length
+
+            $stream = $req.GetRequestStream()
+            $stream.Write($fileBytes, 0, $fileBytes.Length)
+            $stream.Close()
+
+            $resp = $req.GetResponse()
+            $resp.Close()
+            $success = $true
+            Write-Host "Uploaded: $localFile -> $remoteUrl"
+        } catch {
+            $retry++
+            Write-Host "Retry $retry for $localFile ($($_.Exception.Message))"
+            Start-Sleep -Seconds 2
+        }
+    }
+}
+
+$files = @(
+    "config.php",
+    "api/alerts/sms_gateway.php",
+    "api/auth/forgot-password.php",
+    "farmer/index.html",
+    "farmer/asset-manifest.json",
+    "farmer/version.json",
+    "farmer/static/js/main.88e8bb55.js",
+    "farmer/static/js/main.88e8bb55.js.LICENSE.txt",
+    "dev/index.html",
+    "dev/asset-manifest.json",
+    "dev/version.json",
+    "dev/static/js/main.97813521.js",
+    "dev/static/js/main.97813521.js.LICENSE.txt"
+)
+
+foreach ($rel in $files) {
+    $local = Join-Path $localRoot $rel
+    if (Test-Path $local) {
+        $rem = "$ftpHost/$rel".Replace('\', '/')
+        Upload-FtpFile $local $rem
+    }
+}
+
+Write-Host "Deploy finished successfully!"
+

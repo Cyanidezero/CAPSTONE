@@ -269,119 +269,264 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// Helper: Ensure password_resets table exists
+// Helper: Ensure password_resets table exists with phone support
 async function ensurePasswordResetsTable() {
     try {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS \`password_resets\` (
                 \`id\` int(11) NOT NULL AUTO_INCREMENT,
-                \`email\` varchar(100) NOT NULL,
+                \`phone\` varchar(30) NOT NULL DEFAULT '',
+                \`email\` varchar(100) DEFAULT '',
                 \`role\` varchar(20) NOT NULL DEFAULT 'farmer',
                 \`otp\` varchar(10) NOT NULL,
                 \`token\` varchar(64) DEFAULT NULL,
                 \`expires_at\` datetime NOT NULL,
                 \`created_at\` timestamp NOT NULL DEFAULT current_timestamp(),
                 PRIMARY KEY (\`id\`),
+                KEY \`phone_idx\` (\`phone\`),
                 KEY \`email_idx\` (\`email\`),
                 KEY \`otp_idx\` (\`otp\`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
+        try {
+            await pool.query('ALTER TABLE `password_resets` ADD COLUMN `phone` varchar(30) NOT NULL DEFAULT ""');
+        } catch {}
     } catch (e) {
         console.warn('[DB] password_resets table check:', e.message);
     }
 }
 
+// Helper: Normalize phone and return Philippine variations
+function getPhoneVariants(rawPhone) {
+    const clean = String(rawPhone || '').replace(/[\s\-\(\)]/g, '');
+    if (!clean) return [];
+    const variants = [clean];
+    if (/^\+63(9\d{9})$/.test(clean)) {
+        const m = clean.match(/^\+63(9\d{9})$/);
+        variants.push('0' + m[1], '63' + m[1], m[1]);
+    } else if (/^0(9\d{9})$/.test(clean)) {
+        const m = clean.match(/^0(9\d{9})$/);
+        variants.push('+63' + m[1], '63' + m[1], m[1]);
+    } else if (/^63(9\d{9})$/.test(clean)) {
+        const m = clean.match(/^63(9\d{9})$/);
+        variants.push('0' + m[1], '+63' + m[1], m[1]);
+    } else if (/^(9\d{9})$/.test(clean)) {
+        const m = clean.match(/^(9\d{9})$/);
+        variants.push('0' + m[1], '+63' + m[1], '63' + m[1]);
+    }
+    return Array.from(new Set(variants));
+}
+
+// Helper: Send SMS via Infobip API
+const https = require('https');
+async function sendInfobipSms(rawPhone, message) {
+    const cleanPhone = String(rawPhone || '').replace(/[\s\-\(\)]/g, '');
+    let intlPhone = cleanPhone;
+    if (/^\+?63(9\d{9})$/.test(cleanPhone)) {
+        intlPhone = '63' + cleanPhone.replace(/^\+?63/, '');
+    } else if (/^0(9\d{9})$/.test(cleanPhone)) {
+        intlPhone = '63' + cleanPhone.substring(1);
+    } else if (/^(9\d{9})$/.test(cleanPhone)) {
+        intlPhone = '63' + cleanPhone;
+    } else {
+        intlPhone = cleanPhone.replace(/^\+/, '');
+    }
+
+    const apiKey = process.env.INFOBIP_API_KEY || '08d165ab955ad8f77052004bde267653-c500206b-4324-4f84-bad6-9b184efaff68';
+    const baseUrl = process.env.INFOBIP_BASE_URL || 'api.infobip.com';
+    const sender = process.env.INFOBIP_SENDER || 'ClimaYield';
+
+    return new Promise((resolve) => {
+        const payload = JSON.stringify({
+            messages: [{
+                sender: sender,
+                destinations: [{ to: intlPhone }],
+                content: { text: message }
+            }]
+        });
+
+        const req = https.request({
+            hostname: baseUrl,
+            path: '/sms/3/messages',
+            method: 'POST',
+            headers: {
+                'Authorization': `App ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            timeout: 10000
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve({ sent: true, provider: 'infobip', phone: intlPhone, data: parsed });
+                    } else {
+                        resolve({ sent: false, provider: 'infobip', error: parsed.description || `HTTP ${res.statusCode}` });
+                    }
+                } catch {
+                    resolve({ sent: false, provider: 'infobip', error: `HTTP ${res.statusCode}` });
+                }
+            });
+        });
+
+        req.on('error', (err) => resolve({ sent: false, provider: 'infobip', error: err.message }));
+        req.on('timeout', () => {
+            req.destroy();
+            resolve({ sent: false, provider: 'infobip', error: 'Infobip connection timed out' });
+        });
+
+        req.write(payload);
+        req.end();
+    });
+}
+
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
     try {
-        const { action = 'send_otp', email, role, otp, resetToken, newPassword, confirmPassword } = req.body;
+        const { action = 'send_otp', phone, mobile, email, role, otp, resetToken, newPassword, confirmPassword } = req.body;
         await ensurePasswordResetsTable();
 
         if (action === 'send_otp' || !action) {
-            const normalizedEmail = (email || '').trim().toLowerCase();
-            if (!normalizedEmail) {
-                return res.status(400).json({ success: false, error: 'Please enter your email address.' });
+            const rawPhone = String(phone || mobile || '').trim();
+            const normalizedEmail = String(email || '').trim().toLowerCase();
+
+            if (!rawPhone && !normalizedEmail) {
+                return res.status(400).json({ success: false, error: 'Please enter your mobile phone number.' });
             }
 
-            // Check farmers and developers
+            const cleanPhone = rawPhone.replace(/[\s\-\(\)]/g, '');
+            const phoneVariants = getPhoneVariants(cleanPhone);
+
+            // Lookup user by phone (or email)
             let userRow = null;
-            let userRole = 'farmer';
+            let userRole = role || 'farmer';
 
-            try {
-                const [fRows] = await pool.query('SELECT id, name, email FROM `farmers` WHERE LOWER(email) = ?', [normalizedEmail]);
-                if (fRows && fRows.length > 0) {
-                    userRow = fRows[0];
-                    userRole = 'farmer';
-                } else {
-                    const [dRows] = await pool.query('SELECT id, name, email FROM `developers` WHERE LOWER(email) = ?', [normalizedEmail]);
-                    if (dRows && dRows.length > 0) {
-                        userRow = dRows[0];
-                        userRole = 'dev';
+            if (phoneVariants.length > 0) {
+                try {
+                    const placeholders = phoneVariants.map(() => '?').join(',');
+                    const [fRows] = await pool.query(`SELECT id, name, phone, email FROM \`farmers\` WHERE phone IN (${placeholders})`, phoneVariants);
+                    if (fRows && fRows.length > 0) {
+                        userRow = fRows[0];
+                        userRole = 'farmer';
+                    } else {
+                        const [dRows] = await pool.query(`SELECT id, name, phone, email FROM \`developers\` WHERE phone IN (${placeholders})`, phoneVariants);
+                        if (dRows && dRows.length > 0) {
+                            userRow = dRows[0];
+                            userRole = 'dev';
+                        }
                     }
+                } catch (err) {
+                    console.warn('[DB phone lookup error]:', err.message);
                 }
-            } catch (err) {
-                console.warn('[DB lookup error]:', err.message);
             }
 
-            const isDemo = ['farmer@demo.com', 'farmer@agri.coop', 'dev@demo.com', 'dev@agri.coop'].includes(normalizedEmail) || Boolean(knownRegisteredAccounts[normalizedEmail]);
-            if (!userRow && isDemo) {
-                const reg = knownRegisteredAccounts[normalizedEmail];
+            if (!userRow && normalizedEmail) {
+                try {
+                    const [fRows] = await pool.query('SELECT id, name, phone, email FROM `farmers` WHERE LOWER(email) = ?', [normalizedEmail]);
+                    if (fRows && fRows.length > 0) {
+                        userRow = fRows[0];
+                        userRole = 'farmer';
+                    } else {
+                        const [dRows] = await pool.query('SELECT id, name, phone, email FROM `developers` WHERE LOWER(email) = ?', [normalizedEmail]);
+                        if (dRows && dRows.length > 0) {
+                            userRow = dRows[0];
+                            userRole = 'dev';
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[DB email lookup error]:', err.message);
+                }
+            }
+
+            // Fallback for new or demo numbers
+            if (!userRow) {
                 userRow = {
-                    id: reg ? 10 : (normalizedEmail.includes('dev') ? 2 : 1),
-                    name: reg ? reg.name : (normalizedEmail.includes('dev') ? 'Alex Chen' : 'John Miller'),
+                    id: 0,
+                    name: userRole === 'dev' ? 'Developer' : 'Farmer',
+                    phone: cleanPhone,
                     email: normalizedEmail
                 };
-                userRole = reg ? reg.role : (normalizedEmail.includes('dev') ? 'dev' : 'farmer');
-            }
-
-            if (!userRow) {
-                return res.status(404).json({
-                    success: false,
-                    error: 'This email address is not registered in the system. Please check your email or create an account.'
-                });
             }
 
             const generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
             const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
+            // Store in password_resets table
             try {
-                await pool.query('DELETE FROM `password_resets` WHERE LOWER(email) = ?', [normalizedEmail]);
+                if (phoneVariants.length > 0) {
+                    const placeholders = phoneVariants.map(() => '?').join(',');
+                    await pool.query(`DELETE FROM \`password_resets\` WHERE phone IN (${placeholders})`, phoneVariants);
+                }
+                if (normalizedEmail) {
+                    await pool.query('DELETE FROM `password_resets` WHERE LOWER(email) = ?', [normalizedEmail]);
+                }
                 await pool.query(
-                    'INSERT INTO `password_resets` (`email`, `role`, `otp`, `token`, `expires_at`, `created_at`) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW())',
-                    [normalizedEmail, userRole, generatedOtp, token]
+                    'INSERT INTO `password_resets` (`phone`, `email`, `role`, `otp`, `token`, `expires_at`, `created_at`) VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW())',
+                    [cleanPhone, normalizedEmail, userRole, generatedOtp, token]
                 );
             } catch (err) {
                 console.warn('[DB insert OTP error]:', err.message);
             }
 
+            // Dispatch SMS via Infobip
+            const smsText = `[ClimaYield-X] Your 6-digit password reset OTP is ${generatedOtp}. Valid for 15 minutes.`;
+            let smsResult = { sent: false };
+            if (cleanPhone) {
+                smsResult = await sendInfobipSms(cleanPhone, smsText);
+                console.log(`[Infobip SMS] Dispatched to ${cleanPhone}:`, smsResult);
+            }
+
             return res.json({
                 success: true,
-                message: `A 6-digit verification OTP has been sent to ${normalizedEmail}.`,
+                message: `A 6-digit verification OTP has been texted to ${cleanPhone || normalizedEmail}.`,
+                phone: cleanPhone,
                 email: normalizedEmail,
                 role: userRole,
                 userName: userRow.name || 'User',
+                sms_status: smsResult.sent ? 'delivered_to_phone' : 'logged',
+                sms_provider: 'infobip',
                 otp: generatedOtp,
                 expires_in: 900
             });
         }
 
         if (action === 'verify_otp') {
-            const normalizedEmail = (email || '').trim().toLowerCase();
+            const rawPhone = String(phone || mobile || '').trim();
+            const normalizedEmail = String(email || '').trim().toLowerCase();
             const cleanOtp = String(otp || '').replace(/\D/g, '');
 
-            if (!normalizedEmail || !cleanOtp) {
-                return res.status(400).json({ success: false, error: 'Please provide both email and OTP.' });
+            if ((!rawPhone && !normalizedEmail) || !cleanOtp) {
+                return res.status(400).json({ success: false, error: 'Please enter your phone number and the 6-digit OTP.' });
             }
 
-            const [rows] = await pool.query(
-                'SELECT * FROM `password_resets` WHERE LOWER(email) = ? AND otp = ? AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
-                [normalizedEmail, cleanOtp]
-            );
+            const cleanPhone = rawPhone.replace(/[\s\-\(\)]/g, '');
+            const phoneVariants = getPhoneVariants(cleanPhone);
+
+            let rows = [];
+            if (phoneVariants.length > 0) {
+                const placeholders = phoneVariants.map(() => '?').join(',');
+                const [r] = await pool.query(
+                    `SELECT * FROM \`password_resets\` WHERE phone IN (${placeholders}) AND otp = ? AND expires_at >= NOW() ORDER BY id DESC LIMIT 1`,
+                    [...phoneVariants, cleanOtp]
+                );
+                rows = r;
+            }
+
+            if ((!rows || rows.length === 0) && normalizedEmail) {
+                const [r] = await pool.query(
+                    'SELECT * FROM `password_resets` WHERE LOWER(email) = ? AND otp = ? AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
+                    [normalizedEmail, cleanOtp]
+                );
+                rows = r;
+            }
 
             if (!rows || rows.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Invalid or expired OTP verification code. Please check the code or request a new one.'
+                    error: 'Invalid or expired OTP verification code. Please check your SMS messages or request a new code.'
                 });
             }
 
@@ -390,20 +535,21 @@ router.post('/forgot-password', async (req, res) => {
 
             return res.json({
                 success: true,
-                message: 'Email verified successfully! You may now enter your new password.',
-                email: normalizedEmail,
+                message: 'Phone verified successfully! You may now enter your new password.',
+                phone: cleanPhone,
                 role: rows[0].role,
                 reset_token: newResetToken
             });
         }
 
         if (action === 'reset_password') {
-            const normalizedEmail = (email || '').trim().toLowerCase();
+            const rawPhone = String(phone || mobile || '').trim();
+            const normalizedEmail = String(email || '').trim().toLowerCase();
             const cleanOtp = String(otp || '').replace(/\D/g, '');
             const pass = newPassword || '';
 
-            if (!normalizedEmail || !pass) {
-                return res.status(400).json({ success: false, error: 'Email and new password are required.' });
+            if ((!rawPhone && !normalizedEmail) || !pass) {
+                return res.status(400).json({ success: false, error: 'Phone number and new password are required.' });
             }
 
             if (pass.length < 4) {
@@ -414,29 +560,53 @@ router.post('/forgot-password', async (req, res) => {
                 return res.status(400).json({ success: false, error: 'Passwords do not match.' });
             }
 
-            const [rows] = await pool.query(
-                'SELECT * FROM `password_resets` WHERE LOWER(email) = ? AND ((token = ? AND token != "") OR otp = ?) AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
-                [normalizedEmail, resetToken || '', cleanOtp]
-            );
+            const cleanPhone = rawPhone.replace(/[\s\-\(\)]/g, '');
+            const phoneVariants = getPhoneVariants(cleanPhone);
+
+            let rows = [];
+            if (phoneVariants.length > 0) {
+                const placeholders = phoneVariants.map(() => '?').join(',');
+                const [r] = await pool.query(
+                    `SELECT * FROM \`password_resets\` WHERE phone IN (${placeholders}) AND ((token = ? AND token != "") OR otp = ?) AND expires_at >= NOW() ORDER BY id DESC LIMIT 1`,
+                    [...phoneVariants, resetToken || '', cleanOtp]
+                );
+                rows = r;
+            }
+
+            if ((!rows || rows.length === 0) && normalizedEmail) {
+                const [r] = await pool.query(
+                    'SELECT * FROM `password_resets` WHERE LOWER(email) = ? AND ((token = ? AND token != "") OR otp = ?) AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
+                    [normalizedEmail, resetToken || '', cleanOtp]
+                );
+                rows = r;
+            }
 
             if (!rows || rows.length === 0) {
                 return res.status(403).json({
                     success: false,
-                    error: 'Password reset authorization expired or invalid. Please verify your email again.'
+                    error: 'Password reset authorization expired or invalid. Please verify your phone again.'
                 });
             }
 
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(pass, salt);
 
-            await pool.query('UPDATE `farmers` SET `password` = ? WHERE LOWER(email) = ?', [hashedPassword, normalizedEmail]);
-            await pool.query('UPDATE `developers` SET `password` = ? WHERE LOWER(email) = ?', [hashedPassword, normalizedEmail]);
-            await pool.query('DELETE FROM `password_resets` WHERE LOWER(email) = ?', [normalizedEmail]);
+            if (phoneVariants.length > 0) {
+                const placeholders = phoneVariants.map(() => '?').join(',');
+                await pool.query(`UPDATE \`farmers\` SET \`password\` = ? WHERE phone IN (${placeholders})`, [hashedPassword, ...phoneVariants]);
+                await pool.query(`UPDATE \`developers\` SET \`password\` = ? WHERE phone IN (${placeholders})`, [hashedPassword, ...phoneVariants]);
+                await pool.query(`DELETE FROM \`password_resets\` WHERE phone IN (${placeholders})`, phoneVariants);
+            }
+            if (normalizedEmail) {
+                await pool.query('UPDATE `farmers` SET `password` = ? WHERE LOWER(email) = ?', [hashedPassword, normalizedEmail]);
+                await pool.query('UPDATE `developers` SET `password` = ? WHERE LOWER(email) = ?', [hashedPassword, normalizedEmail]);
+                await pool.query('DELETE FROM `password_resets` WHERE LOWER(email) = ?', [normalizedEmail]);
+            }
 
             return res.json({
                 success: true,
                 message: 'Password reset successful! You can now log in with your new password.',
-                email: normalizedEmail
+                phone: cleanPhone
             });
         }
 
