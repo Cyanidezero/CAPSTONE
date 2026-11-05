@@ -1696,40 +1696,44 @@
                 accountBadge.style.display = 'inline-block';
             }
 
-            // Bind forgot password flow (Mobile Phone SMS OTP)
+            // Bind forgot password flow (Email & SMS OTP)
             const currentForgotLink = document.getElementById('forgotLink');
             if (currentForgotLink) {
                 currentForgotLink.onclick = async function(e) {
                     e.preventDefault();
-                    const phone = prompt('📱 Phone Verification (SMS OTP)\nEnter your mobile phone number (e.g. 09171234567 or +639171234567) to immediately receive your 6-digit OTP:');
-                    if (!phone) return;
+                    const input = prompt('📩 Security Verification (OTP Code)\nEnter your registered email address or mobile phone number (e.g. rhenzmatipo4@gmail.com or 09357052067) to receive your 6-digit OTP:');
+                    if (!input) return;
 
-                    const cleanPhone = phone.trim().replace(/[\s\-\(\)]/g, '');
-                    if (!cleanPhone || cleanPhone.length < 10) {
-                        alert('⚠️ Please enter a valid mobile phone number.');
-                        return;
-                    }
+                    const trimmed = input.trim();
+                    const isEmail = trimmed.includes('@');
+                    const cleanPhone = trimmed.replace(/[\s\-\(\)]/g, '');
+                    const payload = isEmail ? { action: 'send_otp', email: trimmed.toLowerCase(), role: 'farmer' } : { action: 'send_otp', phone: cleanPhone, role: 'farmer' };
 
                     try {
                         const sendRes = await fetch('/api/auth/forgot-password.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'send_otp', phone: cleanPhone })
+                            body: JSON.stringify(payload)
                         });
                         const sendData = await sendRes.json();
                         if (!sendData.success) {
-                            alert('⚠️ ' + (sendData.error || 'Failed to text OTP verification code.'));
+                            alert('⚠️ ' + (sendData.error || 'Failed to send OTP verification code.'));
                             return;
                         }
 
-                        let otpPromptMsg = '📲 Verification OTP sent via SMS to ' + cleanPhone + '!\n\nPlease check your mobile Messages app and enter the 6-digit code:';
+                        let targetDest = sendData.email || sendData.phone || trimmed;
+                        let otpPromptMsg = '📩 6-Digit OTP sent to ' + targetDest + '!\n\nPlease check your email inbox (and spam folder) or messages, and enter the 6-digit OTP code:';
                         const otp = prompt(otpPromptMsg);
                         if (!otp) return;
+
+                        const verifyPayload = isEmail 
+                            ? { action: 'verify_otp', email: trimmed.toLowerCase(), otp: otp.trim() } 
+                            : { action: 'verify_otp', phone: cleanPhone, otp: otp.trim() };
 
                         const verifyRes = await fetch('/api/auth/forgot-password.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'verify_otp', phone: cleanPhone, otp: otp.trim() })
+                            body: JSON.stringify(verifyPayload)
                         });
                         const verifyData = await verifyRes.json();
                         if (!verifyData.success) {
@@ -1737,23 +1741,20 @@
                             return;
                         }
 
-                        const newPass = prompt('🔑 Phone verified!\nEnter your new password (minimum 4 characters):');
+                        const newPass = prompt('🔑 Identity verified!\nEnter your new password (minimum 4 characters):');
                         if (!newPass || newPass.length < 4) {
                             alert('⚠️ Password must be at least 4 characters long.');
                             return;
                         }
 
+                        const resetPayload = isEmail 
+                            ? { action: 'reset_password', email: trimmed.toLowerCase(), otp: otp.trim(), reset_token: verifyData.reset_token, new_password: newPass, confirm_password: newPass }
+                            : { action: 'reset_password', phone: cleanPhone, otp: otp.trim(), reset_token: verifyData.reset_token, new_password: newPass, confirm_password: newPass };
+
                         const resetRes = await fetch('/api/auth/forgot-password.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                action: 'reset_password',
-                                phone: cleanPhone,
-                                otp: otp.trim(),
-                                reset_token: verifyData.reset_token,
-                                new_password: newPass,
-                                confirm_password: newPass
-                            })
+                            body: JSON.stringify(resetPayload)
                         });
                         const resetData = await resetRes.json();
                         if (!resetData.success) {

@@ -73,19 +73,19 @@ export function calculateCropHarvestInfo(crop, lang = 'en') {
 
   if (status === 'ready') {
     badgeIcon = '🎉';
-    badgeText = isFil ? `HANDA NANG ANIHIN (Araw ${currentDay}/${totalDays})` : `READY TO HARVEST (Day ${currentDay}/${totalDays})`;
+    badgeText = isFil ? 'HANDA NANG ANIHIN' : 'READY TO HARVEST';
     badgeColor = '#16a34a';
   } else if (status === 'near') {
     badgeIcon = '⏳';
     badgeText = isFil 
-      ? `${daysRemaining} ARAW NA LANG BAGO ANIHIN (Araw ${currentDay}/${totalDays})` 
-      : `${daysRemaining} DAYS LEFT TO HARVEST (Day ${currentDay}/${totalDays})`;
+      ? `${daysRemaining} ARAW NA LANG BAGO ANIHIN` 
+      : `${daysRemaining} DAYS LEFT TO HARVEST`;
     badgeColor = '#f59e0b';
   } else {
     badgeIcon = '🌱';
     badgeText = isFil 
-      ? `Araw ${currentDay} ng ${totalDays} • ${daysRemaining} Araw Bago Anihin` 
-      : `Day ${currentDay} of ${totalDays} • ${daysRemaining} Days Remaining`;
+      ? `${daysRemaining} Araw Bago Anihin` 
+      : `${daysRemaining} Days Remaining`;
     badgeColor = '#10b981';
   }
 

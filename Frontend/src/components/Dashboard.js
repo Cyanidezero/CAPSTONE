@@ -2110,10 +2110,6 @@ function Dashboard({
                             <div className="fd-crop-shortcycle-badge">
                               ⚡ {isFil ? 'Mabilis Anihin (Short-Cycle)' : 'Short-Cycle Vegetable'}
                             </div>
-                            <div className="fd-crop-growth-day-badge" style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, background: '#ecfdf5', padding: '2px 8px', borderRadius: '6px', border: '1px solid #a7f3d0', marginTop: '3px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <span>⏱️</span>
-                              <span>{isFil ? `Araw ${cropHarvest.currentDay} ng ${cropHarvest.totalDays}` : `Day ${cropHarvest.currentDay} of ${cropHarvest.totalDays}`}</span>
-                            </div>
                             {crop.plotOrSeason && (
                               <div className="fd-crop-plot-badge" style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '2px 8px', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 🏷️ {crop.plotOrSeason}
@@ -2573,9 +2569,9 @@ function Dashboard({
                                   {isFil ? (c.filipinoName || c.name) : (c.name || c.filipinoName)}
                                 </span>
                                 <span className="crop-sub">
-                                  ⏱️ {isFil 
-                                    ? `Araw ${cHarvest.currentDay} ng ${cHarvest.totalDays} (${cHarvest.isReady ? 'Puwede nang anihin' : `${cHarvest.daysRemaining} araw bago anihin`})` 
-                                    : `Day ${cHarvest.currentDay} of ${cHarvest.totalDays} (${cHarvest.isReady ? 'Ready to harvest' : `${cHarvest.daysRemaining} days remaining`})`} • 🌱 {isFil ? c.stageFil : c.stageEn}
+                                  {cHarvest.isReady 
+                                    ? (isFil ? '🎉 Puwede nang anihin' : '🎉 Ready to harvest') 
+                                    : (isFil ? `⏳ ${cHarvest.daysRemaining} araw bago anihin` : `⏳ ${cHarvest.daysRemaining} days remaining`)} • 🌱 {isFil ? c.stageFil : c.stageEn}
                                 </span>
                               </div>
                             </div>

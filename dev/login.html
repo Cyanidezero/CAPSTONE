@@ -1707,7 +1707,7 @@
                     const trimmed = input.trim();
                     const isEmail = trimmed.includes('@');
                     const cleanPhone = trimmed.replace(/[\s\-\(\)]/g, '');
-                    const payload = isEmail ? { action: 'send_otp', email: trimmed.toLowerCase(), role: 'dev' } : { action: 'send_otp', phone: cleanPhone, role: 'dev' };
+                    const payload = isEmail ? { action: 'send_otp', email: trimmed.toLowerCase(), role: 'farmer' } : { action: 'send_otp', phone: cleanPhone, role: 'farmer' };
 
                     try {
                         const sendRes = await fetch('/api/auth/forgot-password.php', {
