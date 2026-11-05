@@ -361,13 +361,29 @@ function ModelTraining({ onTrainingComplete, onRedirectToFarmer }) {
             if (isSarima) setActiveDashboard('sarima');
             else if (isLstm) setActiveDashboard('lstm');
             else if (isHybrid) setActiveDashboard('hybrid');
+          } else {
+            setHasFinishedTraining(false);
           }
+        } else {
+          setHasFinishedTraining(false);
         }
       } catch (e) {
         // Fallback or offline
       }
     };
     checkInitialStatus();
+
+    // Listen to dataset upload/input reset events: reset all 3 models to Not Trained
+    const handleResetToUntrained = () => {
+      setTrainedModelsList({ sarima: false, lstm: false, hybrid: false });
+      setTrainingResults({ sarima: null, lstm: null, hybrid: null });
+      setTrainingResultsByTarget({});
+      setHasFinishedTraining(false);
+      setActiveDashboard('sarima');
+    };
+
+    window.addEventListener('modelsResetToUntrained', handleResetToUntrained);
+    return () => window.removeEventListener('modelsResetToUntrained', handleResetToUntrained);
   }, []);
 
   const addLog = (tag, message, color = '#2ecc71') => {
@@ -1659,7 +1675,12 @@ Status: SARIMA-LSTM Hybrid Model Ready for Deployment`;
                 )}
 
                 <button
-                  onClick={() => setHasFinishedTraining(false)}
+                  onClick={() => {
+                    setHasFinishedTraining(false);
+                    setTrainedModelsList({ sarima: false, lstm: false, hybrid: false });
+                    setTrainingResults({ sarima: null, lstm: null, hybrid: null });
+                    setTrainingResultsByTarget({});
+                  }}
                   style={{
                     background: '#0d172e',
                     border: '1px solid #1e2f4d',
@@ -1670,7 +1691,7 @@ Status: SARIMA-LSTM Hybrid Model Ready for Deployment`;
                     fontWeight: '700',
                     cursor: 'pointer'
                   }}
-                  title="Collapse dashboard to pending state"
+                  title="Reset models to untrained view"
                 >
                   ✕ Reset View
                 </button>
@@ -1708,11 +1729,11 @@ Status: SARIMA-LSTM Hybrid Model Ready for Deployment`;
                     borderRadius: '10px',
                     fontWeight: '700',
                     fontFamily: 'var(--font-mono)',
-                    background: isSarimaTrained ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isSarimaTrained ? '#34d399' : '#94a3b8',
-                    border: isSarimaTrained ? '1px solid #10b981' : '1px solid #334155'
+                    background: isSarimaTrained ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                    color: isSarimaTrained ? '#34d399' : '#f87171',
+                    border: isSarimaTrained ? '1px solid #10b981' : '1px solid rgba(239, 68, 68, 0.4)'
                   }}>
-                    {isSarimaTrained ? '✓ Trained' : 'Pending'}
+                    {isSarimaTrained ? '✓ Trained' : 'Not Trained'}
                   </span>
                 </div>
                 <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#94a3b8' }}>
@@ -1745,11 +1766,11 @@ Status: SARIMA-LSTM Hybrid Model Ready for Deployment`;
                     borderRadius: '10px',
                     fontWeight: '700',
                     fontFamily: 'var(--font-mono)',
-                    background: isLstmTrained ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isLstmTrained ? '#c084fc' : '#94a3b8',
-                    border: isLstmTrained ? '1px solid #8b5cf6' : '1px solid #334155'
+                    background: isLstmTrained ? 'rgba(139, 92, 246, 0.25)' : 'rgba(239, 68, 68, 0.15)',
+                    color: isLstmTrained ? '#c084fc' : '#f87171',
+                    border: isLstmTrained ? '1px solid #8b5cf6' : '1px solid rgba(239, 68, 68, 0.4)'
                   }}>
-                    {isLstmTrained ? '✓ Trained' : 'Pending'}
+                    {isLstmTrained ? '✓ Trained' : 'Not Trained'}
                   </span>
                 </div>
                 <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#94a3b8' }}>
@@ -1782,11 +1803,11 @@ Status: SARIMA-LSTM Hybrid Model Ready for Deployment`;
                     borderRadius: '10px',
                     fontWeight: '700',
                     fontFamily: 'var(--font-mono)',
-                    background: isHybridTrained ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isHybridTrained ? '#34d399' : '#94a3b8',
-                    border: isHybridTrained ? '1px solid #10b981' : '1px solid #334155'
+                    background: isHybridTrained ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.15)',
+                    color: isHybridTrained ? '#34d399' : '#f87171',
+                    border: isHybridTrained ? '1px solid #10b981' : '1px solid rgba(239, 68, 68, 0.4)'
                   }}>
-                    {isHybridTrained ? '✓ Trained' : 'Pending'}
+                    {isHybridTrained ? '✓ Trained' : 'Not Trained'}
                   </span>
                 </div>
                 <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#94a3b8' }}>

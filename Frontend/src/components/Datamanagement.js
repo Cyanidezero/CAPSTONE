@@ -83,6 +83,14 @@ function DataManagement({ onDataUpload }) {
         if (response.data.detectedCrops && response.data.detectedCrops.length > 0) {
           saveDatasetCrops(response.data.detectedCrops);
         }
+        // When a new dataset is uploaded, all 3 models must be Not Trained so developer manually trains them
+        localStorage.removeItem('climayield_crop_model_trained');
+        localStorage.removeItem('climayield_lstm_trained');
+        localStorage.removeItem('climayield_training_results');
+        window.dispatchEvent(new CustomEvent('cropModelTrainedUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('lstmTrainingUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('modelsResetToUntrained', { detail: { reset: true } }));
+
         toast.success(response.data.message || 'Dataset uploaded and saved successfully!');
         await fetchDatasetsStatus();
         if (onDataUpload) onDataUpload();
@@ -149,6 +157,14 @@ function DataManagement({ onDataUpload }) {
     try {
       const response = await axios.post(`${API_URL}/datasets/preset/crops`);
       if (response.data.success) {
+        // Reset models to Not Trained so the developer manually trains SARIMA, LSTM, Hybrid
+        localStorage.removeItem('climayield_crop_model_trained');
+        localStorage.removeItem('climayield_lstm_trained');
+        localStorage.removeItem('climayield_training_results');
+        window.dispatchEvent(new CustomEvent('cropModelTrainedUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('lstmTrainingUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('modelsResetToUntrained', { detail: { reset: true } }));
+
         toast.success(response.data.message || '🌾 Crop yield dataset loaded! Weather dataset was preserved.');
         if (response.data.detectedCrops && response.data.detectedCrops.length > 0) {
           saveDatasetCrops(response.data.detectedCrops);
@@ -169,6 +185,13 @@ function DataManagement({ onDataUpload }) {
     try {
       const response = await axios.post(`${API_URL}/datasets/preset/weather`, { scenario: 'elnino' });
       if (response.data.success) {
+        localStorage.removeItem('climayield_crop_model_trained');
+        localStorage.removeItem('climayield_lstm_trained');
+        localStorage.removeItem('climayield_training_results');
+        window.dispatchEvent(new CustomEvent('cropModelTrainedUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('lstmTrainingUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('modelsResetToUntrained', { detail: { reset: true } }));
+
         toast.info(response.data.message || '☀️ El Niño weather scenario loaded! Existing crop yields were preserved.');
         await fetchDatasetsStatus();
         if (onDataUpload) onDataUpload();
@@ -186,6 +209,13 @@ function DataManagement({ onDataUpload }) {
     try {
       const response = await axios.post(`${API_URL}/datasets/preset/weather`, { scenario: 'lanina' });
       if (response.data.success) {
+        localStorage.removeItem('climayield_crop_model_trained');
+        localStorage.removeItem('climayield_lstm_trained');
+        localStorage.removeItem('climayield_training_results');
+        window.dispatchEvent(new CustomEvent('cropModelTrainedUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('lstmTrainingUpdated', { detail: { trained: false } }));
+        window.dispatchEvent(new CustomEvent('modelsResetToUntrained', { detail: { reset: true } }));
+
         toast.info(response.data.message || '🌧️ La Niña monsoon scenario loaded! Existing crop yields were preserved.');
         await fetchDatasetsStatus();
         if (onDataUpload) onDataUpload();

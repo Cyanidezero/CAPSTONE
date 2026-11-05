@@ -131,6 +131,19 @@ if ($method === 'POST') {
             $detected = getDetectedCropsFromDatabase($pdo);
             $wCount = (int)$pdo->query("SELECT COUNT(*) FROM weather_data")->fetchColumn();
 
+            // Reset models to Not Trained so the developer must manually train them
+            setStateValue($pdo, 'training_status', [
+                'sarima'           => 'Not Trained',
+                'lstm'             => 'Not Trained',
+                'hybrid'           => 'Not Trained',
+                'cropModelTrained' => false
+            ]);
+            setStateValue($pdo, 'latest_training', null);
+            setStateValue($pdo, 'all_forecasts', []);
+            try {
+                $pdo->exec("TRUNCATE TABLE forecasts");
+            } catch (Exception $e) {}
+
             sendResponse([
                 'success'       => true,
                 'message'       => "🌾 Input Crop Yield Dataset loaded (" . count($presetRows) . " records, " . count($detected) . " crops detected). Synced to Farmer Side!",
@@ -201,6 +214,19 @@ if ($method === 'POST') {
 
             $combinedCount = syncAgriculturalData($pdo);
             $cCount = (int)$pdo->query("SELECT COUNT(*) FROM crop_yield_data")->fetchColumn();
+
+            // Reset models to Not Trained on new weather scenario
+            setStateValue($pdo, 'training_status', [
+                'sarima'           => 'Not Trained',
+                'lstm'             => 'Not Trained',
+                'hybrid'           => 'Not Trained',
+                'cropModelTrained' => false
+            ]);
+            setStateValue($pdo, 'latest_training', null);
+            setStateValue($pdo, 'all_forecasts', []);
+            try {
+                $pdo->exec("TRUNCATE TABLE forecasts");
+            } catch (Exception $e) {}
 
             sendResponse([
                 'success'       => true,

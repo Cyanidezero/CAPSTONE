@@ -170,6 +170,19 @@ $detectedCrops = getDetectedCropsFromDatabase($pdo);
 $wCount = (int)$pdo->query("SELECT COUNT(*) FROM weather_data")->fetchColumn();
 $cCount = (int)$pdo->query("SELECT COUNT(*) FROM crop_yield_data")->fetchColumn();
 
+// Reset models to Not Trained upon new dataset upload
+setStateValue($pdo, 'training_status', [
+    'sarima'           => 'Not Trained',
+    'lstm'             => 'Not Trained',
+    'hybrid'           => 'Not Trained',
+    'cropModelTrained' => false
+]);
+setStateValue($pdo, 'latest_training', null);
+setStateValue($pdo, 'all_forecasts', []);
+try {
+    $pdo->exec("TRUNCATE TABLE forecasts");
+} catch (Exception $e) {}
+
 $validCount = max($savedWeather, $savedCrops);
 
 sendResponse([

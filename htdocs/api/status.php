@@ -61,12 +61,6 @@ try {
                             'mape'         => '2.6%'
                         ]
                     ];
-                    $trainingStatus = [
-                        'sarima'           => 'Trained',
-                        'lstm'             => 'Trained',
-                        'hybrid'           => 'Trained',
-                        'cropModelTrained' => true
-                    ];
                     $allForecasts[$latestTraining['target']] = $latestTraining;
                 }
             }

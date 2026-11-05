@@ -349,6 +349,19 @@ async function processUpload(req, res, targetType = 'auto') {
         const detectedCrops = detectCrops(global.cropDataset && global.cropDataset.length > 0 ? global.cropDataset : data, req.file.originalname);
         global.detectedCrops = detectedCrops;
 
+        // Reset models to Not Trained upon new dataset upload
+        global.trainingStatus = {
+            sarima: 'Not Trained',
+            lstm: 'Not Trained',
+            hybrid: 'Not Trained',
+            cropModelTrained: false
+        };
+        global.lastTrainedResult = null;
+        global.latestForecasts = {};
+        try {
+            await pool.query('TRUNCATE TABLE forecasts');
+        } catch (e) {}
+
         res.json({
             success: true,
             datasetType: effectiveType,
@@ -510,6 +523,19 @@ router.post('/datasets/preset/crops', async (req, res) => {
         const detected = detectCrops(processedCrops, 'philippine_crops_dataset.csv');
         global.detectedCrops = detected;
 
+        // Reset models to Not Trained so the developer must manually train them
+        global.trainingStatus = {
+            sarima: 'Not Trained',
+            lstm: 'Not Trained',
+            hybrid: 'Not Trained',
+            cropModelTrained: false
+        };
+        global.lastTrainedResult = null;
+        global.latestForecasts = {};
+        try {
+            await pool.query('TRUNCATE TABLE forecasts');
+        } catch (e) {}
+
         res.json({
             success: true,
             message: `🌾 Input Crop Yield Dataset loaded (${processedCrops.length} records, ${detected.length} crops detected). Existing weather datasets were kept intact!`,
@@ -608,6 +634,19 @@ router.post('/datasets/preset/weather', async (req, res) => {
         global.weatherDataset = cleanWeather;
         await saveWeatherRecordsToDatabase(cleanWeather);
         await syncCombinedDataset();
+
+        // Reset models to Not Trained on new weather scenario
+        global.trainingStatus = {
+            sarima: 'Not Trained',
+            lstm: 'Not Trained',
+            hybrid: 'Not Trained',
+            cropModelTrained: false
+        };
+        global.lastTrainedResult = null;
+        global.latestForecasts = {};
+        try {
+            await pool.query('TRUNCATE TABLE forecasts');
+        } catch (e) {}
 
         res.json({
             success: true,
