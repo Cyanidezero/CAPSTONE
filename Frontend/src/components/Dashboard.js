@@ -1743,29 +1743,7 @@ function Dashboard({
               title={isFil ? 'Paganahin o i-test ang alerto sa cellphone' : 'Enable or test mobile phone notifications'}
             >
               <span className="fd-mobile-bell-icon">🔔</span>
-              <span>{farmerPhone ? `Mobile Alerts (${farmerPhone})` : (isFil ? 'Mobile Phone Alerts' : 'Mobile Phone Alerts')}</span>
-            </button>
-            <button
-              type="button"
-              className="fd-phone-edit-pill"
-              onClick={handleOpenPhoneModal}
-              title={isFil ? 'I-update ang numero ng cellphone para sa alerto' : 'Update mobile alert phone number'}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.35)',
-                color: '#ffffff',
-                borderRadius: '999px',
-                padding: '6px 12px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
-            >
-              <span>📱</span>
-              <span>{farmerPhone ? (isFil ? 'Palitan ang No.' : 'Change Phone') : (isFil ? 'Ilagay ang No.' : 'Set Phone')}</span>
+              <span>{isFil ? 'Mga Alerto sa Mobile' : 'Mobile Alerts'}</span>
             </button>
             <div
               className="fd-hero-badge fd-6am-update-pill"
@@ -2110,7 +2088,7 @@ function Dashboard({
                             <div className="fd-crop-shortcycle-badge">
                               ⚡ {isFil ? 'Mabilis Anihin (Short-Cycle)' : 'Short-Cycle Vegetable'}
                             </div>
-                            {crop.plotOrSeason && (
+                            {crop.plotOrSeason && !/09\d{9}/.test(crop.plotOrSeason) && !/^\s*-\s*\d+/.test(crop.plotOrSeason) && (
                               <div className="fd-crop-plot-badge" style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '2px 8px', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 🏷️ {crop.plotOrSeason}
                               </div>
@@ -2142,14 +2120,6 @@ function Dashboard({
                             <span className="btn-icon">🗑️</span>
                             <span className="btn-label">{isFil ? 'Delete' : 'Delete'}</span>
                           </button>
-                        </div>
-                      </div>
-
-                      {/* Dynamic Harvest Countdown & Readiness Badge */}
-                      <div className="fd-card-harvest-badge-row">
-                        <div className={`fd-harvest-status-pill ${cropHarvest.status} ${cropHarvest.isReady ? 'ready' : ''}`}>
-                          <span className="harvest-badge-icon">{cropHarvest.badgeIcon}</span>
-                          <span className="harvest-badge-text">{cropHarvest.badgeText}</span>
                         </div>
                       </div>
 
@@ -2234,7 +2204,7 @@ function Dashboard({
                       }}>
                         <span style={{ color: cropHarvest.isReady ? '#15803d' : '#334155', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           <span>{cropHarvest.badgeIcon}</span>
-                          <span>{cropHarvest.badgeText}</span>
+                          <span>{cropHarvest.isReady ? (isFil ? 'Handa nang anihin' : 'Ready to harvest') : (isFil ? 'Sariwang Gulay' : 'Fresh Vegetable')}</span>
                         </span>
                         <span style={{ color: '#64748b', fontSize: '0.68rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                           🧺 {cropHarvest.harvestWindow}
