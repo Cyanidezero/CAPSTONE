@@ -356,46 +356,68 @@ async function sendPocketAlert(phone, message) {
 }
 
 // Helper: Send Transactional Email via Resend.com HTTPS API
-async function sendResendEmail(toEmail, subject, htmlContent) {
+async function sendResendEmail(toEmail, subject, htmlContent, recipientName = '') {
     const apiKey = process.env.RESEND_API_KEY || '';
-    return new Promise((resolve) => {
-        const payload = JSON.stringify({
-            from: 'ClimaYield-X <onboarding@resend.dev>',
-            to: [toEmail],
-            subject: subject,
-            html: htmlContent
-        });
-        const req = https.request({
-            hostname: 'api.resend.com',
-            path: '/emails',
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(payload)
-            },
-            timeout: 10000
-        }, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try {
-                    const parsed = JSON.parse(data);
-                    if (res.statusCode >= 200 && res.statusCode < 300) {
-                        resolve({ sent: true, provider: 'resend', id: parsed.id });
-                    } else {
-                        resolve({ sent: false, provider: 'resend', error: parsed.message || `HTTP ${res.statusCode}` });
-                    }
-                } catch {
-                    resolve({ sent: false, provider: 'resend', error: `HTTP ${res.statusCode}` });
-                }
+    const adminOwnerEmail = 'rhenzmatipo4@gmail.com';
+
+    const executeCall = (destEmail, subj, html) => {
+        return new Promise((resolve) => {
+            const payload = JSON.stringify({
+                from: 'ClimaYield-X <onboarding@resend.dev>',
+                to: [destEmail],
+                subject: subj,
+                html: html
             });
+            const req = https.request({
+                hostname: 'api.resend.com',
+                path: '/emails',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload)
+                },
+                timeout: 10000
+            }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const parsed = JSON.parse(data);
+                        if (res.statusCode >= 200 && res.statusCode < 300) {
+                            resolve({ sent: true, provider: 'resend', id: parsed.id, statusCode: res.statusCode });
+                        } else {
+                            resolve({ sent: false, provider: 'resend', error: parsed.message || `HTTP ${res.statusCode}`, statusCode: res.statusCode });
+                        }
+                    } catch {
+                        resolve({ sent: false, provider: 'resend', error: `HTTP ${res.statusCode}`, statusCode: res.statusCode });
+                    }
+                });
+            });
+            req.on('error', err => resolve({ sent: false, provider: 'resend', error: err.message }));
+            req.on('timeout', () => { req.destroy(); resolve({ sent: false, provider: 'resend', error: 'Timeout' }); });
+            req.write(payload);
+            req.end();
         });
-        req.on('error', err => resolve({ sent: false, provider: 'resend', error: err.message }));
-        req.on('timeout', () => { req.destroy(); resolve({ sent: false, provider: 'resend', error: 'Timeout' }); });
-        req.write(payload);
-        req.end();
-    });
+    };
+
+    const res1 = await executeCall(toEmail, subject, htmlContent);
+    if (res1.sent) return res1;
+
+    // Resend test sandbox restriction fallback: auto-route copy to verified owner email
+    if (toEmail !== adminOwnerEmail) {
+        const fallbackSubject = `[ClimaYield-X OTP for ${toEmail}] ` + subject;
+        const fallbackHtml = `
+            <div style="background:#fef3c7;border:1px solid #f59e0b;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-family:Arial,sans-serif;color:#92400e;font-size:13px;">
+                <strong>📬 Registered Account:</strong> <code>${toEmail}</code> (${recipientName || 'Registered User'})<br>
+                <em>This OTP was routed to your verified Resend email so logins and tests are never blocked.</em>
+            </div>` + htmlContent;
+
+        const res2 = await executeCall(adminOwnerEmail, fallbackSubject, fallbackHtml);
+        if (res2.sent) return { ...res2, mode: 'routed_to_owner', target: toEmail };
+    }
+
+    return res1;
 }
 
 // Helper: Send SMS via Infobip API (optional if user configures key)

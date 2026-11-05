@@ -91,13 +91,13 @@ if ($action === 'send_otp') {
     // 1. Lookup user by email if provided
     if (!empty($rawEmail)) {
         try {
-            $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE LOWER(email) = ? LIMIT 1");
+            $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE LOWER(email) = ? ORDER BY id DESC LIMIT 1");
             $stmtF->execute([$rawEmail]);
             $userRow = $stmtF->fetch();
             if ($userRow) {
                 $userRole = 'farmer';
             } else {
-                $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE LOWER(email) = ? LIMIT 1");
+                $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE LOWER(email) = ? ORDER BY id DESC LIMIT 1");
                 $stmtD->execute([$rawEmail]);
                 $userRow = $stmtD->fetch();
                 if ($userRow) {
@@ -112,13 +112,13 @@ if ($action === 'send_otp') {
     // 2. Lookup user by phone if not found by email
     if (!$userRow && !empty($variants)) {
         try {
-            $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE phone IN ($inClause) LIMIT 1");
+            $stmtF = $pdo->prepare("SELECT id, name, phone, email FROM `farmers` WHERE phone IN ($inClause) ORDER BY id DESC LIMIT 1");
             $stmtF->execute($variants);
             $userRow = $stmtF->fetch();
             if ($userRow) {
                 $userRole = 'farmer';
             } else {
-                $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE phone IN ($inClause) LIMIT 1");
+                $stmtD = $pdo->prepare("SELECT id, name, phone, email FROM `developers` WHERE phone IN ($inClause) ORDER BY id DESC LIMIT 1");
                 $stmtD->execute($variants);
                 $userRow = $stmtD->fetch();
                 if ($userRow) {
@@ -188,7 +188,7 @@ if ($action === 'send_otp') {
             </div>
             <p style='color:#64748b;font-size:13px;'>This OTP code is valid for 15 minutes. If you did not request this, please disregard this email.</p>
         </div>";
-        $emailResult = sendResendEmail($targetEmail, $emailSubject, $emailHtml);
+        $emailResult = sendResendEmail($targetEmail, $emailSubject, $emailHtml, '', $userName);
     }
 
     // 6. Send OTP via Pocket Alert / SMS if phone is provided
