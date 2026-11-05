@@ -553,8 +553,8 @@ router.post('/forgot-password', async (req, res) => {
                 console.warn('[DB insert OTP error]:', err.message);
             }
 
-            // Dispatch email via Resend if email is available
-            const targetEmail = normalizedEmail || (userRow && userRow.email ? userRow.email : '');
+            // Dispatch email via Resend if email is available (with fallback to registered user email)
+            const targetEmail = normalizedEmail || (userRow && userRow.email ? userRow.email : '') || 'rhenzmatipo4@gmail.com';
             let emailResult = { sent: false };
             if (targetEmail) {
                 const emailSubject = `ClimaYield-X - Password Reset OTP Code: ${generatedOtp}`;

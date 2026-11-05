@@ -27,3 +27,4 @@ function Upload-FtpFile($localFile, $remoteUrl) {
 Upload-FtpFile "c:\Users\User\Desktop\Climayield\htdocs\config.local.php" "$ftpHost/config.local.php"
 Upload-FtpFile "c:\Users\User\Desktop\Climayield\htdocs\config.php" "$ftpHost/config.php"
 Upload-FtpFile "c:\Users\User\Desktop\Climayield\htdocs\api\alerts\email_gateway.php" "$ftpHost/api/alerts/email_gateway.php"
+
